@@ -127,6 +127,8 @@ async function startActivation() {
     queueBox.style.display = 'none';
 
     if (data.success && data.user_status === 'success') {
+      const fullDnsUrl = window.location.origin ? (window.location.origin + '/get_config.php') : 'https://locketbylacvietvip.vercel.app/get_config.php';
+      
       showModal(`
         <div style="color: #34d399; font-size: 48px; margin-bottom: 8px;">
           <i class="fa-solid fa-circle-check"></i>
@@ -149,19 +151,24 @@ async function startActivation() {
             <b>2️⃣</b> Nếu đã có, tiến hành <b>CÀI DNS NGAY</b> (trong 45s):
           </div>
           <div style="background: rgba(16, 185, 129, 0.12); border: 1px dashed rgba(52, 211, 153, 0.5); padding: 10px 12px; border-radius: 8px; margin-bottom: 8px;">
-            <div>🍏 <b>iOS:</b> Bấm vào đây để cài 👉🏼 <a href="get_config.php" style="color: #38bdf8; font-weight: 800; text-decoration: underline;">Cài Đặt DNS Profile</a></div>
-            <div style="font-size: 12px; color: #94a3b8; margin-top: 3px;">(Mở link bằng Safari ➔ Cho phép ➔ Cài đặt Profile)</div>
+            <div style="word-break: break-all;">🍏 <b>iOS:</b> Bấm vào đây để cài 👉🏼 <a href="${fullDnsUrl}" target="_blank" style="color: #38bdf8; font-weight: 800; text-decoration: underline;">${fullDnsUrl}</a></div>
+            <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;">(Mở link bằng Safari ➔ Cho phép ➔ Cài đặt Profile)</div>
           </div>
           <div style="color: #f87171; font-weight: 700; font-size: 12.5px;">
             💡 Lưu ý: Bắt buộc cài DNS để không bị mất Gold!
           </div>
         </div>
 
-        <div style="display: flex; gap: 10px;">
-          <a href="get_config.php" class="btn-gold-pill" style="min-height: 46px; font-size: 14.5px; text-decoration: none; flex: 1;">
-            <i class="fa-solid fa-download"></i> CÀI DNS NGAY
-          </a>
-          <button class="btn-secondary" onclick="closeModal()" style="min-height: 46px; font-size: 14.5px; width: 90px;">
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div style="display: flex; gap: 8px;">
+            <a href="${fullDnsUrl}" class="btn-gold-pill" style="min-height: 44px; font-size: 14px; text-decoration: none; flex: 1;">
+              <i class="fa-solid fa-download"></i> CÀI DNS NGAY
+            </a>
+            <button class="btn-secondary" onclick="copyZaloText('${fullDnsUrl}', '${escapeHtml(activeUsername)}')" style="min-height: 44px; font-size: 14px; flex: 1; background: rgba(56, 189, 248, 0.15); border-color: rgba(56, 189, 248, 0.4); color: #38bdf8;">
+              <i class="fa-solid fa-copy"></i> Copy Gửi Zalo
+            </button>
+          </div>
+          <button class="btn-secondary" onclick="closeModal()" style="min-height: 40px; font-size: 13.5px; width: 100%;">
             Đóng
           </button>
         </div>
@@ -216,7 +223,22 @@ function showToast(msg) {
   }, 2500);
 }
 
-function escapeHtml(str) {
-  if (!str) return '';
-  return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+function copyZaloText(dnsUrl, username) {
+  const text = `✅ KÍCH HOẠT THÀNH CÔNG
+📅 Plan: Gold (12T) • @${username}
+
+🛡️ HƯỚNG DẪN QUAN TRỌNG:
+1️⃣ Vào App Locket kiểm tra đã có Gold chưa.
+2️⃣ Nếu đã có, tiến hành CÀI DNS NGAY (trong 45s):
+
+🍏 iOS: Bấm vào đây để cài 👉🏼 ${dnsUrl}
+(Mở link bằng Safari ➔ Cho phép ➔ Cài đặt Profile)
+
+💡 Lưu ý: Bắt buộc cài DNS để không bị mất Gold!`;
+
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('📋 Đã sao chép tin nhắn gửi Zalo!');
+  }).catch(() => {
+    showToast('⚠️ Vui lòng sao chép thủ công!');
+  });
 }
