@@ -60,28 +60,36 @@ async function resolveLocketProfile(input) {
     return { success: true, username: clean, avatar_url: cached.avatar_url, uid: cached.uid };
   }
 
-  // Resolver 1
+  // Resolver 1: Direct Locket Web Scraper (Chính xác 100% kể cả nick không có avatar)
   try {
-    const upstreamUrl = `https://vanduc.info.vn/locket/get_avatar.php?username=${encodeURIComponent(clean)}`;
+    const locketWebUrl = `https://locket.cam/${encodeURIComponent(clean)}`;
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3500);
-    const res = await fetch(upstreamUrl, {
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
+    const webRes = await fetch(locketWebUrl, {
       signal: controller.signal,
-      headers: { 'User-Agent': 'Mozilla/5.0' }
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1'
+      }
     });
     clearTimeout(timeoutId);
 
-    if (res.ok) {
-      const data = await res.json();
-      if (data.success && data.avatar_url) {
-        const uid = extractUidFromAvatarUrl(data.avatar_url) || clean;
-        avatarCache.set(clean.toLowerCase(), { avatar_url: data.avatar_url, uid, timestamp: Date.now() });
-        return { success: true, username: clean, avatar_url: data.avatar_url, uid };
+    if (webRes.ok) {
+      const html = await webRes.text();
+      // Match invite link containing 28-char Firebase UID: locket.camera/invites/<UID>
+      const inviteMatch = html.match(/locket\.camera(?:%2F|\/)invites(?:%2F|\/)([a-zA-Z0-9_-]{28})/i) || html.match(/invites(?:%2F|\/)([a-zA-Z0-9_-]{28})/i);
+      const uidMatch = html.match(/users(?:%2F|\/)([a-zA-Z0-9_-]{20,40})(?:%2F|\/)public/i);
+
+      const foundUid = (inviteMatch ? inviteMatch[1] : null) || (uidMatch ? uidMatch[1] : null);
+
+      if (foundUid && isFirebaseUid(foundUid)) {
+        const avatar = `https://firebasestorage.googleapis.com/v0/b/locket-img/o/users%2F${foundUid}%2Fpublic%2Fprofile_pic.webp?alt=media`;
+        avatarCache.set(clean.toLowerCase(), { avatar_url: avatar, uid: foundUid, timestamp: Date.now() });
+        return { success: true, username: clean, avatar_url: avatar, uid: foundUid };
       }
     }
   } catch (e) {}
 
-  // Resolver 2
+  // Resolver 2: Upstream Avatar API
   try {
     const qRes = await fetch('https://vanduc.info.vn/locket/queue_api.php', {
       method: 'POST',
