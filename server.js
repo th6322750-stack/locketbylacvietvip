@@ -75,16 +75,23 @@ async function resolveLocketProfile(input) {
 
     if (webRes.ok) {
       const html = await webRes.text();
+      // Match full avatar URL with Token (handles both quoted & unquoted src attribute in Locket HTML)
+      const fullAvatarMatch = html.match(/src=([^\s>]+profile_pic[^\s>]+)/i) || html.match(/src=["']([^"']*profile_pic[^"']*)["']/i);
+      
       // Match invite link containing 28-char Firebase UID: locket.camera/invites/<UID>
       const inviteMatch = html.match(/locket\.camera(?:%2F|\/)invites(?:%2F|\/)([a-zA-Z0-9_-]{28})/i) || html.match(/invites(?:%2F|\/)([a-zA-Z0-9_-]{28})/i);
       const uidMatch = html.match(/users(?:%2F|\/)([a-zA-Z0-9_-]{20,40})(?:%2F|\/)public/i);
 
-      const foundUid = (inviteMatch ? inviteMatch[1] : null) || (uidMatch ? uidMatch[1] : null);
+      let foundUid = (inviteMatch ? inviteMatch[1] : null) || (uidMatch ? uidMatch[1] : null);
+      let foundAvatar = fullAvatarMatch ? fullAvatarMatch[1].replace(/["']/g, '') : null;
+
+      if (!foundAvatar && foundUid) {
+        foundAvatar = `https://firebasestorage.googleapis.com/v0/b/locket-img/o/users%2F${foundUid}%2Fpublic%2Fprofile_pic.webp?alt=media`;
+      }
 
       if (foundUid && isFirebaseUid(foundUid)) {
-        const avatar = `https://firebasestorage.googleapis.com/v0/b/locket-img/o/users%2F${foundUid}%2Fpublic%2Fprofile_pic.webp?alt=media`;
-        avatarCache.set(clean.toLowerCase(), { avatar_url: avatar, uid: foundUid, timestamp: Date.now() });
-        return { success: true, username: clean, avatar_url: avatar, uid: foundUid };
+        avatarCache.set(clean.toLowerCase(), { avatar_url: foundAvatar, uid: foundUid, timestamp: Date.now() });
+        return { success: true, username: clean, avatar_url: foundAvatar, uid: foundUid };
       }
     }
   } catch (e) {}
