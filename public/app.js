@@ -252,3 +252,14 @@ function copyZaloText(dnsUrl, username) {
     showToast('⚠️ Vui lòng sao chép thủ công!');
   });
 }
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
