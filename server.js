@@ -56,7 +56,7 @@ async function resolveLocketProfile(input) {
   }
 
   const cached = avatarCache.get(clean.toLowerCase());
-  if (cached && (Date.now() - cached.timestamp < CACHE_TTL_MS)) {
+  if (cached && (Date.now() - cached.timestamp < CACHE_TTL_MS) && cached.avatar_url && cached.avatar_url.includes('token=')) {
     return { success: true, username: clean, avatar_url: cached.avatar_url, uid: cached.uid };
   }
 
