@@ -128,27 +128,40 @@ async function startActivation() {
 
     if (data.success && data.user_status === 'success') {
       showModal(`
-        <div style="color: #34d399; font-size: 52px; margin-bottom: 12px;">
+        <div style="color: #34d399; font-size: 48px; margin-bottom: 8px;">
           <i class="fa-solid fa-circle-check"></i>
         </div>
-        <h3 style="font-size: 22px; font-weight: 900; color: #34d399; margin-bottom: 8px;">
-          Nâng Cấp Locket Gold Thành Công!
+        <h3 style="font-size: 21px; font-weight: 900; color: #34d399; margin-bottom: 4px;">
+          ✅ KÍCH HOẠT THÀNH CÔNG
         </h3>
-        <p style="font-size: 14.5px; color: #cbd5e1; margin-bottom: 16px; line-height: 1.5;">
-          Tài khoản <b>@${escapeHtml(activeUsername)}</b> đã được cấp quyền Gold thành công!
-        </p>
-        <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: 14px; padding: 14px; margin-bottom: 20px; text-align: left; font-size: 13.5px; color: #cbd5e1; line-height: 1.6;">
-          <div style="color: #34d399; font-weight: 800; margin-bottom: 6px;">
-            <i class="fa-solid fa-bolt"></i> CÁCH SỬ DỤNG:
-          </div>
-          <div>1. Vuốt tắt hẳn ứng dụng <b>Locket</b> trên iPhone rồi mở lại.</div>
-          <div>2. Tải và cài đặt file <b>LacVietMedia.mobileconfig</b> ở bên dưới để đóng băng bản quyền vĩnh viễn!</div>
+        <div style="font-size: 14.5px; font-weight: 700; color: var(--gold-primary); margin-bottom: 14px;">
+          📅 Plan: Gold (12T) • @${escapeHtml(activeUsername)}
         </div>
+
+        <div style="background: rgba(15, 23, 42, 0.75); border: 1px solid rgba(251, 191, 36, 0.35); border-radius: 14px; padding: 14px; margin-bottom: 16px; text-align: left; font-size: 13.5px; color: #e2e8f0; line-height: 1.6;">
+          <div style="color: #fbbf24; font-weight: 800; font-size: 14px; margin-bottom: 8px;">
+            🛡️ HƯỚNG DẪN QUAN TRỌNG:
+          </div>
+          <div style="margin-bottom: 6px;">
+            <b>1️⃣</b> Vào App Locket kiểm tra đã có Gold chưa.
+          </div>
+          <div style="margin-bottom: 8px;">
+            <b>2️⃣</b> Nếu đã có, tiến hành <b>CÀI DNS NGAY</b> (trong 45s):
+          </div>
+          <div style="background: rgba(16, 185, 129, 0.12); border: 1px dashed rgba(52, 211, 153, 0.5); padding: 10px 12px; border-radius: 8px; margin-bottom: 8px;">
+            <div>🍏 <b>iOS:</b> Bấm vào đây để cài 👉🏼 <a href="get_config.php" style="color: #38bdf8; font-weight: 800; text-decoration: underline;">Cài Đặt DNS Profile</a></div>
+            <div style="font-size: 12px; color: #94a3b8; margin-top: 3px;">(Mở link bằng Safari ➔ Cho phép ➔ Cài đặt Profile)</div>
+          </div>
+          <div style="color: #f87171; font-weight: 700; font-size: 12.5px;">
+            💡 Lưu ý: Bắt buộc cài DNS để không bị mất Gold!
+          </div>
+        </div>
+
         <div style="display: flex; gap: 10px;">
-          <a href="get_config.php" class="btn-gold-pill" style="min-height: 46px; font-size: 14.5px; text-decoration: none;">
-            <i class="fa-solid fa-download"></i> Tải Profile DNS
+          <a href="get_config.php" class="btn-gold-pill" style="min-height: 46px; font-size: 14.5px; text-decoration: none; flex: 1;">
+            <i class="fa-solid fa-download"></i> CÀI DNS NGAY
           </a>
-          <button class="btn-secondary" onclick="closeModal()" style="min-height: 46px; font-size: 14.5px;">
+          <button class="btn-secondary" onclick="closeModal()" style="min-height: 46px; font-size: 14.5px; width: 90px;">
             Đóng
           </button>
         </div>
