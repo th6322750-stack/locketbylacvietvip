@@ -1,10 +1,18 @@
-#!name=Meitu & Wink VIP Unlock (LacVietMedia)
-#!desc=Mở khóa VIP vĩnh viễn cho Meitu, Wink, BeautyCam trên App Store gốc
+#!name=Meitu & Wink VIP Unlock 2026 (LacVietMedia)
+#!desc=Mở khóa Super VIP 2026 cho Meitu, Wink, BeautyCam, Xingtu (Mở 4K, AI Tool, Filter)
 #!author=LacVietMedia
 #!category=VIP Unlock
 
+[Rule]
+# Chặn QUIC/HTTP3 qua UDP để ép app dùng TCP HTTPS giải mã VIP ổn định
+AND,((DEST-PORT,443),(PROTOCOL,UDP)),REJECT-NO-DROP
+
 [Script]
-Meitu_Wink_VIP = type=http-response,pattern=^https?:\/\/.*(meitu|winkvideo|beautycam)\.com\/.*(vip|user|subscriber|purchase|member|info|status|auth|account),requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/th6322750-stack/locketbylacvietvip/main/public/scripts/meitu_wink.js
+# Wink VIP 2026
+Wink_VIP_2026 = type=http-response,pattern=^https?:\/\/.*winkvideo\.com\/.*(vip|user|subscriber|purchase|member|info|status|auth|account|rights|order),requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/th6322750-stack/locketbylacvietvip/main/public/scripts/meitu_wink.js
+
+# Meitu & BeautyCam VIP 2026
+Meitu_VIP_2026 = type=http-response,pattern=^https?:\/\/.*(meitu|beautycam|xiuxiu)\.com\/.*(vip|user|subscriber|purchase|member|info|status|auth|account|rights|order),requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/th6322750-stack/locketbylacvietvip/main/public/scripts/meitu_wink.js
 
 [MITM]
-hostname = %APPEND% api.meitu.com, *.meitu.com, api.winkvideo.com, *.winkvideo.com, api.beautycam.com, *.beautycam.com
+hostname = %APPEND% api.winkvideo.com, *.winkvideo.com, api.meitu.com, *.meitu.com, api.beautycam.com, *.beautycam.com, *.xiuxiu.meitu.com, user.meitu.com
