@@ -13,11 +13,17 @@
   ],
   "routes": [
     {
-      "src": "/get_config.php",
+      "src": "/LacVietMedia.mobileconfig",
+      "headers": {
+        "Content-Type": "application/x-apple-aspen-config"
+      },
       "dest": "/server.js"
     },
     {
-      "src": "/LacVietMedia.mobileconfig",
+      "src": "/get_config.php",
+      "headers": {
+        "Content-Type": "application/x-apple-aspen-config"
+      },
       "dest": "/server.js"
     },
     {
