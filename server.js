@@ -85,8 +85,8 @@ async function resolveLocketProfile(input) {
       let foundUid = (inviteMatch ? inviteMatch[1] : null) || (uidMatch ? uidMatch[1] : null);
       let foundAvatar = fullAvatarMatch ? fullAvatarMatch[1].replace(/["']/g, '') : null;
 
-      if (!foundAvatar && foundUid) {
-        foundAvatar = `https://firebasestorage.googleapis.com/v0/b/locket-img/o/users%2F${foundUid}%2Fpublic%2Fprofile_pic.webp?alt=media`;
+      if (!foundAvatar) {
+        foundAvatar = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(clean)}&backgroundColor=f59e0b,fbbf24&textColor=ffffff&fontWeight=700`;
       }
 
       if (foundUid && isFirebaseUid(foundUid)) {
