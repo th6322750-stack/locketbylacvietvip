@@ -11,14 +11,17 @@
                 <string>HTTPS</string>
                 <key>ServerAddresses</key>
                 <array>
-                    <string>1.1.1.1</string>
-                    <string>1.0.0.1</string>
+                    <string>94.140.14.14</string>
+                    <string>94.140.15.15</string>
+                    <string>2a10:50c0::ad1:ff</string>
+                    <string>2a10:50c0::ad2:ff</string>
                 </array>
                 <key>ServerURL</key>
-                <string>https://api.p12.vn/dns-query</string>
-                
+                <string>https://dns.adguard-dns.com/dns-query</string>
                 <key>SupplementalMatchDomains</key>
                 <array>
+                    <string>api.revenuecat.com</string>
+                    <string>app.revenuecat.com</string>
                     <string>certs.apple.com</string>
                     <string>crl.apple.com</string>
                     <string>ocsp.apple.com</string>
@@ -28,9 +31,6 @@
                     <string>crl4.digicert.com</string>
                     <string>ocsp.digicert.cn</string>
                     <string>ocsp.digicert.com</string>
-                    
-                    <string>api.revenuecat.com</string>
-                    <string>app.revenuecat.com</string>
                     <string>in.appcenter.ms</string>
                     <string>app-measurement.com</string>
                     <string>firebaselogging-pa.googleapis.com</string>
@@ -43,44 +43,36 @@
                 <dict>
                     <key>Action</key>
                     <string>Connect</string>
-                    <key>InterfaceTypeMatch</key>
-                    <string>WiFi</string>
-                </dict>
-                <dict>
-                    <key>Action</key>
-                    <string>Connect</string>
-                    <key>InterfaceTypeMatch</key>
-                    <string>Cellular</string>
                 </dict>
             </array>
             <key>PayloadDescription</key>
-            <string>Cấu hình máy chủ DNS chuyên dụng giữ Locket Gold của LacVietMedia</string>
+            <string>Cấu hình DNS chuyên dụng bảo vệ Locket Gold VIP của LacViet Media</string>
             <key>PayloadDisplayName</key>
-            <string>LacVietMedia VIP DNS Server</string>
+            <string>LacViet Media DNS Guard</string>
             <key>PayloadIdentifier</key>
-            <string>com.apple.dnsSettings.managed.lacvietmedia</string>
+            <string>com.apple.dnsSettings.managed.lacvietmedia.dns</string>
             <key>PayloadType</key>
             <string>com.apple.dnsSettings.managed</string>
             <key>PayloadUUID</key>
-            <string>C3D4E5F6-7890-1234-5678-90ABCDEF1234</string>
+            <string>E7D8C9B0-1A2B-3C4D-5E6F-7A8B9C0D1E2F</string>
             <key>PayloadVersion</key>
             <integer>1</integer>
         </dict>
     </array>
     <key>PayloadDescription</key>
-    <string>Hồ sơ cấu hình DNS bảo vệ bản quyền Locket Gold VIP vĩnh viễn và chống thu hồi bởi LacVietMedia.</string>
+    <string>Hồ sơ cấu hình DNS bảo vệ bản quyền Locket Gold VIP vĩnh viễn bởi LacViet Media.</string>
     <key>PayloadDisplayName</key>
     <string>💛 LOCKET GOLD VIP - LAC VIET MEDIA</string>
     <key>PayloadIdentifier</key>
-    <string>com.lacvietmedia.locket.vip</string>
+    <string>com.lacvietmedia.locketgold.profile</string>
     <key>PayloadOrganization</key>
-    <string>LacVietMedia</string>
+    <string>LacViet Media</string>
     <key>PayloadRemovalDisallowed</key>
     <false/>
     <key>PayloadType</key>
     <string>Configuration</string>
     <key>PayloadUUID</key>
-    <string>21098765-4321-DCBA-0F12-4567890ABCDE</string>
+    <string>A1B2C3D4-E5F6-7890-1234-56789ABCDEF0</string>
     <key>PayloadVersion</key>
     <integer>1</integer>
 </dict>
