@@ -253,6 +253,13 @@ function copyZaloText(dnsUrl, username) {
   });
 }
 
+function handleAvatarError(img) {
+  if (!img) return;
+  const name = activeUsername || 'Locket';
+  img.onerror = null;
+  img.src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name)}&backgroundColor=f59e0b,fbbf24&textColor=ffffff&fontWeight=700`;
+}
+
 function escapeHtml(str) {
   if (!str) return '';
   return String(str)
@@ -262,4 +269,5 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
+
 

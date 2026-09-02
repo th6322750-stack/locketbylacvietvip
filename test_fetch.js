@@ -9,17 +9,20 @@ async function fetchLocketWeb(username) {
     });
     console.log('Status:', res.status);
     const html = await res.text();
-    console.log('HTML Length:', html.length);
     
-    // Look for firebase uid or og:image in html
-    const uidMatch = html.match(/users(?:%2F|\/)([a-zA-Z0-9_-]{20,40})(?:%2F|\/)public/i);
-    console.log('UID from HTML:', uidMatch ? uidMatch[1] : 'null');
-    
-    const ogImage = html.match(/og:image[^\>]+content="([^"]+)"/i);
-    console.log('OG Image:', ogImage ? ogImage[1] : 'null');
-    console.log('Body:', html);
+    // Check for profile image in HTML
+    const profileImgMatch = html.match(/class="profile-pic-img"\s+src="([^"]+)"/i) || html.match(/src="([^"]*profile_pic[^"]*)"/i);
+    console.log('Profile Pic Match from HTML:', profileImgMatch ? profileImgMatch[1] : 'none');
+
+    // Check for initials
+    const initialsMatch = html.match(/class="profile-pic-initials">([^<]+)<\/h2>/i);
+    console.log('Initials:', initialsMatch ? initialsMatch[1] : 'none');
+
+    // Check Firebase UID
+    const inviteMatch = html.match(/invites(?:%2F|\/)([a-zA-Z0-9_-]{28})/i);
+    console.log('Invite UID:', inviteMatch ? inviteMatch[1] : 'none');
   } catch (e) {
     console.error('Error:', e);
   }
 }
-fetchLocketWeb('lucifervpvp');
+fetchLocketWeb('hang1709');
