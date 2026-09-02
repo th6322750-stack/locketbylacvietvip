@@ -220,12 +220,11 @@ app.post(['/queue_api.php', '/api/queue', '/api/queue/join'], async (req, res) =
   res.json({ success: true });
 });
 
-// Download MobileConfig DNS Profile Directly
+// Download MobileConfig DNS Profile Directly (Chuẩn iOS Safari Profile Trigger)
 app.get(['/get_config.php', '/api/config', '/LacVietMedia.mobileconfig', '/vanduclocket.mobileconfig'], (req, res) => {
   const filePath = path.join(__dirname, 'public', 'LacVietMedia.mobileconfig');
   if (fs.existsSync(filePath)) {
-    res.setHeader('Content-Type', 'application/x-apple-aspen-config; charset=utf-8');
-    res.setHeader('Content-Disposition', 'attachment; filename="LacVietMedia.mobileconfig"');
+    res.setHeader('Content-Type', 'application/x-apple-aspen-config');
     return res.sendFile(filePath);
   }
   res.redirect('https://vnramdisk.io.vn/vip/vanduclocket.mobileconfig');

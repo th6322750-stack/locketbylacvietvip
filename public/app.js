@@ -136,7 +136,7 @@ async function startActivation() {
     queueBox.style.display = 'none';
 
     if (data.success && data.user_status === 'success') {
-      const fullDnsUrl = window.location.origin ? (window.location.origin + '/get_config.php') : 'https://locketbylacvietvip.vercel.app/get_config.php';
+      const fullDnsUrl = window.location.origin ? (window.location.origin + '/LacVietMedia.mobileconfig') : 'https://locketbylacvietvip.vercel.app/LacVietMedia.mobileconfig';
       
       showModal(`
         <div style="color: #34d399; font-size: 48px; margin-bottom: 8px;">
