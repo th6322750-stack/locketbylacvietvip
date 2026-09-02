@@ -1,0 +1,10 @@
+#!name=Meitu & Wink VIP Unlock (LacVietMedia)
+#!desc=Mở khóa VIP vĩnh viễn cho Meitu, Wink, BeautyCam trên App Store gốc
+#!author=LacVietMedia
+#!category=VIP Unlock
+
+[Script]
+Meitu_Wink_VIP = type=http-response,pattern=^https?:\/\/.*(meitu|winkvideo|beautycam)\.com\/.*(vip|user|subscriber|purchase|member|info|status|auth|account),requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/th6322750-stack/locketbylacvietvip/main/public/scripts/meitu_wink.js
+
+[MITM]
+hostname = %APPEND% api.meitu.com, *.meitu.com, api.winkvideo.com, *.winkvideo.com, api.beautycam.com, *.beautycam.com
