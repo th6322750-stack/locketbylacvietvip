@@ -1,0 +1,40 @@
+{
+  "version": 2,
+  "name": "locketbylacvietvip",
+  "builds": [
+    {
+      "src": "server.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "public/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/get_config.php",
+      "dest": "/server.js"
+    },
+    {
+      "src": "/LacVietMedia.mobileconfig",
+      "dest": "/server.js"
+    },
+    {
+      "src": "/get_avatar.php",
+      "dest": "/server.js"
+    },
+    {
+      "src": "/queue_api.php",
+      "dest": "/server.js"
+    },
+    {
+      "src": "/api/(.*)",
+      "dest": "/server.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/public/$1"
+    }
+  ]
+}

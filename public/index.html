@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Nâng Cấp Locket Gold VIP - Realtime Portal</title>
+  <meta name="description" content="Cổng nâng cấp Locket Gold VIP tự động trực tiếp">
+
+  <!-- Google Fonts & Font Awesome -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Outfit:wght@700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <!-- Top Realtime VIP Banner -->
+  <header class="top-banner">
+    <div class="banner-content">
+      <span class="banner-badge"><i class="fa-solid fa-crown"></i> LOCKET GOLD VIP</span>
+      <span>• Hệ Thống Cấp Quyền Tự Động</span>
+      <span class="status-indicator"><span class="pulse-dot"></span> MÁY CHỦ: SẴN SÀNG</span>
+    </div>
+  </header>
+
+  <main class="main-wrapper">
+
+    <!-- Hero Header -->
+    <section class="hero-section">
+      <h1 class="hero-title">NÂNG CẤP LOCKET GOLD</h1>
+      <div class="hero-badge-subtitle">VIP REALTIME • TỰ ĐỘNG</div>
+      <p class="hero-desc">Nhập Username để cấp quyền Gold trực tiếp vào tài khoản</p>
+    </section>
+
+    <!-- Main Portal Activation Card -->
+    <div class="portal-card">
+      <div class="crown-container">
+        <div class="crown-badge">
+          <i class="fa-solid fa-crown"></i>
+        </div>
+      </div>
+
+      <!-- Real User Profile Display -->
+      <div class="profile-hero" id="profileHero">
+        <div class="avatar-ring">
+          <img id="avatarImg" class="avatar-img" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80" alt="Avatar Locket">
+          <div class="avatar-badge-icon" id="goldBadge"><i class="fa-solid fa-bolt"></i></div>
+        </div>
+        <div class="profile-meta">
+          <div class="profile-name">
+            <span id="displayName">Locket User</span>
+            <i class="fa-solid fa-circle-check" style="color: #38bdf8; font-size: 14px;"></i>
+          </div>
+          <div class="profile-uid-pill" id="uidPill">
+            <i class="fa-solid fa-fingerprint"></i>
+            <span id="uidText">Nhập Username để kiểm tra</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Input Form -->
+      <div class="input-wrapper">
+        <label class="input-label" for="usernameInput">
+          <span><i class="fa-solid fa-user-tag" style="color: var(--gold-primary);"></i> Nhập Username, Link hoặc UID:</span>
+          <small style="color: #94a3b8; font-weight: 500;">Không cần mật khẩu</small>
+        </label>
+        <div style="position: relative;">
+          <i class="fa-solid fa-at input-icon"></i>
+          <input type="text" id="usernameInput" class="custom-input" placeholder="Ví dụ: hannhnguyn hoặc dán link locket.cam/..." autocomplete="off" spellcheck="false">
+        </div>
+      </div>
+
+      <!-- Big Action Button -->
+      <button class="btn-gold-pill" id="btnSubmit" onclick="startActivation()">
+        <i class="fa-solid fa-bolt"></i>
+        <span id="btnSubmitText">BẤM NÂNG CẤP LOCKET GOLD</span>
+      </button>
+
+      <!-- Real-Time Queue Processing Box -->
+      <div class="queue-box" id="queueBox">
+        <div class="neon-orbit-loader">
+          <div class="orbit-ring-outer"></div>
+          <div class="orbit-ring-inner"></div>
+          <i class="fa-solid fa-crown orbit-core-icon"></i>
+        </div>
+        <div class="shimmer-text" id="queueStatusTitle">
+          Đang cấp quyền Locket Gold VIP...
+        </div>
+        <div class="queue-pos-text" id="queuePosText">ĐANG XỬ LÝ</div>
+        <div class="queue-sub-text" id="queueSubText">Đang gửi mã bản quyền tới máy chủ RevenueCat...</div>
+      </div>
+    </div>
+
+    <!-- Action Card: Download DNS Profile -->
+    <div class="action-card">
+      <div class="action-card-header">
+        <i class="fa-solid fa-shield-halved"></i>
+        <span>CẤU HÌNH DNS GIỮ GOLD (BẮT BUỘC)</span>
+      </div>
+      <p class="action-card-desc">
+        Tải và cài đặt hồ sơ DNS LacVietMedia để đóng băng và giữ bản quyền Gold vĩnh viễn trên iPhone.
+      </p>
+      <a href="get_config.php" class="btn-secondary" id="btnDownloadProfile" style="background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.45); color: #34d399;">
+        <i class="fa-solid fa-download"></i>
+        <span>Tải File Cấu Hình (LacVietMedia.mobileconfig)</span>
+      </a>
+    </div>
+
+    <!-- Instructions Card -->
+    <div class="action-card">
+      <div class="action-card-header">
+        <i class="fa-solid fa-circle-question"></i>
+        <span>HƯỚNG DẪN 3 BƯỚC SỬ DỤNG</span>
+      </div>
+      <div style="font-size: 13.5px; color: #cbd5e1; line-height: 1.6; display: flex; flex-direction: column; gap: 8px;">
+        <div><b>Bước 1:</b> Nhập chính xác Username Locket của bạn và bấm <b>BẤM NÂNG CẤP LOCKET GOLD</b>.</div>
+        <div><b>Bước 2:</b> Bấm nút <b>Tải File Cấu Hình</b> ở trên -> Vào <i>Cài đặt iPhone > Đã tải về hồ sơ > Cài đặt</i>.</div>
+        <div><b>Bước 3:</b> Vuốt tắt hẳn app Locket rồi mở lại để trải nghiệm Locket Gold VIP!</div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Modal Popup for Results -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-card" id="modalCard">
+      <button class="modal-close-btn" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <!-- Toast Message -->
+  <div class="toast-container" id="toast">
+    <i class="fa-solid fa-circle-check" style="color: #34d399;"></i>
+    <span id="toastMsg">Thành công!</span>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+
+</html>
