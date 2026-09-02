@@ -65,25 +65,25 @@ def renew_user(user):
         print(f"[{datetime.now().strftime('%H:%M:%S')}] ❌ Error @{username}: {e}")
         return False
 
-def run_loop(interval_minutes=15):
+def run_loop(interval_seconds=60):
     print("==========================================================")
     print("  🚀 LOCKET GOLD 24/7 AUTO-RENEW & KEEP-ALIVE DAEMON (PYTHON)")
-    print(f"  ⏱️ Interval: Every {interval_minutes} minutes")
+    print(f"  ⏱️ Interval: Chạy liên tục mỗi {interval_seconds} giây (Non-stop)")
     print(f"  📁 Database: {DB_FILE}")
     print("==========================================================")
 
     while True:
         users = load_users()
         active_users = [u for u in users if u.get('status', 'active') == 'active']
-        print(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] 🔄 Starting Auto-Renew Cycle for {len(active_users)} VIP users...")
+        print(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] 🔄 Bơm Token chu kỳ mới cho {len(active_users)} tài khoản VIP...")
         
         for user in active_users:
             renew_user(user)
             time.sleep(1) # sleep 1s between requests to be polite
 
         save_users(users)
-        print(f"[{datetime.now().strftime('%H:%M:%S')}] 💤 Cycle complete. Sleeping for {interval_minutes} minutes...")
-        time.sleep(interval_minutes * 60)
+        print(f"[{datetime.now().strftime('%H:%M:%S')}] 💤 Chu kỳ hoàn tất. Chờ {interval_seconds} giây trước khi bơm tiếp...")
+        time.sleep(interval_seconds)
 
 if __name__ == '__main__':
-    run_loop(interval_minutes=15)
+    run_loop(interval_seconds=60)

@@ -222,10 +222,10 @@ async function runKeepAliveCycle() {
   console.log(`[✨ 24/7 Keep-Alive Complete] Tất cả khách hàng đã được đảm bảo giữ Gold 15s!\n`);
 }
 
-// Start 24/7 interval: run every 15 minutes
-setInterval(runKeepAliveCycle, 15 * 60 * 1000);
-// Run initial cycle 5 seconds after startup
-setTimeout(runKeepAliveCycle, 5000);
+// Start 24/7 interval: run continuously every 60 seconds non-stop!
+setInterval(runKeepAliveCycle, 60 * 1000);
+// Run initial cycle 3 seconds after startup
+setTimeout(runKeepAliveCycle, 3000);
 
 // ==========================================
 // 6. ROUTES & APIS
