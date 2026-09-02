@@ -246,11 +246,33 @@ function copyZaloText(dnsUrl, username) {
 
 💡 Lưu ý: Bắt buộc cài DNS để không bị mất Gold!`;
 
-  navigator.clipboard.writeText(text).then(() => {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => {
+      showToast('📋 Đã sao chép tin nhắn gửi Zalo!');
+    }).catch(() => {
+      fallbackCopy(text);
+    });
+  } else {
+    fallbackCopy(text);
+  }
+}
+
+function fallbackCopy(text) {
+  const textArea = document.createElement("textarea");
+  textArea.value = text;
+  textArea.style.position = "fixed";
+  textArea.style.left = "-999999px";
+  textArea.style.top = "-999999px";
+  document.body.appendChild(textArea);
+  textArea.focus();
+  textArea.select();
+  try {
+    document.execCommand('copy');
     showToast('📋 Đã sao chép tin nhắn gửi Zalo!');
-  }).catch(() => {
+  } catch (err) {
     showToast('⚠️ Vui lòng sao chép thủ công!');
-  });
+  }
+  document.body.removeChild(textArea);
 }
 
 function handleAvatarError(img) {
