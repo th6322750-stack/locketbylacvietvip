@@ -200,10 +200,11 @@ async function startActivation() {
     }
 
   } catch (err) {
+    console.error('[Activation Error]:', err);
     btnSubmit.disabled = false;
     btnSubmitText.textContent = 'BẤM NÂNG CẤP LOCKET GOLD';
     queueBox.style.display = 'none';
-    showToast('❌ Lỗi kết nối mạng tới máy chủ!');
+    showToast(`❌ Lỗi: ${err.message || 'Kết nối mạng tới máy chủ thất bại'}`);
   }
 }
 
