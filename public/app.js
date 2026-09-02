@@ -37,7 +37,11 @@ document.addEventListener('DOMContentLoaded', () => {
 // 1. RESOLVE USER PROFILE (REAL CDN & UID)
 // ==========================================
 async function resolveUserProfile(username) {
-  const cleanName = username.trim().toLowerCase().replace(/^@/, '');
+  let cleanName = username.trim();
+  const linkMatch = cleanName.match(/locket\.(?:cam|camera)(?:\/links)?\/([a-zA-Z0-9._-]+)/i);
+  if (linkMatch) cleanName = linkMatch[1];
+  cleanName = cleanName.replace(/^@/, '').trim();
+
   if (!cleanName) {
     resetUserProfile();
     return;
