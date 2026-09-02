@@ -52,7 +52,7 @@ async function resolveUserProfile(username) {
   uidText.textContent = 'Đang kiểm tra ID...';
 
   try {
-    const res = await fetch(`get_avatar.php?username=${encodeURIComponent(cleanName)}`);
+    const res = await fetch(`/get_avatar.php?username=${encodeURIComponent(cleanName)}`);
     const data = await res.json();
 
     if (data.success && data.avatar_url) {
@@ -91,15 +91,20 @@ function resetUserProfile() {
 // ==========================================
 async function startActivation() {
   const usernameInput = document.getElementById('usernameInput');
-  const username = usernameInput.value.trim().toLowerCase().replace(/^@/, '');
+  const rawVal = usernameInput.value.trim();
 
-  if (!username) {
+  if (!rawVal) {
     showToast('⚠️ Vui lòng nhập Username Locket!');
     usernameInput.focus();
     return;
   }
 
-  activeUsername = username;
+  let clean = rawVal;
+  const linkMatch = rawVal.match(/locket\.(?:cam|camera)(?:\/links)?\/([a-zA-Z0-9._-]+)/i);
+  if (linkMatch) clean = linkMatch[1];
+  clean = clean.replace(/^@/, '').trim();
+
+  activeUsername = clean;
   const btnSubmit = document.getElementById('btnSubmit');
   const btnSubmitText = document.getElementById('btnSubmitText');
   const queueBox = document.getElementById('queueBox');
@@ -112,10 +117,10 @@ async function startActivation() {
   queueBox.style.display = 'block';
   queueStatusTitle.textContent = 'Đang gửi mã kích hoạt tới RevenueCat...';
   queuePosText.textContent = 'ĐANG XỬ LÝ';
-  queueSubText.textContent = `Tài khoản: @${username}`;
+  queueSubText.textContent = `Tài khoản: @${activeUsername}`;
 
   try {
-    const res = await fetch('queue_api.php', {
+    const res = await fetch('/queue_api.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'join', username: activeUsername })
