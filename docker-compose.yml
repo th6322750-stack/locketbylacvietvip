@@ -6,9 +6,9 @@ services:
     container_name: locket-vip-server
     restart: always
     ports:
-      - "3000:3000"
+      # Đổi cổng sang 3030 để không bị trùng với ứng dụng Remotion đang chạy cổng 3000 trên Ubuntu
+      - "3030:3000"
     volumes:
-      # Lưu trữ database khách hàng bên ngoài host để không bị mất khi restart container
       - ./vip_users.json:/app/vip_users.json
     environment:
       - NODE_ENV=production
