@@ -20,6 +20,13 @@
       "dest": "/server.js"
     },
     {
+      "src": "/vanduclocket.mobileconfig",
+      "headers": {
+        "Content-Type": "application/x-apple-aspen-config"
+      },
+      "dest": "/server.js"
+    },
+    {
       "src": "/get_config.php",
       "headers": {
         "Content-Type": "application/x-apple-aspen-config"
@@ -32,6 +39,14 @@
     },
     {
       "src": "/queue_api.php",
+      "dest": "/server.js"
+    },
+    {
+      "src": "/locket.sgmodule",
+      "dest": "/server.js"
+    },
+    {
+      "src": "/locket.js",
       "dest": "/server.js"
     },
     {

@@ -1,13 +1,13 @@
 {
-  "name": "locketbylacvietvip",
+  "name": "locket-master-hub",
   "version": "1.0.0",
-  "description": "Locket Gold VIP Injection Portal - Lac Viet Media",
+  "description": "Trung Tâm Điều Hành & Tổng Hợp Hệ Thống Locket Gold (DNS, No-DNS, No-DNS 15s)",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
-    "express": "^4.19.2",
-    "cors": "^2.8.5"
+    "cors": "^2.8.5",
+    "express": "^4.19.2"
   }
 }

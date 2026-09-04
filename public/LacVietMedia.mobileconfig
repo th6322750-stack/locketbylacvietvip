@@ -11,15 +11,14 @@
                 <string>HTTPS</string>
                 <key>ServerAddresses</key>
                 <array>
-                    <string>127.0.0.1</string>
-                    <string>0.0.0.0</string>
+                    <string>1.1.1.1</string>
+                    <string>1.0.0.1</string>
                 </array>
                 <key>ServerURL</key>
-                <string>https://127.0.0.1/dns-query</string>
+                <string>https://api.p12.vn/dns-query</string>
+                
                 <key>SupplementalMatchDomains</key>
                 <array>
-                    <string>api.revenuecat.com</string>
-                    <string>app.revenuecat.com</string>
                     <string>certs.apple.com</string>
                     <string>crl.apple.com</string>
                     <string>ocsp.apple.com</string>
@@ -29,6 +28,9 @@
                     <string>crl4.digicert.com</string>
                     <string>ocsp.digicert.cn</string>
                     <string>ocsp.digicert.com</string>
+                    
+                    <string>api.revenuecat.com</string>
+                    <string>app.revenuecat.com</string>
                     <string>in.appcenter.ms</string>
                     <string>app-measurement.com</string>
                     <string>firebaselogging-pa.googleapis.com</string>
@@ -41,36 +43,44 @@
                 <dict>
                     <key>Action</key>
                     <string>Connect</string>
+                    <key>InterfaceTypeMatch</key>
+                    <string>WiFi</string>
+                </dict>
+                <dict>
+                    <key>Action</key>
+                    <string>Connect</string>
+                    <key>InterfaceTypeMatch</key>
+                    <string>Cellular</string>
                 </dict>
             </array>
             <key>PayloadDescription</key>
-            <string>Cấu hình DNS Sinkhole cục bộ chặn thu hồi bản quyền Locket Gold VIP của LacViet Media</string>
+            <string>Configures device to use Locket VIP Freeze DNS</string>
             <key>PayloadDisplayName</key>
-            <string>LacViet Media DNS Gold Guard</string>
+            <string>P12.VN Locket VIP Server</string>
             <key>PayloadIdentifier</key>
-            <string>com.apple.dnsSettings.managed.lacvietmedia.dns</string>
+            <string>com.apple.dnsSettings.managed.locketvip</string>
             <key>PayloadType</key>
             <string>com.apple.dnsSettings.managed</string>
             <key>PayloadUUID</key>
-            <string>E7D8C9B0-1A2B-3C4D-5E6F-7A8B9C0D1E2F</string>
+            <string>C3D4E5F6-7890-1234-5678-90ABCDEF1234</string>
             <key>PayloadVersion</key>
             <integer>1</integer>
         </dict>
     </array>
     <key>PayloadDescription</key>
-    <string>Hồ sơ cấu hình DNS đóng băng và bảo vệ bản quyền Locket Gold VIP vĩnh viễn bởi LacViet Media.</string>
+    <string>Hồ sơ VIP đóng băng bản quyền Locket Gold vĩnh viễn và chống thu hồi chứng chỉ P12.Mình là Đức GSM mình nhận bypass icloud,ẩn icloud,chặn xóa cho những may vay ae có tài chính thấp,Và ĐẶC BIỆT MÌNH NHẬN OFF NHỮNG MAY ĐANG VAY MÀ CÓ MÃ VNA/A ZP/A GIÁ SIÊU RẺ NHÉ XS-17PRM LUN.</string>
     <key>PayloadDisplayName</key>
-    <string>💛 LOCKET GOLD VIP - LAC VIET MEDIA</string>
+    <string>💛LOCKET GOLD VIP BY VAN DUC</string>
     <key>PayloadIdentifier</key>
-    <string>com.lacvietmedia.locketgold.profile</string>
+    <string>com.p12.locket.vip</string>
     <key>PayloadOrganization</key>
-    <string>LacViet Media</string>
+    <string>Cuios.shop</string>
     <key>PayloadRemovalDisallowed</key>
     <false/>
     <key>PayloadType</key>
     <string>Configuration</string>
     <key>PayloadUUID</key>
-    <string>A1B2C3D4-E5F6-7890-1234-56789ABCDEF0</string>
+    <string>21098765-4321-DCBA-0F12-4567890ABCDE</string>
     <key>PayloadVersion</key>
     <integer>1</integer>
 </dict>
