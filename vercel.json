@@ -55,15 +55,15 @@
     },
     {
       "src": "/shop",
-      "dest": "/public/shop.html"
+      "dest": "/server.js"
     },
     {
-      "src": "/shop/",
-      "dest": "/public/shop.html"
+      "src": "/shop/(.*)",
+      "dest": "/server.js"
     },
     {
       "src": "/store",
-      "dest": "/public/shop.html"
+      "dest": "/server.js"
     },
     {
       "src": "/(.*)",
