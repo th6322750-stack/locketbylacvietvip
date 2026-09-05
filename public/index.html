@@ -759,6 +759,29 @@
     </div>
   </div>
 
+  <!-- VIP Admin Security Lock Overlay -->
+  <div id="adminLockOverlay" class="modal-overlay" style="background: rgba(8, 9, 14, 0.96); backdrop-filter: blur(18px); z-index: 99999; display: none;">
+    <div class="modal-card" style="max-width: 420px; text-align: center; border-color: rgba(245, 158, 11, 0.4); box-shadow: 0 0 60px rgba(245, 158, 11, 0.2);">
+      <div style="font-size: 48px; margin-bottom: 12px;">🔒</div>
+      <h3 style="font-size: 22px; font-weight: 800; color: #fff; margin-bottom: 6px;">KHÓA BẢO MẬT ADMIN</h3>
+      <p style="color: var(--text-muted); font-size: 13.5px; margin-bottom: 24px;">Nhập mã PIN quản trị viên để mở khóa Bảng Điều Khiển</p>
+
+      <div class="form-group" style="margin-bottom: 20px;">
+        <input type="password" id="adminPinInput" class="form-input font-mono" placeholder="••••••" style="text-align: center; font-size: 24px; letter-spacing: 8px; padding: 12px;" autofocus>
+        <div id="pinErrorMsg" style="color: #ef4444; font-size: 13px; margin-top: 8px; display: none;">❌ Mã PIN không chính xác!</div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <button class="btn btn-gold btn-lg" style="width: 100%; justify-content: center;" onclick="verifyAdminPin()">
+          <span>🔓 Mở Khóa Quản Trị</span>
+        </button>
+        <a href="/shop" class="btn btn-glass" style="width: 100%; justify-content: center; text-decoration: none;">
+          <span>🛍️ Tôi Là Khách Hàng ➔ Đến Trang Mua Gold</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Notification -->
   <div id="toast" class="toast"></div>
 

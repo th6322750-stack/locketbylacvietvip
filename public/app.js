@@ -9,7 +9,11 @@ let editingUid = null;
 let currentResolvedProfile = null;
 let lookupTimer = null;
 
+const ADMIN_SECURITY_PIN = '888888';
+
 document.addEventListener('DOMContentLoaded', () => {
+  checkAdminAuth();
+
   // Check URL param for tab
   const params = new URLSearchParams(window.location.search);
   const tabParam = params.get('tab');
@@ -21,6 +25,51 @@ document.addEventListener('DOMContentLoaded', () => {
   loadMasterInfo();
   checkExpiryHeartbeat();
 });
+
+function checkAdminAuth() {
+  const isAuth = sessionStorage.getItem('locket_admin_auth');
+  const lockOverlay = document.getElementById('adminLockOverlay');
+  if (isAuth === 'true') {
+    if (lockOverlay) {
+      lockOverlay.classList.remove('open');
+      lockOverlay.style.display = 'none';
+    }
+  } else {
+    if (lockOverlay) {
+      lockOverlay.style.display = 'flex';
+      lockOverlay.classList.add('open');
+      const pinInput = document.getElementById('adminPinInput');
+      if (pinInput) {
+        pinInput.value = '';
+        pinInput.focus();
+        pinInput.onkeydown = (e) => {
+          if (e.key === 'Enter') verifyAdminPin();
+        };
+      }
+    }
+  }
+}
+
+function verifyAdminPin() {
+  const input = document.getElementById('adminPinInput')?.value.trim();
+  const errMsg = document.getElementById('pinErrorMsg');
+  if (input === ADMIN_SECURITY_PIN || input === 'lucifer888') {
+    sessionStorage.setItem('locket_admin_auth', 'true');
+    const lockOverlay = document.getElementById('adminLockOverlay');
+    if (lockOverlay) {
+      lockOverlay.classList.remove('open');
+      lockOverlay.style.display = 'none';
+    }
+    showToast('🔓 Đã mở khóa Quản trị viên thành công!');
+  } else {
+    if (errMsg) errMsg.style.display = 'block';
+    const pinInput = document.getElementById('adminPinInput');
+    if (pinInput) {
+      pinInput.value = '';
+      pinInput.focus();
+    }
+  }
+}
 
 // ========================================================
 // 1. NAVIGATION & TAB SWITCHING
