@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Locket Gold Official Store - Nâng Cấp Locket Gold & 15s Video Bản Quyền Apple</title>
+  <meta name="description" content="Hệ thống nâng cấp Locket Gold No-DNS & 15s Video Ultra tự động 24/7. Bảo hành full thời gian 1 đổi 1 bản quyền StoreKit Apple.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="shop.css">
+</head>
+<body>
+
+  <!-- Ambient Glow Effects -->
+  <div class="ambient-glow">
+    <div class="glow-circle glow-1"></div>
+    <div class="glow-circle glow-2"></div>
+    <div class="glow-circle glow-3"></div>
+  </div>
+
+  <div class="container">
+    <!-- Top Navigation Bar -->
+    <nav class="navbar">
+      <a href="/shop.html" class="nav-brand">
+        <div class="brand-icon">💛</div>
+        <div>
+          <span class="brand-title">LOCKET GOLD STORE</span>
+          <span class="brand-badge">BẢN QUYỀN VIP</span>
+        </div>
+      </a>
+      <div class="nav-links">
+        <a href="/" class="nav-btn nav-btn-glass">
+          <span>👑 Bảng Quản Trị Admin</span>
+        </a>
+        <a href="#orderSection" class="nav-btn nav-btn-gold">
+          <span>⚡ Nâng Cấp Ngay</span>
+        </a>
+      </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="hero">
+      <div class="hero-tag">
+        <span class="pulse-dot"></span>
+        <span>HỆ THỐNG KÍCH HOẠT TỰ ĐỘNG 24/7 • STOREKIT 2 APPLE</span>
+      </div>
+      <h1 class="hero-title">
+        Nâng Cấp <span class="text-gradient-gold">Locket Gold VIP</span><br>
+        Mở Khóa Quay Video 15s Siêu Nhanh
+      </h1>
+      <p class="hero-subtitle">
+        Không cần cài VPN, không lo rụng DNS, giữ nguyên tài khoản chính chủ. Nâng cấp 1 chạm nhận Gold tức thì sau 5 giây!
+      </p>
+
+      <!-- Trust Badges Ribbon -->
+      <div class="trust-ribbon">
+        <div class="trust-item">
+          <span class="trust-icon">⚡</span>
+          <span>Kích hoạt tự động trong 5 giây</span>
+        </div>
+        <div class="trust-item">
+          <span class="trust-icon">🛡️</span>
+          <span>Bảo hành 1 đổi 1 suốt 12 tháng</span>
+        </div>
+        <div class="trust-item">
+          <span class="trust-icon">📱</span>
+          <span>100% No-DNS • Không cần chứng chỉ</span>
+        </div>
+        <div class="trust-item">
+          <span class="trust-icon">👥</span>
+          <span>Hơn 5.280+ khách hàng tin dùng</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Interactive 3-Step Order & Checkout Card -->
+    <section id="orderSection" class="order-section">
+      <div class="section-heading">
+        <h2>🛍️ ĐẶT MUA & KÍCH HOẠT TỰ ĐỘNG</h2>
+        <p>Điền thông tin tài khoản Locket của bạn để hệ thống kết nối và bơm Gold</p>
+      </div>
+
+      <!-- Step 1: Input Locket Account & Auto-Scraper -->
+      <div class="step-box">
+        <label class="step-label">
+          <span class="step-num">1</span>
+          <span>Nhập Username hoặc Link Locket của bạn:</span>
+        </label>
+        <div class="input-resolver-group">
+          <input 
+            type="text" 
+            id="inputLocketCustomer" 
+            class="input-locket" 
+            placeholder="Ví dụ: linh_0810 hoặc locket.cam/linh_0810 hoặc UID..."
+            autocomplete="off"
+          >
+          <button id="btnResolveCustomer" class="btn-resolve" onclick="resolveCustomerProfile()">
+            <span>🔍 Kiểm Tra</span>
+          </button>
+        </div>
+
+        <!-- Live Profile Card Preview -->
+        <div id="customerPreviewCard" class="profile-preview-card">
+          <img id="previewAvatarImg" class="preview-avatar" src="https://api.dicebear.com/7.x/initials/svg?seed=Locket" alt="Avatar">
+          <div class="preview-info">
+            <div class="preview-username">
+              <span id="previewUsernameTxt">@username</span>
+              <span class="verified-badge">✓ Đã Nhận Diện</span>
+            </div>
+            <div id="previewUidTxt" class="preview-uid">UID: ----------------------------</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Choose Gold Package -->
+      <div class="step-box">
+        <label class="step-label">
+          <span class="step-num">2</span>
+          <span>Chọn Gói Locket Gold Muốn Nâng Cấp:</span>
+        </label>
+
+        <div class="packages-grid">
+          <!-- Package 1: No-DNS Standard -->
+          <div class="package-card" data-pkg-id="nodns-standard" onclick="selectPackage('nodns-standard')">
+            <div class="package-ribbon">TIẾT KIỆM 58%</div>
+            <div class="package-header">
+              <div class="package-title">💛 No-DNS Chuẩn</div>
+              <div class="package-desc">Bản quyền StoreKit Gold 1 Năm</div>
+            </div>
+            <div class="package-price-wrap">
+              <span class="package-price">50.000đ</span>
+              <span class="package-old-price">120.000đ</span>
+            </div>
+            <ul class="package-features">
+              <li><span class="feature-check">✓</span> Huy hiệu Locket Gold Vàng rực</li>
+              <li><span class="feature-check">✓</span> Không cần cài VPN / DNS</li>
+              <li><span class="feature-check">✓</span> Đăng khoảnh khắc chất lượng cao</li>
+              <li><span class="feature-check">✓</span> Bảo hành 1 đổi 1 trọn gói 1 năm</li>
+            </ul>
+          </div>
+
+          <!-- Package 2: No-DNS 15s Video Ultra (Default Selected) -->
+          <div class="package-card selected" data-pkg-id="nodns-15s" onclick="selectPackage('nodns-15s')">
+            <div class="package-ribbon package-ribbon-hot">🔥 GÓI VIP BÁN CHẠY NHẤT</div>
+            <div class="package-header">
+              <div class="package-title">⚡ No-DNS 15s Ultra Video</div>
+              <div class="package-desc">Combo Full Tính Năng + Video 15 Giây</div>
+            </div>
+            <div class="package-price-wrap">
+              <span class="package-price">79.000đ</span>
+              <span class="package-old-price">180.000đ</span>
+            </div>
+            <ul class="package-features">
+              <li><span class="feature-check">✓</span> <strong>Mở khóa quay & gửi video 15s</strong></li>
+              <li><span class="feature-check">✓</span> Full đặc quyền Locket Gold VIP</li>
+              <li><span class="feature-check">✓</span> Không VPN / Không rụng cấu hình</li>
+              <li><span class="feature-check">✓</span> Cập nhật App Store thoải mái</li>
+              <li><span class="feature-check">✓</span> Bảo hành VIP ưu tiên 24/7</li>
+            </ul>
+          </div>
+
+          <!-- Package 3: DNS Cheap -->
+          <div class="package-card" data-pkg-id="dns-cheap" onclick="selectPackage('dns-cheap')">
+            <div class="package-ribbon" style="background: rgba(255,255,255,0.15); color: #fff;">HỌC SINH / SV</div>
+            <div class="package-header">
+              <div class="package-title">🛡️ Gói DNS Profile</div>
+              <div class="package-desc">Cài đặt qua Profile MobileConfig</div>
+            </div>
+            <div class="package-price-wrap">
+              <span class="package-price">30.000đ</span>
+              <span class="package-old-price">70.000đ</span>
+            </div>
+            <ul class="package-features">
+              <li><span class="feature-check">✓</span> Nâng cấp qua Profile Apple DNS</li>
+              <li><span class="feature-check">✓</span> Xem lại ảnh full lịch sử</li>
+              <li><span class="feature-check">✓</span> Giá siêu tiết kiệm cho HSSV</li>
+              <li><span class="feature-check">✓</span> Hỗ trợ cài đặt từ xa</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Payment via Dynamic VietQR -->
+      <div class="step-box">
+        <label class="step-label">
+          <span class="step-num">3</span>
+          <span>Quét Mã VietQR Chuyển Khoản Tự Động:</span>
+        </label>
+
+        <div class="payment-box">
+          <div class="qr-display-wrap">
+            <div class="qr-image-container">
+              <img id="vietQrImage" class="qr-image" src="" alt="Mã VietQR Chuyển Khoản">
+            </div>
+            <small style="color: var(--text-muted); font-size: 11px;">Hỗ trợ tất cả App Ngân Hàng & MoMo</small>
+          </div>
+
+          <div class="payment-details">
+            <div class="detail-row">
+              <span class="detail-label">Gói đã chọn:</span>
+              <span id="selectedPkgName" class="detail-value text-gradient-gold">No-DNS 15s Video Ultra</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Số tiền thanh toán:</span>
+              <span id="selectedPkgPrice" class="detail-value" style="color: var(--gold-glow); font-size: 18px;">79.000 đ</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Ngân hàng thụ hưởng:</span>
+              <span id="bankNameTxt" class="detail-value">MB Bank (Quân Đội)</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Số tài khoản:</span>
+              <div class="detail-value">
+                <span id="bankAccTxt">0988888888</span>
+                <button class="btn-copy-code" onclick="copyBankAcc()">Copy</button>
+              </div>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Chủ tài khoản:</span>
+              <span id="bankOwnerTxt" class="detail-value">NGUYEN VAN DUC</span>
+            </div>
+            <div class="detail-row" style="background: rgba(245, 158, 11, 0.08); padding: 10px 12px; border-radius: 8px; border: 1px dashed rgba(245, 158, 11, 0.4);">
+              <span class="detail-label" style="color: #fff; font-weight: 700;">Nội dung chuyển khoản:</span>
+              <div class="detail-value">
+                <strong id="transferContentTxt" style="color: var(--gold-glow); font-family: 'JetBrains Mono', monospace; font-size: 15px;">LOCKET KHACH</strong>
+                <button class="btn-copy-code" onclick="copyTransferContent()">Copy</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button id="btnSubmitOrder" class="btn-submit-order" onclick="submitCustomerOrder()">
+          <span>🚀 Tôi Đã Chuyển Khoản • Kích Hoạt Ngay</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Comparison Table Section -->
+    <section class="comparison-section">
+      <div class="section-heading">
+        <h2>💎 BẢNG SO SÁNH CÁC GÓI DỊCH VỤ</h2>
+        <p>Lựa chọn gói nâng cấp phù hợp nhất với nhu cầu sử dụng của bạn</p>
+      </div>
+
+      <table class="features-table">
+        <thead>
+          <tr>
+            <th>Tính Năng & Quyền Lợi</th>
+            <th>Bản Miễn Phí</th>
+            <th>No-DNS Chuẩn</th>
+            <th class="highlight-col">No-DNS 15s Video (Khuyên Dùng)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Thời lượng quay video</td>
+            <td>3 giây</td>
+            <td>3 giây</td>
+            <td class="highlight-col"><strong>15 giây dài gấp 5 lần</strong></td>
+          </tr>
+          <tr>
+            <td>Huy hiệu Locket Gold Vàng</td>
+            <td>❌ Không có</td>
+            <td>✅ Có Gold chính chủ</td>
+            <td class="highlight-col">✅ Có Gold chính chủ</td>
+          </tr>
+          <tr>
+            <td>Xem lịch sử ảnh không giới hạn</td>
+            <td>❌ Giới hạn</td>
+            <td>✅ Toàn bộ lịch sử</td>
+            <td class="highlight-col">✅ Toàn bộ lịch sử</td>
+          </tr>
+          <tr>
+            <td>Chế độ cài đặt</td>
+            <td>Mặc định</td>
+            <td>1 chạm (Không VPN)</td>
+            <td class="highlight-col"><strong>1 chạm (Không VPN)</strong></td>
+          </tr>
+          <tr>
+            <td>Chế độ bảo hành</td>
+            <td>Không</td>
+            <td>12 tháng 1 đổi 1</td>
+            <td class="highlight-col"><strong>12 tháng VIP 1 đổi 1</strong></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- FAQ Accordion -->
+    <section class="faq-section">
+      <div class="section-heading">
+        <h2>❓ CÂU HỎI THƯỜNG GẶP (FAQ)</h2>
+        <p>Tất cả những điều bạn cần biết trước khi nâng cấp</p>
+      </div>
+
+      <div class="faq-grid">
+        <div class="faq-card">
+          <div class="faq-q"><span>🔒 Nâng cấp có bị mất tài khoản hoặc lộ mật khẩu không?</span></div>
+          <div class="faq-a">Hoàn toàn KHÔNG! Hệ thống chỉ cần Username / Link Locket công khai của bạn để gửi gói bản quyền từ máy chủ Apple, tuyệt đối không cần mật khẩu hay mã OTP.</div>
+        </div>
+        <div class="faq-card">
+          <div class="faq-q"><span>⚡ Sau khi chuyển khoản bao lâu thì có Gold?</span></div>
+          <div class="faq-a">Hệ thống xử lý tự động 100%. Ngay sau khi chuyển khoản và bấm nút xác nhận, tài khoản của bạn sẽ nhận được gói Gold trong vòng 5 - 10 giây.</div>
+        </div>
+        <div class="faq-card">
+          <div class="faq-q"><span>📱 Có dùng được trên cả iOS và Android không?</span></div>
+          <div class="faq-a">Bản No-DNS hoạt động hoàn hảo trên mọi thiết bị iPhone, iPad và hỗ trợ cả các thiết bị Android liên kết chung tài khoản.</div>
+        </div>
+        <div class="faq-card">
+          <div class="faq-q"><span>🛡️ Chính sách bảo hành như thế nào?</span></div>
+          <div class="faq-a">Chúng tôi cam kết bảo hành 1 đổi 1 trọn đời gói mua. Nếu tài khoản gặp sự cố, hệ thống sẽ tự động kích hoạt lại miễn phí ngay lập tức.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="footer-links">
+        <a href="/">👑 Trung Tâm Quản Trị</a>
+        <a href="https://zalo.me" target="_blank">💬 Hỗ Trợ Zalo CSKH</a>
+        <a href="#orderSection">⚡ Nạp Gold</a>
+      </div>
+      <p>© 2026 Locket Gold Store • All-In-One Unified Ecosystem. Bản quyền StoreKit 2 Apple.</p>
+    </footer>
+  </div>
+
+  <!-- Live Floating Order Notification Ticker -->
+  <div id="floatingOrderToast" class="floating-order-toast">
+    <img id="tickerAvatar" class="toast-avatar" src="" alt="Avatar">
+    <div class="toast-text">
+      <div><span id="tickerUser" class="toast-user">@khachhang</span> vừa kích hoạt</div>
+      <div id="tickerPkg" class="toast-action">No-DNS 15s Video Ultra</div>
+      <div id="tickerTime" class="toast-time">1 phút trước</div>
+    </div>
+  </div>
+
+  <!-- Success Celebration Modal -->
+  <div id="successModal" class="modal-overlay">
+    <div class="success-modal-card">
+      <div class="success-icon">🎉</div>
+      <h3 class="success-title">NÂNG CẤP THÀNH CÔNG!</h3>
+      <p class="success-desc">
+        Tài khoản <strong id="modalSuccessUser" class="text-gradient-gold">@username</strong> đã được kích hoạt gói <strong id="modalSuccessPkg">No-DNS 15s Video Ultra</strong> bản quyền StoreKit Apple!
+      </p>
+
+      <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 12px; padding: 16px; margin-bottom: 24px; text-align: left; font-size: 13.5px;">
+        <div style="color: #fff; font-weight: 700; margin-bottom: 6px;">📱 HƯỚNG DẪN KIỂM TRA TRÊN ĐIỆN THOẠI:</div>
+        <ol style="padding-left: 18px; color: #cbd5e1; line-height: 1.6;">
+          <li>Vuốt tắt hoàn toàn ứng dụng <strong>Locket</strong> (Đóng App chạy ngầm).</li>
+          <li>Mở lại Locket ➔ Vào mục Cài đặt (Icon Avatar góc trên).</li>
+          <li>Kiểm tra huy hiệu <strong>Locket Gold</strong> và tính năng quay video 15s!</li>
+        </ol>
+      </div>
+
+      <div style="display: flex; gap: 12px;">
+        <button class="btn-submit-order" style="margin-top: 0; flex: 1;" onclick="closeSuccessModal()">
+          <span>✓ Tuyệt Vời!</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="shop.js"></script>
+</body>
+</html>
