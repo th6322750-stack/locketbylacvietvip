@@ -4,15 +4,6 @@
   "expires_date": "2026-10-03T11:26:26Z",
   "keys": [
     {
-      "id": "MASTER_3431",
-      "name": "Key Master 1 Năm VIP 2027 (Dự Phòng)",
-      "fetch_token": "510002836840999",
-      "expires_date": "2027-09-05T12:00:00Z",
-      "status": "standby",
-      "created_at": "2026-09-04T18:41:53.431Z",
-      "notes": ""
-    },
-    {
       "id": "MASTER_01",
       "name": "Master Node 01 (StoreKit 2 Gold Active)",
       "fetch_token": "510002836840566",

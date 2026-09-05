@@ -692,7 +692,7 @@ let allMasterKeys = [];
 
 async function loadMasterInfo(showToastMsg = false) {
   try {
-    const res = await fetch('/api/masters');
+    const res = await fetch(`/api/masters?_t=${Date.now()}`, { cache: 'no-store' });
     const data = await res.json();
     allMasterKeys = data.keys || [];
 
@@ -734,7 +734,7 @@ function renderMasterKeysTable(keys, activeId) {
       : 'Hệ thống';
 
     return `
-      <tr style="${isActive ? 'background: rgba(255,204,0,0.05);' : ''}">
+      <tr style="${isActive ? 'background: rgba(255,204,0,0.05);' : ''}" id="master_row_${k.id}">
         <td style="color: var(--text-muted); font-weight: 600;">#${idx + 1}</td>
         <td>
           <strong>${k.name || 'Master Node'}</strong>
@@ -790,7 +790,7 @@ async function submitAddNewMasterKey() {
       document.getElementById('inputNewMasterName').value = '';
       document.getElementById('inputNewMasterToken').value = '';
       document.getElementById('inputNewMasterExpiry').value = '';
-      loadMasterInfo();
+      await loadMasterInfo();
     } else {
       alertEl.className = 'alert-box error';
       alertEl.innerText = 'Lỗi: ' + (data.error || 'Không thể thêm Key');
@@ -802,38 +802,53 @@ async function submitAddNewMasterKey() {
 }
 
 async function activateMasterKey(keyId, keyName) {
+  // Optimistic UI update
+  allMasterKeys.forEach(k => k.status = (k.id === keyId ? 'active' : 'standby'));
+  renderMasterKeysTable(allMasterKeys, keyId);
+
   try {
     const res = await fetch(`/api/masters/activate/${encodeURIComponent(keyId)}`, {
-      method: 'POST'
+      method: 'POST',
+      headers: { 'Cache-Control': 'no-cache' }
     });
     const data = await res.json();
     if (data.success) {
       showToast(`Đã chuyển sang dùng "${keyName}"!`);
-      loadMasterInfo();
+      await loadMasterInfo();
     } else {
       showToast('Lỗi: ' + data.error);
+      await loadMasterInfo();
     }
   } catch (err) {
     showToast('Lỗi kích hoạt Key: ' + err.message);
+    await loadMasterInfo();
   }
 }
 
 async function deleteMasterKey(keyId, keyName) {
   if (!confirm(`Anh có chắc chắn muốn xóa "${keyName}" khỏi Kho Khóa?`)) return;
 
+  // Optimistic UI update: remove row immediately
+  allMasterKeys = allMasterKeys.filter(k => k.id !== keyId);
+  const activeKey = allMasterKeys.find(k => k.status === 'active') || allMasterKeys[0];
+  renderMasterKeysTable(allMasterKeys, activeKey ? activeKey.id : null);
+
   try {
     const res = await fetch(`/api/masters/${encodeURIComponent(keyId)}`, {
-      method: 'DELETE'
+      method: 'DELETE',
+      headers: { 'Cache-Control': 'no-cache' }
     });
     const data = await res.json();
     if (data.success) {
       showToast(`Đã xóa "${keyName}"!`);
-      loadMasterInfo();
+      await loadMasterInfo();
     } else {
       showToast('Lỗi: ' + data.error);
+      await loadMasterInfo();
     }
   } catch (err) {
     showToast('Lỗi xóa Key: ' + err.message);
+    await loadMasterInfo();
   }
 }
 
