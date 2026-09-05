@@ -36,7 +36,7 @@ const LOCKET_RC_KEY = 'appl_JngFETzdodyLmCREOlwTUtXdQik';
 const DEFAULT_MASTER_JWS_TOKEN = 'eyJhbGciOiJFUzI1NiIsIng1YyI6WyJNSUlFTVRDQ0E3YWdBd0lCQWdJUVI4S0h6ZG41NTRaL1VvcmFkTng5dHpBS0JnZ3Foa2pPUFFRREF6QjFNVVF3UWdZRFZRUURERHRCY0hCc1pTQlhiM0pzWkhkcFpHVWdSR1YyWld4dmNHVnlJRkpsYkdGMGFXOXVjeUJEWlhKMGFXWnBZMkYwYVc5dUlFRjFkR2h2Y21sMGVURUxNQWtHQTFVRUN3d0NSell4RXpBUkJnTlZCQW9NQ2tGd2NHeGxJRWx1WXk0eEN6QUpCZ05WQkFZVEFsVlRNQjRYRFRJMU1Ea3hPVEU1TkRRMU1Wb1hEVEkzTVRBeE16RTNORGN5TTFvd2daSXhRREErQmdOVkJBTU1OMUJ5YjJRZ1JVTkRJRTFoWXlCQmNIQWdVM1J2Y21VZ1lXNWtJR2xVZFc1bGN5QlRkRzl5WlNCU1pXTmxhWEIwSUZOcFoyNXBibWN4TERBcUJnTlZCQXNNSTBGd2NHeGxJRmR2Y214a2QybGtaU0JFWlhabGJHOXdaWElnVW1Wc1lYUnBiMjV6TVJNd0VRWURWUVFLREFwQmNIQnNaU0JKYm1NdU1Rc3dDUVlEVlFRR0V3SlZVekJaTUJNR0J5cUdTTTQ5QWdFR0NDcUdTTTQ5QXdFSEEwSUFCTm5WdmhjdjdpVCs3RXg1dEJNQmdyUXNwSHpJc1hSaTBZeGZlazdsdjh3RW1qL2JIaVd0TndKcWMyQm9IenNRaUVqUDdLRklJS2c0WTh5MC9ueW51QW1qZ2dJSU1JSUNCREFNQmdOVkhSTUJBZjhFQWpBQU1COEdBMVVkSXdRWU1CYUFGRDh2bENOUjAxREptaWc5N2JCODVjK2xrR0taTUhBR0NDc0dBUVVGQndFQkJHUXdZakF0QmdnckJnRUZCUWN3QW9ZaGFIUjBjRG92TDJObGNuUnpMbUZ3Y0d4bExtTnZiUzkzZDJSeVp6WXVaR1Z5TURFR0NDc0dBUVVGQnpBQmhpVm9kSFJ3T2k4dmIyTnpjQzVoY0hCc1pTNWpiMjB2YjJOemNEQXpMWGQzWkhKbk5qQXlNSUlCSGdZRFZSMGdCSUlCRlRDQ0FSRXdnZ0VOQmdvcWhraUc5Mk5rQlFZQk1JSCtNSUhEQmdnckJnRUZCUWNDQWpDQnRneUJzMUpsYkdsaGJtNmxJRzl1SUhSb2FYTWdZMlZ5ZEdsbWFXTmhkR1VnWW5rZ1lXNTVJSEJoY25SNUlHRnpjM1Z0WlhNZ1lXTmpaWEIwWVc1alpTQnZaaUIwYUdVZ2RHaGxiaUJoY0hCc2FXTmhZbXhsSUhOMFlXNWtZWEprSUhSbGNtMXpJR0Z1WkNCamIyNWthWFJwYjI1eklHOW1JSFZ6WlN3Z1kyVnlkR2xtYVdOaGRHVWdjRzlzYVdONUlHRnVaQ0JqWlhKMGFXWnBZMkYwYVc5dUlIQnlZV04wYVdObElITjBZWFJsYldWdWRITXVNRFlHQ0NzR0FRVUZCd0lCRmlwb2RIUndPaTh2ZDNkM0xtRndjR3hsTG1OdmJTOWpaWEowYVdacFkyRjBaV0YxZEdodmNtbDBlUzh3SFFZRFZSME9CQllFRklGaW9HNHdNTVZBMWt1OXpKbUdOUEFWbjNlcU1BNEdBMVVkRHdFQi93UUVBd0lIZ0RBUUJnb3Foa2lHOTJOa0Jnc0JCQUlGQURBS0JnZ3Foa2pPUFFRREF3TnBBREJtQWpFQStxWG5SRUM3aFhJV1ZMc0x4em5qUnBJelBmN1ZIejlWL0NUbTgrTEpsclFlcG5tY1B2R0xOY1g2WFBubGNnTEFBakVBNUlqTlpLZ2c1cFE3OWtuRjRJYlRYZEt2OHZ1dElETVhEbWpQVlQzZEd2RnRzR1J3WE95d1Iya1pDZFNyZmVvdCIsIk1JSURGakNDQXB5Z0F3SUJBZ0lVSXNHaFJ3cDBjMm52VTRZU3ljYWZQVGp6Yk5jd0NnWUlLb1pJemowRUF3TXdaekViTUJrR0ExVUVBd3dTUVhCd2JHVWdVbTl2ZENCRFFTQXRJRWN6TVNZd0pBWURWUVFMREIxQmNIQnNaU0JEWlhKMGFXWnBZMkYwYVc5dUlFRjFkR2h2Y21sMGVURVRNQkVHQTFVRUNnd0tRWEJ3YkdVZ1NXNWpMakVMTUFrR0ExVUVCaE1DVlZNd0hoY05NakV3TXpFM01qQXpOekV3V2hjTk16WXdNekU1TURBd01EQXdXakIxTVVRd1FnWURWUVFERER0QmNIQnNaU0JYYjNKc1pIZHBaR1VnUkdWMlpXeHZjR1Z5SUZKbGJHRjBhVzl1Y3lCRFpYSjBhV1pwWTJGMGFXOXVJRUYxZEdodmNtbDBlVEVMTUFrR0ExVUVDd3dDUnpZeEV6QVJCZ05WQkFvTUNrRndjR3hsSUVsdVl5NHhDekFKQmdOVkJBWVRBbFZUTUhZd0VBWUhLb1pJemowQ0FRWUZLNEVFQUNJRFlnQUVic1FLQzk0UHJsV21aWG5YZ3R4emRWSkw4VDBTR1luZ0RSR3BuZ24zTjZQVDhKTUViN0ZEaTRiQm1QaENuWjMvc3E2UEYvY0djS1hXc0w1dk90ZVJoeUo0NXgzQVNQN2NPQithYW85MGZjcHhTdi9FWkZibmlBYk5nWkdoSWhwSW80SDZNSUgzTUJJR0ExVWRFd0VCL3dRSU1BWUJBZjhDQVFBd0h3WURWUjBqQkJnd0ZvQVV1N0Rlb1ZnemlKcWtpcG5ldnIzcnI5ckxKS3N3UmdZSUt3WUJCUVVIQVFFRU9qQTRNRFlHQ0NzR0FRVUZCekFCaGlwb2RIUndPaTh2YjJOemNDNWhjSEJzWlM1amIyMHZiMk56Y0RBekxXRndjR3hsY205dmRHTmhaek13TndZRFZSMGZCREF3TGpBc29DcWdLSVltYUhSMGNEb3ZMMk55YkM1aGNIQnNaUzVqYjIwdllYQndiR1Z5YjI5MFkyRm5NeTVqY213d0hRWURWUjBPQkJZRUZEOHZsQ05SMDFESm1pZzk3YkI4NWMrbGtHS1pNQTRHQTFVZER3RUIvd1FFQXdJQkJqQVFCZ29xaGtpRzkyTmtCZ0lCQkFJRkFEQUtCZ2dxaGtqT1BRUURBd05vQURCbEFqQkFYaFNxNUl5S29nTUNQdHc0OTBCYUI2NzdDYUVHSlh1ZlFCL0VxWkdkNkNTamlDdE9udU1UYlhWWG14eGN4ZmtDTVFEVFNQeGFyWlh2TnJreFUzVGtVTUkzM3l6dkZWVlJUNHd4V0pDOTk0T3NkY1o0K1JHTnNZRHlSNWdtZHIwbkRHZz0iLCJNSUlDUXpDQ0FjbWdBd0lCQWdJSUxjWDhpTkxGUzVVd0NnWUlLb1pJemowRUF3TXdaekViTUJrR0ExVUVBd3dTUVhCd2JHVWdVbTl2ZENCRFFTQXRJRWN6TVNZd0pBWURWUVFMREIxQmNIQnNaU0JEWlhKMGFXWnBZMkYwYVc5dUlFRjFkR2h2Y21sMGVURVRNQkVHQTFVRUNnd0tRWEJ3YkdVZ1NXNWpMakVMTUFrR0ExVUVCaE1DVlZNd0hoY05NVFF3TkRNd01UZ3hPVEEyV2hjTk16a3dORE13TVRneE9UQTJXakJuTVJzd0dRWURWUVFEREJKQmNIQnNaU0JTYjI5MElFTkJJQzBnUnpNeEpqQWtCZ05WQkFzTUhVRndjR3hsSUVObGNuUnBabWxqWVhScGIyNGdRWFYwYUc5eWFYUjVNUk13RVFZRFZRUUtEQXBCY0hCc1pTQkpibU11TVFzd0NRWURWUVFHRXdKVlV6QjJNQkFHQnlxR1NNNDlBZ0VHQlN1QkJBQWlBMklBQkpqcEx6MUFjcVR0a3lKeWdSTWMzUkNWOGNXalRuSGNGQmJaRHVXbUJTcDNaSHRmVGpqVHV4eEV0WC8xSDdZeVlsM0o2WVJiVHpCUEVWb0EvVmhZREtYMUR5eE5CMGNUZGRxWGw1ZHZNVnp0SzUxN0lEdll1VlRaWHBta09sRUtNYU5DTUVBd0hRWURWUjBPQkJZRUZMdXczcUZZTTRpYXBJcVozcjY5NjYvYXl5U3JNQThHQTFVZEV3RUIvd1FGTUFNQkFmOHdEZ1lEVlIwUEFRSC9CQVFEQWdFR01Bb0dDQ3FHU000OUJBTURBMmdBTUdVQ01RQ0Q2Y0hFRmw0YVhUUVkyZTN2OUd3T0FFWkx1Tit5UmhIRkQvM21lb3locG12T3dnUFVuUFdUeG5TNGF0K3FJeFVDTUcxbWloREsxQTNVVDgyTlF6NjBpbU9sTTI3amJkb1h0MlFmeUZNbStZaGlkRGtMRjF2TFVhZ002QmdENTZLeUtBPT0iXX0.eyJ0cmFuc2FjdGlvbklkIjoiNTEwMDAyODM2ODQwNTY2Iiwib3JpZ2luYWxUcmFuc2FjdGlvbklkIjoiNTEwMDAyODM2ODQwNTY2Iiwid2ViT3JkZXJMaW5lSXRlbUlkIjoiNTEwMDAxMjcwMzAxOTQ1IiwiYnVuZGxlSWQiOiJjb20ubG9ja2V0LkxvY2tldCIsInByb2R1Y3RJZCI6ImxvY2tldF8xOTlfMW0iLCJzdWJzY3JpcHRpb25Hcm91cElkZW50aWZpZXIiOiIyMTQxOTQ0NyIsInB1cmNoYXNlRGF0ZSI6MTc4ODQzNDc4NjAwMCwib3JpZ2luYWxQdXJjaGFzZURhdGUiOjE3ODg0MzQ3ODYwMDAsImV4cGlyZXNEYXRlIjoxNzkxMDI2Nzg2MDAwLCJxdWFudGl0eSI6MSwidHlwZSI6IkF1dG8tUmVuZXdhYmxlIFN1YnNjcmlwdGlvbiIsImRldmljZVZlcmlmaWNhdGlvbiI6Ikdpamt0NG9OR1podlUwYUw5QmRBbXZXdTBob1hmclB6NnN4U2VmR1k0dnBQQ0NSejBQZUI1ZXYvTnd6bndLRGIiLCJkZXZpY2VWZXJpZmljYXRpb25Ob25jZSI6IjQyZWE0YThkLTY0YWItNDZiMS05M2U0LWNjZDAzMjRmYzI0ZCIsImluQXBwT3duZXJzaGlwVHlwZSI6IlBVUkNIQVNFRCIsInNpZ25lZERhdGUiOjE3ODg0MzQ4MzUyOTMsImVudmlyb25tZW50IjoiUHJvZHVjdGlvbiIsInRyYW5zYWN0aW9uUmVhc29uIjoiUFVSQ0hBU0UiLCJzdG9yZWZyb250IjoiVk5NIiwic3RvcmVmcm9udElkIjoiMTQzNDcxIiwicHJpY2UiOjQ5MDAwMDAwLCJjdXJyZW5jeSI6IlZORCIsImFwcFRyYW5zYWN0aW9uSWQiOiI3MDU4NTI3MDU3MDQ5NjMzNjYiLCJiaWxsaW5nUGxhblR5cGUiOiJCSUxMRURfVVBGUk9OVCJ9.GaxwQwDtoDjNZIw_wtJvGcRBdRxNWvrMuuqP_lXV4Sl00z7XyCFKr5qNll1XHCrYs3l37LR3rjHjZb5qwggp0g';
 let MASTER_FETCH_TOKEN = "510002836840566";
 let MASTER_EXPIRES_DATE = "2026-10-03T11:26:26Z";
-let DEFAULT_PRICE = 50000; // 50.000 VND / acc
+let DEFAULT_PRICE = 60000; // 60.000 VND / acc
 
 const DATA_DIR = path.join(__dirname, 'data');
 if (!fs.existsSync(DATA_DIR)) {
@@ -46,6 +46,37 @@ if (!fs.existsSync(DATA_DIR)) {
 const LOCAL_USERS_FILE = path.join(DATA_DIR, 'users.json');
 const LOCAL_MASTERS_FILE = path.join(DATA_DIR, 'masters.json');
 const LOCAL_SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
+const LOCAL_COUPONS_FILE = path.join(DATA_DIR, 'coupons.json');
+
+// Initialize coupons file if not exists
+if (!fs.existsSync(LOCAL_COUPONS_FILE)) {
+  fs.writeFileSync(LOCAL_COUPONS_FILE, JSON.stringify([
+    { code: 'LACVIET', type: 'fixed', value: 10000, description: 'Mã ưu đãi Lạc Việt VIP (Giảm 10.000đ)', active: true, usage_count: 0 },
+    { code: 'VIP2026', type: 'fixed', value: 15000, description: 'Ưu đãi Locket VIP 2026 (Giảm 15.000đ)', active: true, usage_count: 0 },
+    { code: 'GOLD5K', type: 'fixed', value: 5000, description: 'Khuyến mãi thành viên mới (Giảm 5.000đ)', active: true, usage_count: 0 }
+  ], null, 2), 'utf8');
+}
+
+function getAllCoupons() {
+  try {
+    if (fs.existsSync(LOCAL_COUPONS_FILE)) {
+      return JSON.parse(fs.readFileSync(LOCAL_COUPONS_FILE, 'utf8'));
+    }
+  } catch (e) {
+    console.error('Error reading coupons:', e);
+  }
+  return [];
+}
+
+function saveAllCoupons(coupons) {
+  try {
+    fs.writeFileSync(LOCAL_COUPONS_FILE, JSON.stringify(coupons, null, 2), 'utf8');
+    return true;
+  } catch (e) {
+    console.error('Error saving coupons:', e);
+    return false;
+  }
+}
 
 // Initialize settings
 if (!fs.existsSync(LOCAL_SETTINGS_FILE)) {
@@ -596,6 +627,112 @@ app.get('/api/revenuecat-check/:uid', async (req, res) => {
   const uid = req.params.uid;
   const rc = await queryRevenueCatLive(uid);
   res.json(rc);
+});
+
+// 2c. Validate Coupon Code (Public)
+app.post('/api/coupons/validate', (req, res) => {
+  try {
+    const { code = '', price = 60000 } = req.body || {};
+    if (!code || typeof code !== 'string') {
+      return res.status(400).json({ success: false, message: 'Vui lòng nhập mã giảm giá!' });
+    }
+
+    const cleanCode = code.trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '');
+    const coupons = getAllCoupons();
+    const coupon = coupons.find(c => c.code.toUpperCase() === cleanCode && c.active);
+
+    if (!coupon) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Mã giảm giá không tồn tại hoặc đã hết hạn sử dụng!' 
+      });
+    }
+
+    const basePrice = Number(price) || 60000;
+    let discount = 0;
+
+    if (coupon.type === 'percent') {
+      discount = Math.round((basePrice * Number(coupon.value)) / 100);
+    } else {
+      discount = Number(coupon.value) || 0;
+    }
+
+    // Minimum final price is 10,000đ to prevent zero/negative attacks
+    discount = Math.min(discount, Math.max(0, basePrice - 10000));
+    const finalPrice = Math.max(10000, basePrice - discount);
+
+    return res.json({
+      success: true,
+      valid: true,
+      coupon: {
+        code: coupon.code,
+        type: coupon.type,
+        value: coupon.value,
+        discount: discount,
+        finalPrice: finalPrice,
+        description: coupon.description
+      },
+      message: `Áp dụng thành công mã ${coupon.code}! Giảm ${discount.toLocaleString('vi-VN')} đ`
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: 'Lỗi kiểm tra mã: ' + err.message });
+  }
+});
+
+// 2d. Admin Coupon Management (Protected with requireAdminAuth)
+app.get('/api/coupons', requireAdminAuth, (req, res) => {
+  res.json({ success: true, coupons: getAllCoupons() });
+});
+
+app.post('/api/coupons/save', requireAdminAuth, (req, res) => {
+  try {
+    const { code, type = 'fixed', value = 10000, description = '', active = true } = req.body || {};
+    if (!code || typeof code !== 'string') {
+      return res.status(400).json({ success: false, error: 'Mã giảm giá không được để trống!' });
+    }
+
+    const cleanCode = code.trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '');
+    let coupons = getAllCoupons();
+    const existingIndex = coupons.findIndex(c => c.code.toUpperCase() === cleanCode);
+
+    const couponObj = {
+      code: cleanCode,
+      type: type === 'percent' ? 'percent' : 'fixed',
+      value: Math.max(1, Number(value) || 10000),
+      description: description || `Mã giảm giá ${cleanCode}`,
+      active: Boolean(active),
+      usage_count: existingIndex >= 0 ? (coupons[existingIndex].usage_count || 0) : 0,
+      updated_at: new Date().toISOString()
+    };
+
+    if (existingIndex >= 0) {
+      coupons[existingIndex] = { ...coupons[existingIndex], ...couponObj };
+    } else {
+      couponObj.created_at = new Date().toISOString();
+      coupons.push(couponObj);
+    }
+
+    saveAllCoupons(coupons);
+    return res.json({ success: true, message: `Đã lưu mã giảm giá ${cleanCode}!`, coupon: couponObj });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/coupons/delete', requireAdminAuth, (req, res) => {
+  try {
+    const { code } = req.body || {};
+    if (!code) return res.status(400).json({ success: false, error: 'Thiếu mã cần xoá' });
+
+    let coupons = getAllCoupons();
+    const beforeCount = coupons.length;
+    coupons = coupons.filter(c => c.code.toUpperCase() !== code.trim().toUpperCase());
+
+    saveAllCoupons(coupons);
+    return res.json({ success: true, message: `Đã xoá mã giảm giá ${code}`, deleted: beforeCount !== coupons.length });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 // 3. Get All Users (Protected with Admin Auth)

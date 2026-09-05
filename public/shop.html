@@ -129,8 +129,8 @@
               <div class="package-desc">Bản quyền StoreKit Apple Chính Hãng • Bảo Hành 1 Đổi 1 Trọn Gói 1 Năm</div>
             </div>
             <div class="package-price-wrap">
-              <span class="package-price">50.000đ</span>
-              <span class="package-old-price">120.000đ</span>
+              <span class="package-price">60.000đ</span>
+              <span class="package-old-price">150.000đ</span>
             </div>
             <ul class="package-features">
               <li><span class="feature-check">✓</span> <strong>Huy hiệu Locket Gold Vàng rực</strong> chính chủ</li>
@@ -150,7 +150,7 @@
               <div class="package-desc">Combo Full Tính Năng + Video 15 Giây</div>
             </div>
             <div class="package-price-wrap">
-              <span class="package-price">79.000đ</span>
+              <span class="package-price">89.000đ</span>
               <span class="package-old-price">180.000đ</span>
             </div>
           </div>
@@ -161,6 +161,40 @@
               <div class="package-title">🛡️ Gói DNS Profile</div>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- Coupon / Promo Code Step Box -->
+      <div class="step-box coupon-step-box">
+        <label class="step-label">
+          <span class="step-num">🏷️</span>
+          <span>Mã Giảm Giá / Khuyến Mãi (Nếu có):</span>
+        </label>
+        <div class="input-coupon-group">
+          <input 
+            type="text" 
+            id="inputCouponCode" 
+            class="input-coupon" 
+            placeholder="Ví dụ: LACVIET, VIP2026..." 
+            autocomplete="off"
+            style="text-transform: uppercase;"
+          >
+          <button id="btnApplyCoupon" class="btn-apply-coupon" onclick="applyCouponCode()">
+            <span>Áp Dụng</span>
+          </button>
+        </div>
+
+        <!-- Feedback Messages -->
+        <div id="couponMessage" class="coupon-message" style="display: none;"></div>
+
+        <!-- Applied Coupon Info Pill -->
+        <div id="appliedCouponWrap" class="applied-coupon-pill" style="display: none;">
+          <div class="pill-info">
+            <span class="pill-icon">🎉</span>
+            <span>Mã: <strong id="appliedCouponCodeTxt">LACVIET</strong></span>
+            <span class="pill-discount" id="appliedCouponDiscountTxt">-10.000 đ</span>
+          </div>
+          <button class="btn-remove-coupon" onclick="removeCouponCode()" title="Bỏ mã">✕</button>
         </div>
       </div>
 
@@ -184,9 +218,13 @@
               <span class="detail-label">Gói đã chọn:</span>
               <span id="selectedPkgName" class="detail-value text-gradient-gold">No-DNS Chuẩn (Gold 1 Năm)</span>
             </div>
+            <div id="discountDetailRow" class="detail-row" style="display: none;">
+              <span class="detail-label" style="color: #34d399;">Ưu đãi giảm giá:</span>
+              <span id="discountDetailVal" class="detail-value" style="color: #34d399; font-weight: 700;">-10.000 đ</span>
+            </div>
             <div class="detail-row">
               <span class="detail-label">Số tiền thanh toán:</span>
-              <span id="selectedPkgPrice" class="detail-value" style="color: var(--gold-glow); font-size: 18px;">50.000 đ</span>
+              <span id="selectedPkgPrice" class="detail-value" style="color: var(--gold-glow); font-size: 19px; font-weight: 800;">60.000 đ</span>
             </div>
             <div class="detail-row">
               <span class="detail-label">Ngân hàng thụ hưởng:</span>

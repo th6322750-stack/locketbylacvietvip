@@ -16,27 +16,28 @@ const STORE_CONFIG = {
       id: 'nodns-standard',
       name: 'No-DNS Chuẩn (Gold 1 Năm)',
       mode: 'nodns',
-      price: 50000,
+      price: 60000,
       badge: 'GÓI PHỔ BIẾN'
     },
     'nodns-15s': {
       id: 'nodns-15s',
       name: 'No-DNS 15s Video Ultra (Gói Hot)',
       mode: '15s',
-      price: 79000,
+      price: 89000,
       badge: '🔥 GÓI VIP BÁN CHẠY NHẤT'
     },
     'dns-cheap': {
       id: 'dns-cheap',
       name: 'Gói DNS / Shadowrocket',
       mode: 'dns',
-      price: 30000,
+      price: 35000,
       badge: 'TIẾT KIỆM'
     }
   }
 };
 
 let currentSelectedPkg = 'nodns-standard';
+let appliedCoupon = null;
 let resolvedCustomer = {
   username: '',
   uid: '',
@@ -55,6 +56,14 @@ document.addEventListener('DOMContentLoaded', () => {
       if (e.key === 'Enter') resolveCustomerProfile();
     });
   }
+
+  // Enter key trigger for coupon
+  const couponInput = document.getElementById('inputCouponCode');
+  if (couponInput) {
+    couponInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') applyCouponCode();
+    });
+  }
 });
 
 // 1. SELECT PACKAGE & UPDATE VIETQR
@@ -71,9 +80,7 @@ function selectPackage(pkgId) {
 
   // Update payment summary
   const pkgNameEl = document.getElementById('selectedPkgName');
-  const pkgPriceEl = document.getElementById('selectedPkgPrice');
   if (pkgNameEl) pkgNameEl.innerText = pkg.name;
-  if (pkgPriceEl) pkgPriceEl.innerText = pkg.price.toLocaleString('vi-VN') + ' đ';
 
   updatePaymentQR();
 }
@@ -140,12 +147,46 @@ async function resolveCustomerProfile() {
   }
 }
 
-// 3. GENERATE DYNAMIC VIETQR
+// 3. GENERATE DYNAMIC VIETQR (With Coupon Calculation)
 function updatePaymentQR() {
-  const pkg = STORE_CONFIG.packages[currentSelectedPkg] || { price: 50000 };
+  const pkg = STORE_CONFIG.packages[currentSelectedPkg] || { price: 60000 };
   const rawUsername = resolvedCustomer.username || (document.getElementById('inputLocketCustomer')?.value.trim().replace('@', '')) || 'KHACH';
   const cleanUsername = rawUsername.toUpperCase().replace(/[^A-Z0-9_.-]/g, '').substring(0, 15) || 'KHACH';
   const cleanTransferContent = `SEVQR LOCKET ${cleanUsername}`.trim();
+
+  // Calculate final amount
+  let discountAmount = 0;
+  if (appliedCoupon) {
+    if (appliedCoupon.type === 'percent') {
+      discountAmount = Math.round((pkg.price * appliedCoupon.value) / 100);
+    } else {
+      discountAmount = Number(appliedCoupon.discount || appliedCoupon.value) || 0;
+    }
+  }
+  discountAmount = Math.min(discountAmount, Math.max(0, pkg.price - 10000));
+  const finalPrice = Math.max(10000, pkg.price - discountAmount);
+
+  // Update summary UI
+  const pkgPriceEl = document.getElementById('selectedPkgPrice');
+  if (pkgPriceEl) {
+    if (discountAmount > 0) {
+      pkgPriceEl.innerHTML = `<span style="text-decoration: line-through; color: #94a3b8; font-size: 14px; margin-right: 6px;">${pkg.price.toLocaleString('vi-VN')} đ</span><span style="color: var(--gold-glow); font-size: 19px; font-weight: 800;">${finalPrice.toLocaleString('vi-VN')} đ</span>`;
+    } else {
+      pkgPriceEl.innerHTML = `<span style="color: var(--gold-glow); font-size: 19px; font-weight: 800;">${pkg.price.toLocaleString('vi-VN')} đ</span>`;
+    }
+  }
+
+  // Update discount detail row
+  const discountRow = document.getElementById('discountDetailRow');
+  const discountVal = document.getElementById('discountDetailVal');
+  if (discountRow && discountVal) {
+    if (discountAmount > 0) {
+      discountRow.style.display = 'flex';
+      discountVal.innerText = `-${discountAmount.toLocaleString('vi-VN')} đ (${appliedCoupon?.code || ''})`;
+    } else {
+      discountRow.style.display = 'none';
+    }
+  }
 
   // Update transfer content displays
   const contentEl = document.getElementById('transferContentTxt');
@@ -160,14 +201,97 @@ function updatePaymentQR() {
   const bankOwnerEl = document.getElementById('bankOwnerTxt');
   if (bankOwnerEl) bankOwnerEl.innerText = STORE_CONFIG.bank.accountName;
 
-  // VietQR QuickLink format with VietinBank & SEVQR
-  const amount = pkg.price || 50000;
-  const qrUrl = `https://img.vietqr.io/image/${STORE_CONFIG.bank.code}-${STORE_CONFIG.bank.accountNumber}-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(cleanTransferContent)}`;
+  // VietQR QuickLink format with VietinBank & SEVQR & dynamic finalPrice
+  const qrUrl = `https://img.vietqr.io/image/${STORE_CONFIG.bank.code}-${STORE_CONFIG.bank.accountNumber}-compact2.png?amount=${finalPrice}&addInfo=${encodeURIComponent(cleanTransferContent)}`;
 
   const qrImg = document.getElementById('vietQrImage');
   if (qrImg) {
     qrImg.src = qrUrl;
   }
+}
+
+// 3b. COUPON / DISCOUNT ENGINE
+async function applyCouponCode() {
+  const inputEl = document.getElementById('inputCouponCode');
+  const btnEl = document.getElementById('btnApplyCoupon');
+  const msgEl = document.getElementById('couponMessage');
+  const appliedWrapEl = document.getElementById('appliedCouponWrap');
+
+  const code = (inputEl ? inputEl.value : '').trim();
+  if (!code) {
+    if (msgEl) {
+      msgEl.className = 'coupon-message error';
+      msgEl.innerText = 'Vui lòng nhập mã giảm giá!';
+      msgEl.style.display = 'block';
+    }
+    return;
+  }
+
+  const pkg = STORE_CONFIG.packages[currentSelectedPkg] || { price: 60000 };
+
+  if (btnEl) {
+    btnEl.disabled = true;
+    btnEl.innerText = '⏳ Đang kiểm tra...';
+  }
+
+  try {
+    const res = await fetch('/api/coupons/validate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: code, price: pkg.price })
+    });
+
+    const data = await res.json();
+    if (data.success && data.valid && data.coupon) {
+      appliedCoupon = data.coupon;
+
+      if (msgEl) {
+        msgEl.className = 'coupon-message success';
+        msgEl.innerText = `✓ ${data.message || 'Áp dụng mã thành công!'}`;
+        msgEl.style.display = 'block';
+      }
+
+      if (appliedWrapEl) {
+        document.getElementById('appliedCouponCodeTxt').innerText = appliedCoupon.code;
+        document.getElementById('appliedCouponDiscountTxt').innerText = `-${appliedCoupon.discount.toLocaleString('vi-VN')} đ`;
+        appliedWrapEl.style.display = 'flex';
+      }
+
+      if (inputEl) inputEl.value = '';
+      updatePaymentQR();
+      showToast(`Đã áp dụng mã ${appliedCoupon.code}: -${appliedCoupon.discount.toLocaleString('vi-VN')}đ`);
+    } else {
+      appliedCoupon = null;
+      if (msgEl) {
+        msgEl.className = 'coupon-message error';
+        msgEl.innerText = data.message || 'Mã giảm giá không hợp lệ!';
+        msgEl.style.display = 'block';
+      }
+      if (appliedWrapEl) appliedWrapEl.style.display = 'none';
+      updatePaymentQR();
+    }
+  } catch (err) {
+    if (msgEl) {
+      msgEl.className = 'coupon-message error';
+      msgEl.innerText = 'Lỗi kết nối máy chủ: ' + err.message;
+      msgEl.style.display = 'block';
+    }
+  } finally {
+    if (btnEl) {
+      btnEl.disabled = false;
+      btnEl.innerText = 'Áp Dụng';
+    }
+  }
+}
+
+function removeCouponCode() {
+  appliedCoupon = null;
+  const msgEl = document.getElementById('couponMessage');
+  const appliedWrapEl = document.getElementById('appliedCouponWrap');
+  if (msgEl) msgEl.style.display = 'none';
+  if (appliedWrapEl) appliedWrapEl.style.display = 'none';
+  updatePaymentQR();
+  showToast('Đã hủy mã giảm giá');
 }
 
 // 4. SUBMIT ORDER & INSTANT ACTIVATION (1-Touch)
@@ -188,6 +312,17 @@ async function submitCustomerOrder() {
   submitBtn.disabled = true;
   submitBtn.innerHTML = '<span>⚡ Đang gửi lệnh kích hoạt lên Apple...</span>';
 
+  let discountAmount = 0;
+  if (appliedCoupon) {
+    if (appliedCoupon.type === 'percent') {
+      discountAmount = Math.round((pkg.price * appliedCoupon.value) / 100);
+    } else {
+      discountAmount = Number(appliedCoupon.discount || appliedCoupon.value) || 0;
+    }
+  }
+  discountAmount = Math.min(discountAmount, Math.max(0, pkg.price - 10000));
+  const finalPrice = Math.max(10000, pkg.price - discountAmount);
+
   try {
     const res = await fetch('/api/upgrade', {
       method: 'POST',
@@ -196,11 +331,11 @@ async function submitCustomerOrder() {
         username: username,
         uid: uid,
         mode: pkg.mode,
-        price: pkg.price,
+        price: finalPrice,
         payment_status: 'paid',
         channel: 'website_store',
         avatar: avatar,
-        notes: `Khách tự đặt gói ${pkg.name} qua Landing Page`
+        notes: `Khách đặt gói ${pkg.name}${appliedCoupon ? ` [Mã KM: ${appliedCoupon.code} (-${discountAmount.toLocaleString('vi-VN')}đ)]` : ''}`
       })
     });
 

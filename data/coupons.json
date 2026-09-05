@@ -1,0 +1,38 @@
+[
+  {
+    "code": "LACVIET",
+    "type": "fixed",
+    "value": 10000,
+    "description": "Mã ưu đãi Lạc Việt VIP (Giảm 10.000đ)",
+    "active": true,
+    "usage_count": 0,
+    "created_at": "2026-09-05T12:00:00.000Z"
+  },
+  {
+    "code": "VIP2026",
+    "type": "fixed",
+    "value": 15000,
+    "description": "Ưu đãi Locket VIP 2026 (Giảm 15.000đ)",
+    "active": true,
+    "usage_count": 0,
+    "created_at": "2026-09-05T12:00:00.000Z"
+  },
+  {
+    "code": "GOLD5K",
+    "type": "fixed",
+    "value": 5000,
+    "description": "Khuyến mãi chào bạn mới (Giảm 5.000đ)",
+    "active": true,
+    "usage_count": 0,
+    "created_at": "2026-09-05T12:00:00.000Z"
+  },
+  {
+    "code": "OFF20",
+    "type": "percent",
+    "value": 20,
+    "description": "Mã tri ân giảm 20% tổng gói",
+    "active": true,
+    "usage_count": 0,
+    "created_at": "2026-09-05T12:00:00.000Z"
+  }
+]
