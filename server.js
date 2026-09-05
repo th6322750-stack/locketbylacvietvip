@@ -5,9 +5,12 @@ const path = require('path');
 const http = require('http');
 const https = require('https');
 const os = require('os');
+const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+const SEPAY_SECRET = process.env.SEPAY_SECRET || 'whsec_iCKGIs7aP5ISbM8GtLkoDv4ikgceGcdn';
 
 app.use(cors());
 app.use(express.json());
