@@ -106,14 +106,14 @@ function sendTelegramOrderAlert(orderData) {
   const {
     username,
     uid,
-    price = 50000,
+    price = 60000,
     channel = 'website_store',
     notes = ''
   } = orderData;
 
   const timeStr = new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
-  const formattedPrice = (Number(price) || 50000).toLocaleString('vi-VN') + ' đ';
-  const sourceName = channel === 'website_store' ? '🌐 Website Shop Tự Động (/shop)' : (channel === 'zalo' ? '💬 Quản Trị Zalo' : `👑 Admin (${channel})`);
+  const formattedPrice = (Number(price) || 60000).toLocaleString('vi-VN') + ' đ';
+  const sourceName = channel === 'website_store' ? '🌐 Website Shop Tự Động (/)' : (channel === 'sepay_auto' ? '⚡ SePay Chuyển Khoản Tự Động' : (channel === 'zalo' ? '💬 Quản Trị Zalo' : `👑 Admin (${channel})`));
 
   const message = `🔔 <b>CÓ ĐƠN HÀNG LOCKET GOLD MỚI!</b>
 ━━━━━━━━━━━━━━━━━━
@@ -152,6 +152,73 @@ ${notes ? `📝 <b>Ghi chú:</b> <i>${notes}</i>\n` : ''}━━━━━━━�
   req.write(payload);
   req.end();
 }
+
+function sendTelegramAnomalyAlert(alertData) {
+  if (!TELEGRAM_CONFIG.enabled || !TELEGRAM_CONFIG.botToken || !TELEGRAM_CONFIG.chatId) return;
+
+  const {
+    type = 'warning', // 'heal' | 'drop' | 'error' | 'expiring' | 'test' | 'ok'
+    title = 'CẢNH BÁO BẤT THƯỜNG HỆ THỐNG',
+    details = [],
+    message: customMsg = ''
+  } = alertData;
+
+  const timeStr = new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
+
+  let icon = '⚠️';
+  if (type === 'heal') icon = '🛡️';
+  if (type === 'drop') icon = '🚨';
+  if (type === 'error') icon = '❌';
+  if (type === 'expiring') icon = '⏳';
+  if (type === 'test') icon = '🧪';
+  if (type === 'ok') icon = '🟢';
+
+  let text = `${icon} <b>${title}</b>\n━━━━━━━━━━━━━━━━━━\n⏰ <b>Thời gian:</b> ${timeStr}\n`;
+
+  if (customMsg) {
+    text += `📌 <b>Thông tin:</b> ${customMsg}\n`;
+  }
+
+  if (details && details.length > 0) {
+    text += `\n📋 <b>Chi tiết (${details.length} tài khoản):</b>\n`;
+    details.slice(0, 15).forEach((item, idx) => {
+      text += `${idx + 1}. <b>@${item.username || 'N/A'}</b> (<code>${item.uid ? item.uid.slice(0, 8) + '...' : ''}</code>)\n`;
+      if (item.reason) text += `   └ <i>${item.reason}</i>\n`;
+      if (item.action) text += `   └ <b>Xử lý:</b> ${item.action}\n`;
+    });
+    if (details.length > 15) {
+      text += `... và <b>${details.length - 15}</b> tài khoản khác.\n`;
+    }
+  }
+
+  text += `━━━━━━━━━━━━━━━━━━\n🤖 <i>Hệ thống Auto-Watchdog & Bảo mật Locket VIP</i>`;
+
+  const payload = JSON.stringify({
+    chat_id: TELEGRAM_CONFIG.chatId,
+    text: text,
+    parse_mode: 'HTML'
+  });
+
+  const req = https.request({
+    hostname: 'api.telegram.org',
+    path: '/bot' + TELEGRAM_CONFIG.botToken + '/sendMessage',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Content-Length': Buffer.byteLength(payload)
+    }
+  }, (res) => {
+    // logged
+  });
+
+  req.on('error', (err) => {
+    console.error('Telegram anomaly alert error:', err.message);
+  });
+
+  req.write(payload);
+  req.end();
+}
+
 
 // -------------------------------------------------------------
 // HELPER: GET LAN IP ADDRESS
@@ -1303,7 +1370,22 @@ app.get(['/locket.sgmodule', '/module.sgmodule'], (req, res) => {
   res.send('#!name=Locket Gold\n[MITM]\nhostname = %APPEND% api.revenuecat.com');
 });
 
-// 12. AUTOMATED WATCHDOG & SELF-HEALING ENGINE (CHỐNG RỤNG ACC TỰ ĐỘNG)
+// 12. Test Telegram Alert Endpoint (Protected)
+app.post('/api/telegram/test-alert', requireAdminAuth, (req, res) => {
+  const { title = 'KIỂM TRA HỆ THỐNG CẢNH BÁO TELEGRAM', message = 'Hệ thống kết nối Bot Telegram @kwanticheckbot hoạt động 100% bình thường!' } = req.body || {};
+  sendTelegramAnomalyAlert({
+    type: 'test',
+    title,
+    message,
+    details: [
+      { username: 'Linh_100318', uid: 'cskKqTGYUvV3nq9JddfYuhRTTSm2', reason: 'Tài khoản hoạt động chuẩn StoreKit 2', action: '🟢 LIVE 100%' },
+      { username: 'tnmai06', uid: 'C2A5eSIG79UquwvohWpirajDTVx2', reason: 'Tài khoản nạp tự động SePay', action: '🟢 LIVE 100%' }
+    ]
+  });
+  res.json({ success: true, message: 'Đã gửi thông báo kiểm tra đến Telegram nhóm CHECK ĐƠN SHOP!' });
+});
+
+// 13. AUTOMATED WATCHDOG & SELF-HEALING ENGINE (CHỐNG RỤNG ACC TỰ ĐỘNG & BÁO ĐỘNG TELEGRAM)
 async function runAutoWatchdogScan() {
   try {
     const userMap = getAllUsersMap();
@@ -1311,11 +1393,20 @@ async function runAutoWatchdogScan() {
     if (users.length === 0) return;
 
     console.log(`[WATCHDOG] 🛡️ Đang quét tự động ${users.length} tài khoản để chống rụng...`);
-    let healedCount = 0;
+    const healedList = [];
+    const droppedList = [];
+    const errorList = [];
+    let liveCount = 0;
 
     for (const u of users) {
       if (!u.uid) continue;
       const rc = await queryRevenueCatLive(u.uid);
+
+      if (rc.status === 'ERROR') {
+        errorList.push({ username: u.username, uid: u.uid, reason: `Lỗi kết nối RevenueCat: ${rc.error || 'N/A'}` });
+        continue;
+      }
+
       const isDead = !rc.is_live;
       const isExpiring = rc.days_left !== null && rc.days_left <= 3;
 
@@ -1323,22 +1414,78 @@ async function runAutoWatchdogScan() {
         console.warn(`[WATCHDOG] ⚠️ Phát hiện @${u.username} (${u.uid}) ${isDead ? 'mất Gold' : 'sắp hết hạn'}! Tự động cứu acc...`);
         const injectRes = await injectToRevenueCat(u.uid, u.video_15s || false);
         if (injectRes.success) {
-          healedCount++;
           u.has_gold = true;
           u.expires_date = MASTER_EXPIRES_DATE;
           saveUserToAllFiles(u);
           console.log(`[WATCHDOG] ✅ Đã hồi sinh Gold thành công cho @${u.username} (Hạn mới: ${MASTER_EXPIRES_DATE})!`);
+          healedList.push({
+            username: u.username,
+            uid: u.uid,
+            reason: isDead ? 'Phát hiện tài khoản bị mất quyền lợi Gold' : `Tài khoản sắp hết hạn (còn ${rc.days_left} ngày)`,
+            action: `🟢 Đã tự động kích hoạt lại Gold StoreKit 2 (Hạn: ${MASTER_EXPIRES_DATE.split('T')[0]})`
+          });
+        } else {
+          droppedList.push({
+            username: u.username,
+            uid: u.uid,
+            reason: `Bơm lại thất bại (HTTP ${injectRes.statusCode || 'Err'})`,
+            action: '🔴 Cần admin kiểm tra thủ công Master Token'
+          });
         }
+      } else {
+        liveCount++;
       }
     }
 
-    if (healedCount > 0) {
-      console.log(`[WATCHDOG] 🎉 Đã tự động cứu sống ${healedCount} tài khoản!`);
-    } else {
+    // Update settings file
+    try {
+      const settings = fs.existsSync(LOCAL_SETTINGS_FILE) ? JSON.parse(fs.readFileSync(LOCAL_SETTINGS_FILE, 'utf8')) : {};
+      settings.last_scan = new Date().toISOString();
+      settings.last_scan_total = users.length;
+      settings.last_scan_live = liveCount;
+      settings.last_scan_healed = healedList.length;
+      settings.last_scan_dropped = droppedList.length;
+      fs.writeFileSync(LOCAL_SETTINGS_FILE, JSON.stringify(settings, null, 2), 'utf8');
+    } catch (e) {}
+
+    // Send Telegram Notifications if any anomaly or healing occurred
+    if (healedList.length > 0) {
+      sendTelegramAnomalyAlert({
+        type: 'heal',
+        title: 'BÁO CÁO WATCHDOG: TỰ ĐỘNG CỨU ACC THÀNH CÔNG',
+        message: `Hệ thống vừa phát hiện và tự động hồi sinh Gold StoreKit 2 cho <b>${healedList.length}</b> tài khoản!`,
+        details: healedList
+      });
+    }
+
+    if (droppedList.length > 0) {
+      sendTelegramAnomalyAlert({
+        type: 'drop',
+        title: 'CẢNH BÁO BẤT THƯỜNG: TÀI KHOẢN CẦN XỬ LÝ',
+        message: `Phát hiện <b>${droppedList.length}</b> tài khoản không thể tự động hồi sinh. Vui lòng kiểm tra lại Master Key!`,
+        details: droppedList
+      });
+    }
+
+    if (errorList.length > 0) {
+      sendTelegramAnomalyAlert({
+        type: 'error',
+        title: 'CẢNH BÁO: LỖI KẾT NỐI REVENUECAT API',
+        message: `Có <b>${errorList.length}</b> tài khoản gặp lỗi mạng/API khi kiểm tra trạng thái.`,
+        details: errorList
+      });
+    }
+
+    if (healedList.length === 0 && droppedList.length === 0 && errorList.length === 0) {
       console.log(`[WATCHDOG] 🟢 Tất cả ${users.length} tài khoản đều đang LIVE ổn định 100%!`);
     }
   } catch (err) {
     console.error('[WATCHDOG ERROR]:', err.message);
+    sendTelegramAnomalyAlert({
+      type: 'error',
+      title: 'LỖI TIẾN TRÌNH WATCHDOG',
+      message: `Tiến trình quét tự động gặp lỗi ngoại lệ: <code>${err.message}</code>`
+    });
   }
 }
 
@@ -1355,3 +1502,4 @@ app.listen(PORT, () => {
   setTimeout(runAutoWatchdogScan, 5000);
   setInterval(runAutoWatchdogScan, 30 * 60 * 1000);
 });
+
