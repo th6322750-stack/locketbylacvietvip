@@ -67,7 +67,7 @@
         <span class="tab-icon">🔍</span>
         <span>Quét RevenueCat Live</span>
       </button>
-      <button class="tab-btn" id="tab-btn-dns" onclick="switchTab('dns')">
+      <button class="tab-btn" id="tab-btn-dns" onclick="switchTab('dns')" style="display: none;">
         <span class="tab-icon">🛡️</span>
         <span>Cấu Hình Apple DNS & Profile</span>
       </button>
@@ -82,26 +82,26 @@
     <!-- ======================================================== -->
     <main id="tab-content-upgrade" class="tab-content active">
       <!-- Quick Mode Selector Cards -->
-      <div class="mode-selector-grid">
-        <div class="mode-card active" id="mode-card-15s" onclick="selectUpgradeMode('15s')">
+      <div class="mode-selector-grid" style="grid-template-columns: 1fr;">
+        <div class="mode-card" id="mode-card-15s" onclick="selectUpgradeMode('15s')" style="display: none;">
           <div class="mode-header">
             <span class="mode-tag tag-purple">KHUYÊN DÙNG • 15S VIDEO</span>
-            <span class="mode-radio">●</span>
+            <span class="mode-radio">○</span>
           </div>
           <h3 class="mode-title">No-DNS 15s Video Ultra</h3>
           <p class="mode-desc">Tiêm biên lai Storefront US mở full tính năng quay video 15 giây dài hơn + Toàn bộ đặc quyền Gold vĩnh viễn.</p>
         </div>
 
-        <div class="mode-card" id="mode-card-nodns" onclick="selectUpgradeMode('nodns')">
+        <div class="mode-card active" id="mode-card-nodns" onclick="selectUpgradeMode('nodns')">
           <div class="mode-header">
-            <span class="mode-tag tag-gold">NO-DNS TIÊU CHUẨN</span>
-            <span class="mode-radio">○</span>
+            <span class="mode-tag tag-gold">CHẾ ĐỘ DUY NHẤT • NO-DNS CHÍNH HÃNG</span>
+            <span class="mode-radio">●</span>
           </div>
-          <h3 class="mode-title">No-DNS Chuẩn</h3>
-          <p class="mode-desc">Tiêm trực tiếp gói Gold vào hệ thống RevenueCat, không cần cài VPN, khách dùng app gốc 100%.</p>
+          <h3 class="mode-title">Kích Hoạt Locket Gold No-DNS Chuẩn</h3>
+          <p class="mode-desc">Kích hoạt trực tiếp gói Gold vào hệ thống RevenueCat qua UID Locket, không cần cài bất kỳ cấu hình DNS/VPN nào, khách mở app gốc là nhận ngay.</p>
         </div>
 
-        <div class="mode-card" id="mode-card-dns" onclick="selectUpgradeMode('dns')">
+        <div class="mode-card" id="mode-card-dns" onclick="selectUpgradeMode('dns')" style="display: none;">
           <div class="mode-header">
             <span class="mode-tag tag-cyan">APPLE PROFILE & DNS</span>
             <span class="mode-radio">○</span>
@@ -115,7 +115,7 @@
       <div class="workspace-card" id="upgradeWorkspace">
         <div class="workspace-header">
           <div>
-            <h2 class="workspace-title" id="workspaceTitle">🚀 Kích Hoạt Nhanh Locket Gold (No-DNS 15s Ultra)</h2>
+            <h2 class="workspace-title" id="workspaceTitle">🟢 Kích Hoạt Nhanh Locket Gold (No-DNS Chuẩn)</h2>
             <p class="workspace-subtitle">Tự động nhận diện Link Locket, trích xuất UID và hiển thị Avatar khách trước khi nạp</p>
           </div>
           <div class="form-toggle-modes">

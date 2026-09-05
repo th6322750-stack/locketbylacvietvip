@@ -1,5 +1,5 @@
 let currentTab = 'upgrade';
-let currentMode = '15s'; // '15s', 'nodns', 'dns'
+let currentMode = 'nodns'; // 'nodns'
 let currentFormMode = 'single'; // 'single', 'bulk'
 
 let allUsers = [];
