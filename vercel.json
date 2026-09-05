@@ -54,6 +54,14 @@
       "dest": "/server.js"
     },
     {
+      "src": "/shop",
+      "dest": "/shop.html"
+    },
+    {
+      "src": "/shop/",
+      "dest": "/shop.html"
+    },
+    {
       "src": "/(.*)",
       "dest": "/public/$1"
     }
