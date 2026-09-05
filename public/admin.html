@@ -763,30 +763,44 @@
   <div id="adminLockOverlay" class="modal-overlay open">
     <div class="admin-gate-card">
       <div class="admin-gate-icon">🛡️</div>
-      <h2 class="admin-gate-title">KHÓA QUẢN TRỊ VIÊN</h2>
-      <p class="admin-gate-subtitle">Hệ thống phân quyền bảo mật cao cấp dành riêng cho <strong>Lucifer</strong> & <strong>Kwang</strong></p>
+      <h2 class="admin-gate-title">CỔNG XÁC THỰC BẢO MẬT</h2>
+      <p class="admin-gate-subtitle">Khu vực quản trị hệ thống. Vui lòng xác thực danh tính để tiếp tục.</p>
 
       <form id="adminLoginForm" onsubmit="event.preventDefault(); handleAdminLogin();" style="text-align: left;">
         <div class="form-group" style="margin-bottom: 14px;">
-          <label class="form-label" style="font-size: 12px;">Tài Khoản / Quản Trị:</label>
-          <select id="adminUserInput" class="form-input" style="font-weight: 600;">
-            <option value="lucifer">👑 Lucifer (Admin Chính)</option>
-            <option value="kwang">⚡ Kwang (Admin Quản Trị)</option>
-          </select>
+          <label class="form-label" style="font-size: 12px;">Tài Khoản Quản Trị:</label>
+          <input 
+            type="text" 
+            id="adminUserInput" 
+            class="form-input font-mono" 
+            placeholder="Nhập tên tài khoản..." 
+            style="padding: 12px 14px; font-size: 14px;" 
+            autocomplete="username" 
+            required 
+            autofocus
+          >
         </div>
 
         <div class="form-group" style="margin-bottom: 18px;">
           <label class="form-label" style="font-size: 12px;">Mật Khẩu / Mã PIN:</label>
-          <input type="password" id="adminPassInput" class="form-input font-mono" placeholder="Nhập mật khẩu quản trị..." style="padding: 12px 14px; font-size: 14px;" autocomplete="current-password" autofocus required>
+          <input 
+            type="password" 
+            id="adminPassInput" 
+            class="form-input font-mono" 
+            placeholder="Nhập mật khẩu quản trị..." 
+            style="padding: 12px 14px; font-size: 14px;" 
+            autocomplete="current-password" 
+            required
+          >
           <div id="adminLoginError" style="color: #ef4444; font-size: 12.5px; margin-top: 8px; display: none; line-height: 1.4;"></div>
         </div>
 
         <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 22px;">
           <button type="submit" id="btnAdminLogin" class="btn btn-gold btn-lg" style="width: 100%; justify-content: center;">
-            <span>🔓 Đăng Nhập Quản Trị</span>
+            <span>🔓 Xác Thực & Đăng Nhập</span>
           </button>
-          <a href="/shop" class="btn btn-glass" style="width: 100%; justify-content: center; text-decoration: none; padding: 11px;">
-            <span>🛍️ Tôi Là Khách Hàng ➔ Đến Trang Mua Gold</span>
+          <a href="/" class="btn btn-glass" style="width: 100%; justify-content: center; text-decoration: none; padding: 11px;">
+            <span>🛍️ Quay Lại Trang Bán Hàng</span>
           </a>
         </div>
       </form>

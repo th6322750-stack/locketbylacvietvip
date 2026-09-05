@@ -550,7 +550,7 @@ function requireAdminAuth(req, res, next) {
 
   return res.status(401).json({
     success: false,
-    error: 'Truy cập bị từ chối. Vui lòng đăng nhập tài khoản Quản trị viên (kwang / lucifer)!'
+    error: 'Truy cập bị từ chối. Vui lòng xác thực tài khoản Quản trị viên!'
   });
 }
 

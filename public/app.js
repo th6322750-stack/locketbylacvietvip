@@ -9,8 +9,6 @@ let editingUid = null;
 let currentResolvedProfile = null;
 let lookupTimer = null;
 
-const ADMIN_SECURITY_PIN = '888888';
-
 document.addEventListener('DOMContentLoaded', () => {
   checkAdminAuth();
 
@@ -26,10 +24,28 @@ document.addEventListener('DOMContentLoaded', () => {
   checkExpiryHeartbeat();
 });
 
+function getAdminToken() {
+  return sessionStorage.getItem('locket_admin_token') || '';
+}
+
+function authFetch(url, options = {}) {
+  const token = getAdminToken();
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(options.headers || {})
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return fetch(url, { ...options, headers });
+}
+
 function checkAdminAuth() {
   const isAuth = sessionStorage.getItem('locket_admin_auth');
+  const token = sessionStorage.getItem('locket_admin_token');
   const lockOverlay = document.getElementById('adminLockOverlay');
-  if (isAuth === 'true') {
+
+  if (isAuth === 'true' && token) {
     if (lockOverlay) {
       lockOverlay.classList.remove('open');
       lockOverlay.style.display = 'none';
@@ -38,35 +54,79 @@ function checkAdminAuth() {
     if (lockOverlay) {
       lockOverlay.style.display = 'flex';
       lockOverlay.classList.add('open');
-      const pinInput = document.getElementById('adminPinInput');
-      if (pinInput) {
-        pinInput.value = '';
-        pinInput.focus();
-        pinInput.onkeydown = (e) => {
-          if (e.key === 'Enter') verifyAdminPin();
-        };
+      const userInput = document.getElementById('adminUserInput');
+      if (userInput) {
+        userInput.value = '';
+        userInput.focus();
       }
     }
   }
 }
 
-function verifyAdminPin() {
-  const input = document.getElementById('adminPinInput')?.value.trim();
-  const errMsg = document.getElementById('pinErrorMsg');
-  if (input === ADMIN_SECURITY_PIN || input === 'lucifer888') {
-    sessionStorage.setItem('locket_admin_auth', 'true');
-    const lockOverlay = document.getElementById('adminLockOverlay');
-    if (lockOverlay) {
-      lockOverlay.classList.remove('open');
-      lockOverlay.style.display = 'none';
+async function handleAdminLogin() {
+  const userEl = document.getElementById('adminUserInput');
+  const passEl = document.getElementById('adminPassInput');
+  const btnEl = document.getElementById('btnAdminLogin');
+  const errEl = document.getElementById('adminLoginError');
+
+  const username = (userEl ? userEl.value : '').trim();
+  const password = (passEl ? passEl.value : '').trim();
+
+  if (!username || !password) {
+    if (errEl) {
+      errEl.innerText = 'Vui lòng nhập đầy đủ Tài khoản và Mật khẩu!';
+      errEl.style.display = 'block';
     }
-    showToast('🔓 Đã mở khóa Quản trị viên thành công!');
-  } else {
-    if (errMsg) errMsg.style.display = 'block';
-    const pinInput = document.getElementById('adminPinInput');
-    if (pinInput) {
-      pinInput.value = '';
-      pinInput.focus();
+    return;
+  }
+
+  if (btnEl) {
+    btnEl.disabled = true;
+    btnEl.innerHTML = '<span>⏳ Đang xác thực...</span>';
+  }
+  if (errEl) errEl.style.display = 'none';
+
+  try {
+    const res = await fetch('/api/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+
+    const data = await res.json();
+    if (res.ok && data.success && data.token) {
+      sessionStorage.setItem('locket_admin_auth', 'true');
+      sessionStorage.setItem('locket_admin_token', data.token);
+      sessionStorage.setItem('locket_admin_user', data.user || username);
+
+      const lockOverlay = document.getElementById('adminLockOverlay');
+      if (lockOverlay) {
+        lockOverlay.classList.remove('open');
+        lockOverlay.style.display = 'none';
+      }
+
+      showToast(`🔓 Xin chào Quản trị viên @${data.user}! Mở khóa thành công.`);
+      loadAdminData();
+      loadMasterInfo();
+    } else {
+      if (errEl) {
+        errEl.innerText = data.error || 'Tài khoản hoặc mật khẩu không chính xác!';
+        errEl.style.display = 'block';
+      }
+      if (passEl) {
+        passEl.value = '';
+        passEl.focus();
+      }
+    }
+  } catch (err) {
+    if (errEl) {
+      errEl.innerText = 'Lỗi kết nối máy chủ: ' + err.message;
+      errEl.style.display = 'block';
+    }
+  } finally {
+    if (btnEl) {
+      btnEl.disabled = false;
+      btnEl.innerHTML = '<span>🔓 Xác Thực & Đăng Nhập</span>';
     }
   }
 }
