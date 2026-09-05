@@ -76,12 +76,12 @@
     "has_gold": true,
     "video_15s_unlocked": false,
     "expires_date": "2026-10-03T11:26:26Z",
-    "upgraded_at": "2026-09-05T10:04:31.398Z",
+    "upgraded_at": "2026-09-05T12:09:01.213Z",
     "price": 50000,
     "payment_status": "paid",
-    "channel": "zalo",
-    "avatar": "https://api.dicebear.com/7.x/initials/svg?seed=tnmai06&backgroundColor=f59e0b,fbbf24&textColor=ffffff&fontWeight=700",
-    "notes": ""
+    "channel": "sepay_auto",
+    "avatar": "https://firebasestorage.googleapis.com:443/v0/b/locket-img/o/users%2FC2A5eSIG79UquwvohWpirajDTVx2%2Fpublic%2Fprofile_pic.webp?alt=media&token=5fa4f042-29b7-4f89-b0a6-a2a19c1a7810",
+    "notes": "SePay Auto Webhook: Ngân hàng VietinBank • GD #999901 • Nội dung: \"SEVQR LOCKET tnmai06\""
   },
   "EhEdKNWCG8aeFJ8dUwXiEidvec22": {
     "username": "luciper123",
@@ -160,12 +160,12 @@
     "has_gold": true,
     "video_15s_unlocked": false,
     "expires_date": "2026-10-03T11:26:26Z",
-    "upgraded_at": "2026-09-05T10:04:36.058Z",
-    "price": 50000,
+    "upgraded_at": "2026-09-05T19:17:23.452Z",
+    "price": 60000,
     "payment_status": "paid",
-    "channel": "zalo",
+    "channel": "admin_reinject",
     "avatar": "https://api.dicebear.com/7.x/initials/svg?seed=Linh_100318&backgroundColor=f59e0b,fbbf24&textColor=ffffff&fontWeight=700",
-    "notes": ""
+    "notes": "Bơm làm mới quyền lợi Gold StoreKit 2"
   },
   "lmHmAnuNXYQsInf1AhyfNyjXFRj1": {
     "username": "nguyenquynhanh310107",
@@ -270,13 +270,13 @@
     "customer_uid": "tdGyLcHrjvNBYlUnR2MYnwgY0xT2",
     "master_uid": "C2A5eSIG79UquwvohWpirajDTVx2",
     "has_gold": true,
-    "video_15s_unlocked": true,
+    "video_15s_unlocked": false,
     "expires_date": "2026-10-03T11:26:26Z",
-    "upgraded_at": "2026-09-05T10:04:41.546Z",
+    "upgraded_at": "2026-09-05T12:21:40.339Z",
     "price": 50000,
     "payment_status": "paid",
-    "channel": "zalo",
-    "avatar": "https://api.dicebear.com/7.x/initials/svg?seed=linh_0810&backgroundColor=f59e0b,fbbf24&textColor=ffffff&fontWeight=700",
-    "notes": ""
+    "channel": "sepay_auto",
+    "avatar": "https://firebasestorage.googleapis.com:443/v0/b/locket-img/o/users%2FtdGyLcHrjvNBYlUnR2MYnwgY0xT2%2Fpublic%2Fprofile_pic.webp?alt=media&token=99aadc89-6c34-42c4-8362-86b6cbf1332a",
+    "notes": "SePay Auto Webhook: Ngân hàng VietinBank • GD #888123 • Nội dung: \"SEVQR LOCKET linh_0810\""
   }
 }

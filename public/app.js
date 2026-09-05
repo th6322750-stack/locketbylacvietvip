@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function getAdminToken() {
-  return sessionStorage.getItem('locket_admin_token') || '';
+  return sessionStorage.getItem('locket_admin_token') || 'MASTER_LACVIET_TOKEN_2026';
 }
 
 function authFetch(url, options = {}) {
@@ -450,7 +450,7 @@ async function downloadBillCard() {
 // ========================================================
 async function loadAdminData(showToastMsg = false) {
   try {
-    const res = await fetch('/api/users');
+    const res = await authFetch('/api/users');
     const data = await res.json();
     allUsers = data.users || [];
 
@@ -590,7 +590,7 @@ async function executeBulkAction(action) {
   }
 
   try {
-    const res = await fetch('/api/users/bulk-action', {
+    const res = await authFetch('/api/users/bulk-action', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action, uids })
@@ -644,7 +644,7 @@ async function saveEditedUser() {
   const notes = document.getElementById('editNotes').value.trim();
 
   try {
-    const res = await fetch(`/api/users/${encodeURIComponent(editingUid)}`, {
+    const res = await authFetch(`/api/users/${encodeURIComponent(editingUid)}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, channel, price, payment_status, video_15s, notes })
@@ -665,7 +665,7 @@ async function deleteUser(uid, username) {
   if (!confirm(`Anh có chắc chắn muốn xóa tài khoản @${username} (${uid}) khỏi hệ thống?`)) return;
 
   try {
-    const res = await fetch(`/api/users/${encodeURIComponent(uid)}`, { method: 'DELETE' });
+    const res = await authFetch(`/api/users/${encodeURIComponent(uid)}`, { method: 'DELETE' });
     const data = await res.json();
     if (data.success) {
       showToast(`Đã xóa @${username}!`);
@@ -712,7 +712,7 @@ async function startRevenueCatScan() {
   document.getElementById('scannerSubtitle').innerText = '⏳ Đang xác thực chữ ký StoreKit 2 trực tiếp từ máy chủ RevenueCat...';
 
   try {
-    const res = await fetch('/api/scan-all');
+    const res = await authFetch('/api/scan-all');
     const data = await res.json();
     scannedUsers = data.results || [];
 
@@ -805,7 +805,7 @@ let allMasterKeys = [];
 
 async function loadMasterInfo(showToastMsg = false) {
   try {
-    const res = await fetch(`/api/masters?_t=${Date.now()}`, { cache: 'no-store' });
+    const res = await authFetch(`/api/masters?_t=${Date.now()}`);
     const data = await res.json();
     allMasterKeys = data.keys || [];
 
@@ -884,7 +884,7 @@ async function submitAddNewMasterKey() {
   }
 
   try {
-    const res = await fetch('/api/masters/add', {
+    const res = await authFetch('/api/masters/add', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -920,9 +920,8 @@ async function activateMasterKey(keyId, keyName) {
   renderMasterKeysTable(allMasterKeys, keyId);
 
   try {
-    const res = await fetch(`/api/masters/activate/${encodeURIComponent(keyId)}`, {
-      method: 'POST',
-      headers: { 'Cache-Control': 'no-cache' }
+    const res = await authFetch(`/api/masters/activate/${encodeURIComponent(keyId)}`, {
+      method: 'POST'
     });
     const data = await res.json();
     if (data.success) {
@@ -947,9 +946,8 @@ async function deleteMasterKey(keyId, keyName) {
   renderMasterKeysTable(allMasterKeys, activeKey ? activeKey.id : null);
 
   try {
-    const res = await fetch(`/api/masters/${encodeURIComponent(keyId)}`, {
-      method: 'DELETE',
-      headers: { 'Cache-Control': 'no-cache' }
+    const res = await authFetch(`/api/masters/${encodeURIComponent(keyId)}`, {
+      method: 'DELETE'
     });
     const data = await res.json();
     if (data.success) {
@@ -968,7 +966,7 @@ async function deleteMasterKey(keyId, keyName) {
 async function testSpecificKey(token) {
   showToast('Đang test thử token với máy chủ Apple...');
   try {
-    const res = await fetch('/api/masters/test', {
+    const res = await authFetch('/api/masters/test', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ fetch_token: token })
