@@ -317,9 +317,6 @@ function injectToRevenueCat(uid, is15s = true, customToken = null) {
 
 function queryRevenueCatLive(uid) {
   return new Promise((resolve) => {
-    const userMap = getAllUsersMap();
-    const localUser = userMap.get(uid);
-
     const options = {
       hostname: 'api.revenuecat.com',
       path: '/v1/subscribers/' + encodeURIComponent(uid),
@@ -338,42 +335,38 @@ function queryRevenueCatLive(uid) {
         try {
           const json = JSON.parse(body);
           const sub = json.subscriber || {};
-
           const gold = sub.entitlements && sub.entitlements.Gold;
           const now = new Date();
-          
-          // Determine active expiry date: prefer active future date or master storekit expiry
-          let expiresDate = (gold && gold.expires_date) ? gold.expires_date : (localUser?.expires_date || MASTER_EXPIRES_DATE);
-          if (new Date(expiresDate) < now && localUser?.has_gold !== false) {
-            expiresDate = localUser?.expires_date || MASTER_EXPIRES_DATE;
-          }
-
-          const isLive = new Date(expiresDate) > now;
-          let daysLeft = Math.max(0, Math.ceil((new Date(expiresDate).getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
 
           let subKey = sub.subscriptions ? Object.keys(sub.subscriptions)[0] : null;
           let subObj = subKey ? sub.subscriptions[subKey] : null;
+
+          const isLive = !!(gold && gold.expires_date && new Date(gold.expires_date) > now);
+          const expiresDate = (gold && gold.expires_date) ? gold.expires_date : null;
+          const purchaseDate = (gold && gold.purchase_date) || (subObj && subObj.purchase_date) || null;
+          const daysLeft = isLive ? Math.max(0, Math.ceil((new Date(expiresDate).getTime() - now.getTime()) / (1000 * 60 * 60 * 24))) : 0;
 
           resolve({
             uid,
             is_live: isLive,
             status: isLive ? 'ACTIVE' : 'DROPPED',
-            gold_product: (gold && gold.product_identifier) || subKey || 'locket_199_1m',
+            gold_product: (gold && gold.product_identifier) || subKey || 'None',
             expires_date: expiresDate,
-            purchase_date: (gold && gold.purchase_date) || (subObj && subObj.purchase_date) || '2026-09-03T11:26:26Z',
+            purchase_date: purchaseDate,
             days_left: daysLeft,
             store: (gold && gold.store) || (subObj && subObj.store) || 'app_store'
           });
         } catch (e) {
           resolve({
             uid,
-            is_live: true,
-            status: 'ACTIVE',
-            gold_product: 'locket_199_1m',
-            expires_date: localUser?.expires_date || MASTER_EXPIRES_DATE,
-            purchase_date: '2026-09-03T11:26:26Z',
-            days_left: 28,
-            store: 'app_store'
+            is_live: false,
+            status: 'ERROR',
+            gold_product: 'None',
+            expires_date: null,
+            purchase_date: null,
+            days_left: 0,
+            store: 'N/A',
+            error: e.message
           });
         }
       });
@@ -382,13 +375,14 @@ function queryRevenueCatLive(uid) {
     req.on('error', (err) => {
       resolve({
         uid,
-        is_live: true,
-        status: 'ACTIVE',
-        gold_product: 'locket_199_1m',
-        expires_date: localUser?.expires_date || MASTER_EXPIRES_DATE,
-        purchase_date: '2026-09-03T11:26:26Z',
-        days_left: 28,
-        store: 'app_store'
+        is_live: false,
+        status: 'ERROR',
+        gold_product: 'None',
+        expires_date: null,
+        purchase_date: null,
+        days_left: 0,
+        store: 'N/A',
+        error: err.message
       });
     });
 
@@ -891,15 +885,11 @@ app.get(['/locket.sgmodule', '/module.sgmodule'], (req, res) => {
 });
 
 // Start Server
-if (process.env.NODE_ENV !== 'production' || process.env.PORT) {
-  app.listen(PORT, () => {
-    const lanIp = getLanIp();
-    console.log('======================================================');
-    console.log(`🌟 LOCKET GOLD UNIFIED MASTER HUB v3.5 (PRO EDITION)`);
-    console.log(`👉 Bảng Điều Khiển Máy Tính: http://localhost:${PORT}`);
-    console.log(`📱 Điều Khiển Qua Điện Thoại: http://${lanIp}:${PORT}`);
-    console.log('======================================================');
-  });
-}
-
-module.exports = app;
+app.listen(PORT, () => {
+  const lanIp = getLanIp();
+  console.log('======================================================');
+  console.log(`🌟 LOCKET GOLD UNIFIED MASTER HUB v3.5 (PRO EDITION)`);
+  console.log(`👉 Bảng Điều Khiển Máy Tính: http://localhost:${PORT}`);
+  console.log(`📱 Điều Khiển Qua Điện Thoại: http://${lanIp}:${PORT}`);
+  console.log('======================================================');
+});

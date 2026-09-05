@@ -632,7 +632,7 @@ function renderScannerTable(users) {
   }
 
   tbody.innerHTML = users.map((u, idx) => {
-    const isLive = u.is_live;
+    const isLive = !!u.is_live;
     const statusBadge = isLive 
       ? `<span class="badge-live">🟢 SỐNG (ACTIVE)</span>` 
       : `<span class="badge-dropped">🔴 ĐÃ RỤNG</span>`;
@@ -640,7 +640,11 @@ function renderScannerTable(users) {
     const shortUid = (u.uid || '').substring(0, 10) + '...';
     const expireFormatted = u.expires_date 
       ? new Date(u.expires_date).toLocaleDateString('vi-VN') 
-      : '03/10/2026';
+      : `<span style="color: var(--text-muted);">Không có</span>`;
+
+    const daysLeftFormatted = isLive 
+      ? `<span style="color: #10b981; font-weight: 600;">Còn ${u.days_left} ngày</span>`
+      : `<span style="color: #ef4444; font-weight: 600;">Đã hết hạn</span>`;
 
     return `
       <tr>
@@ -649,7 +653,7 @@ function renderScannerTable(users) {
         <td><code class="uid-code" title="${u.uid}">${shortUid}</code></td>
         <td><code style="font-family: var(--font-mono); color: var(--gold-primary); font-size: 11px;">${u.gold_product || 'locket_199_1m'}</code></td>
         <td><strong>${expireFormatted}</strong></td>
-        <td><small style="color: var(--text-muted);">Còn ~${u.days_left || 28} ngày</small></td>
+        <td><small>${daysLeftFormatted}</small></td>
         <td><span class="tag-15s-pill">${u.store || 'App Store'}</span></td>
         <td>${statusBadge}</td>
       </tr>
