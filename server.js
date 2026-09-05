@@ -26,9 +26,14 @@ app.use('/api', (req, res, next) => {
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Explicit Route for /shop
-app.get(['/shop', '/store'], (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'shop.html'));
+// Explicit Route for Admin Dashboard
+app.get(['/admin', '/admin/', '/admin.html'], (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
+// Explicit Route for Shop / Storefront
+app.get(['/', '/shop', '/shop.html', '/store'], (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Master RevenueCat Configuration

@@ -3,801 +3,307 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Locket Gold Unified Master Portal & Admin (All-In-One Pro)</title>
+  <title>Locket Gold Official Store - Nâng Cấp Locket Gold & 15s Video Bản Quyền Apple</title>
+  <meta name="description" content="Hệ thống nâng cấp Locket Gold No-DNS & 15s Video Ultra tự động 24/7. Bảo hành full thời gian 1 đổi 1 bản quyền StoreKit Apple.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="/shop.css">
 </head>
 <body>
+
   <!-- Ambient Glow Effects -->
-  <div class="bg-glow">
-    <div class="glow-orb orb-1"></div>
-    <div class="glow-orb orb-2"></div>
-    <div class="glow-orb orb-3"></div>
+  <div class="ambient-glow">
+    <div class="glow-circle glow-1"></div>
+    <div class="glow-circle glow-2"></div>
+    <div class="glow-circle glow-3"></div>
   </div>
 
   <div class="container">
-    <!-- Top Brand & Header -->
-    <header class="hub-header">
-      <div class="header-left">
-        <div class="brand-badge">
-          <div class="pulse-dot"></div>
-          <span>LOCKET GOLD ALL-IN-ONE SYSTEM v3.5 PRO</span>
+    <!-- Top Navigation Bar -->
+    <nav class="navbar">
+      <a href="/shop.html" class="nav-brand">
+        <div class="brand-icon">💛</div>
+        <div>
+          <span class="brand-title">LOCKET GOLD STORE</span>
+          <span class="brand-badge">BẢN QUYỀN VIP</span>
         </div>
-        <h1 class="hub-title">Cổng Tổng Hợp & Quản Trị Locket Gold</h1>
-        <p class="hub-subtitle">Tích hợp đầy đủ: <strong>No-DNS 15s Video Ultra</strong> • <strong>Smart UID Resolver</strong> • <strong>Tạo Bill VIP</strong> • <strong>Admin CRM</strong></p>
-      </div>
-
-      <div class="header-right">
-        <a href="/shop.html" target="_blank" class="btn btn-gold btn-sm" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
-          <span>🛍️ Trang Bán Hàng (Store)</span>
+      </a>
+      <div class="nav-links">
+        <a href="https://zalo.me" target="_blank" class="nav-btn nav-btn-glass">
+          <span>💬 Hỗ Trợ 24/7</span>
         </a>
-        <button class="btn btn-glass btn-sm" onclick="openMobileQrModal()">
-          <span>📱 Dùng Trên Điện Thoại</span>
-        </button>
-        <button class="btn btn-gold btn-sm" onclick="switchTab('upgrade')">
-          <span>⚡ Bắn Gold Ngay</span>
-        </button>
-        <button class="btn btn-purple btn-sm" onclick="switchTab('admin')">
-          <span>👑 Quản Trị Admin</span>
-        </button>
+        <a href="#orderSection" class="nav-btn nav-btn-gold">
+          <span>⚡ Nâng Cấp Ngay</span>
+        </a>
+      </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="hero">
+      <div class="hero-tag">
+        <span class="pulse-dot"></span>
+        <span>HỆ THỐNG KÍCH HOẠT TỰ ĐỘNG 24/7 • STOREKIT 2 APPLE</span>
+      </div>
+      <h1 class="hero-title">
+        Nâng Cấp <span class="text-gradient-gold">Locket Gold VIP</span><br>
+        Mở Khóa Quay Video 15s Siêu Nhanh
+      </h1>
+      <p class="hero-subtitle">
+        Không cần cài VPN, không lo rụng DNS, giữ nguyên tài khoản chính chủ. Nâng cấp 1 chạm nhận Gold tức thì sau 5 giây!
+      </p>
+
+      <!-- Trust Badges Ribbon -->
+      <div class="trust-ribbon">
+        <div class="trust-item">
+          <span class="trust-icon">⚡</span>
+          <span>Kích hoạt tự động trong 5 giây</span>
+        </div>
+        <div class="trust-item">
+          <span class="trust-icon">🛡️</span>
+          <span>Bảo hành 1 đổi 1 suốt 12 tháng</span>
+        </div>
+        <div class="trust-item">
+          <span class="trust-icon">📱</span>
+          <span>100% No-DNS • Không cần chứng chỉ</span>
+        </div>
+        <div class="trust-item">
+          <span class="trust-icon">👥</span>
+          <span>Hơn 5.280+ khách hàng tin dùng</span>
+        </div>
       </div>
     </header>
 
-    <!-- Expiry Alert Banner (Auto-rendered if any account expiring soon) -->
-    <div id="expiryAlertBanner" class="alert-banner-warning" style="display: none;">
-      <span class="alert-icon">⚠️</span>
-      <span id="expiryAlertText">Phát hiện 0 tài khoản sắp hết hạn trong 3 ngày tới!</span>
-      <button class="btn btn-sm btn-outline" style="border-color: #ffaa00; color: #ffaa00;" onclick="switchTab('admin')">Kiểm Tra Ngay</button>
-    </div>
-
-    <!-- Nav Tabs Navigation Bar -->
-    <nav class="nav-tabs-bar">
-      <button class="tab-btn active" id="tab-btn-upgrade" onclick="switchTab('upgrade')">
-        <span class="tab-icon">⚡</span>
-        <span>Bắn Gold & 15s Video</span>
-      </button>
-      <button class="tab-btn" id="tab-btn-admin" onclick="switchTab('admin')">
-        <span class="tab-icon">👥</span>
-        <span>Quản Trị Khách Hàng (Admin)</span>
-        <span class="tab-badge" id="tabBadgeUserCount">19</span>
-      </button>
-      <button class="tab-btn" id="tab-btn-scanner" onclick="switchTab('scanner')">
-        <span class="tab-icon">🔍</span>
-        <span>Quét RevenueCat Live</span>
-      </button>
-      <button class="tab-btn" id="tab-btn-dns" onclick="switchTab('dns')" style="display: none;">
-        <span class="tab-icon">🛡️</span>
-        <span>Cấu Hình Apple DNS & Profile</span>
-      </button>
-      <button class="tab-btn" id="tab-btn-master" onclick="switchTab('master')">
-        <span class="tab-icon">🔑</span>
-        <span>Kho Master Key & Cài Đặt</span>
-      </button>
-    </nav>
-
-    <!-- ======================================================== -->
-    <!-- TAB 1: BẮN GOLD & 15S VIDEO (SMART RESOLVER + 1-TAP INJECT) -->
-    <!-- ======================================================== -->
-    <main id="tab-content-upgrade" class="tab-content active">
-      <!-- Quick Mode Selector Cards -->
-      <div class="mode-selector-grid" style="grid-template-columns: 1fr;">
-        <div class="mode-card" id="mode-card-15s" onclick="selectUpgradeMode('15s')" style="display: none;">
-          <div class="mode-header">
-            <span class="mode-tag tag-purple">KHUYÊN DÙNG • 15S VIDEO</span>
-            <span class="mode-radio">○</span>
-          </div>
-          <h3 class="mode-title">No-DNS 15s Video Ultra</h3>
-          <p class="mode-desc">Tiêm biên lai Storefront US mở full tính năng quay video 15 giây dài hơn + Toàn bộ đặc quyền Gold vĩnh viễn.</p>
-        </div>
-
-        <div class="mode-card active" id="mode-card-nodns" onclick="selectUpgradeMode('nodns')">
-          <div class="mode-header">
-            <span class="mode-tag tag-gold">CHẾ ĐỘ DUY NHẤT • NO-DNS CHÍNH HÃNG</span>
-            <span class="mode-radio">●</span>
-          </div>
-          <h3 class="mode-title">Kích Hoạt Locket Gold No-DNS Chuẩn</h3>
-          <p class="mode-desc">Kích hoạt trực tiếp gói Gold vào hệ thống RevenueCat qua UID Locket, không cần cài bất kỳ cấu hình DNS/VPN nào, khách mở app gốc là nhận ngay.</p>
-        </div>
-
-        <div class="mode-card" id="mode-card-dns" onclick="selectUpgradeMode('dns')" style="display: none;">
-          <div class="mode-header">
-            <span class="mode-tag tag-cyan">APPLE PROFILE & DNS</span>
-            <span class="mode-radio">○</span>
-          </div>
-          <h3 class="mode-title">Cấu Hình Apple MobileConfig</h3>
-          <p class="mode-desc">Tải file cấu hình iOS hoặc Module Shadowrocket chặn và mô phỏng giao dịch mua hàng.</p>
-        </div>
+    <!-- Interactive 3-Step Order & Checkout Card -->
+    <section id="orderSection" class="order-section">
+      <div class="section-heading">
+        <h2>🛍️ ĐẶT MUA & KÍCH HOẠT TỰ ĐỘNG</h2>
+        <p>Điền thông tin tài khoản Locket của bạn để hệ thống kết nối và bơm Gold</p>
       </div>
 
-      <!-- Main Upgrade Workspace Form -->
-      <div class="workspace-card" id="upgradeWorkspace">
-        <div class="workspace-header">
-          <div>
-            <h2 class="workspace-title" id="workspaceTitle">🟢 Kích Hoạt Nhanh Locket Gold (No-DNS Chuẩn)</h2>
-            <p class="workspace-subtitle">Tự động nhận diện Link Locket, trích xuất UID và hiển thị Avatar khách trước khi nạp</p>
-          </div>
-          <div class="form-toggle-modes">
-            <button class="btn btn-sm btn-outline active" id="btnSingleMode" onclick="toggleFormMode('single')">Nạp Đơn Lẻ</button>
-            <button class="btn btn-sm btn-outline" id="btnBulkMode" onclick="toggleFormMode('bulk')">Nạp Hàng Loạt</button>
-          </div>
+      <!-- Step 1: Input Locket Account & Auto-Scraper -->
+      <div class="step-box">
+        <label class="step-label">
+          <span class="step-num">1</span>
+          <span>Nhập Username hoặc Link Locket của bạn:</span>
+        </label>
+        <div class="input-resolver-group">
+          <input 
+            type="text" 
+            id="inputLocketCustomer" 
+            class="input-locket" 
+            placeholder="Ví dụ: linh_0810 hoặc locket.cam/linh_0810 hoặc UID..."
+            autocomplete="off"
+          >
+          <button id="btnResolveCustomer" class="btn-resolve" onclick="resolveCustomerProfile()">
+            <span>🔍 Kiểm Tra</span>
+          </button>
         </div>
 
-        <!-- Single Upgrade Form with Smart Resolver -->
-        <div id="singleFormSection">
-          <div class="form-grid">
-            <div class="form-group">
-              <label class="form-label">Dán Link Kết Bạn Hoặc Nhập Username Locket:</label>
-              <div class="input-with-action">
-                <input type="text" id="inputSmartLookup" class="form-input" placeholder="Ví dụ: locket.cam/thuylinh hoặc @thuylinh" oninput="debounceLookup()">
-                <button class="btn btn-gold btn-sm" onclick="triggerManualLookup()">🔍 Tìm UID</button>
-              </div>
-              <small class="form-hint">Dán thẳng link khách gửi qua Zalo/FB, hệ thống sẽ tự cào ra UID & Avatar.</small>
+        <!-- Live Profile Card Preview -->
+        <div id="customerPreviewCard" class="profile-preview-card">
+          <img id="previewAvatarImg" class="preview-avatar" src="https://api.dicebear.com/7.x/initials/svg?seed=Locket" alt="Avatar">
+          <div class="preview-info">
+            <div class="preview-username">
+              <span id="previewUsernameTxt">@username</span>
+              <span class="verified-badge">✓ Đã Nhận Diện</span>
             </div>
-
-            <div class="form-group">
-              <label class="form-label">Locket Customer UID (Tự động điền hoặc nhập tay):</label>
-              <div class="input-with-action">
-                <input type="text" id="inputUid" class="form-input font-mono" placeholder="Chuỗi Firebase UID (28 ký tự)...">
-                <button class="btn btn-glass btn-sm" onclick="pasteClipboardToUid()">Dán</button>
-              </div>
-              <small class="form-hint">Chuỗi UID Firebase dùng để tiêm bản quyền RevenueCat.</small>
-            </div>
-          </div>
-
-          <!-- Live Resolved Profile Card Preview -->
-          <div id="resolvedProfileBox" class="resolved-profile-card" style="display: none;">
-            <div class="resolved-avatar-wrap">
-              <img id="resolvedAvatarImg" src="" alt="Avatar" class="resolved-avatar">
-              <span class="resolved-gold-badge">GOLD</span>
-            </div>
-            <div class="resolved-info">
-              <div class="resolved-name-row">
-                <h3 id="resolvedUsernameTxt" class="resolved-username">@username</h3>
-                <span class="badge-resolved-valid">🟢 UID ĐÃ XÁC THỰC</span>
-              </div>
-              <p class="resolved-uid font-mono" id="resolvedUidTxt">UID: --</p>
-              <span class="resolved-note" id="resolvedMsgTxt">Đã sẵn sàng kích hoạt StoreKit 2 receipt</span>
-            </div>
-          </div>
-
-          <!-- CRM & Order Options -->
-          <div class="form-grid" style="margin-top: 16px;">
-            <div class="form-group">
-              <label class="form-label">Kênh Bán Hàng:</label>
-              <select id="inputChannel" class="form-input">
-                <option value="zalo">💬 Zalo</option>
-                <option value="facebook">📘 Facebook / Messenger</option>
-                <option value="tiktok">🎵 TikTok</option>
-                <option value="direct">🤝 Khách Quen / Giới Thiệu</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Đơn Giá (VNĐ):</label>
-              <input type="number" id="inputPrice" class="form-input font-mono" value="50000" step="5000">
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Trạng Thái Thanh Toán:</label>
-              <select id="inputPaymentStatus" class="form-input">
-                <option value="paid">🟢 Đã Thanh Toán (Paid)</option>
-                <option value="pending">🟡 Chờ Chuyển Khoản (Pending)</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Ghi Chú Đơn Hàng:</label>
-              <input type="text" id="inputNotes" class="form-input" placeholder="Ví dụ: Khách Zalo bảo hành 1 năm...">
-            </div>
-          </div>
-
-          <div class="upgrade-actions-row">
-            <button id="btnSubmitSingle" class="btn btn-gold btn-lg" onclick="executeSingleUpgrade()">
-              <span class="btn-icon">⚡</span>
-              <span>KÍCH HOẠT LOCKET GOLD & TẠO BILL VIP</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Bulk Upgrade Form -->
-        <div id="bulkFormSection" style="display: none;">
-          <div class="form-group">
-            <label class="form-label">Dán Danh Sách Khách Hàng (Mỗi dòng 1 UID hoặc Username:UID):</label>
-            <textarea id="inputBulkText" class="form-textarea font-mono" rows="6" placeholder="hang1709:1RDPLXH5nyXVVZivqBTzf0ylQDS2&#10;cbcPpKu4cZPO1OgjAVz37NVqOvB2&#10;lucifer:IF5nVLoNOJeXePN3DlStq8rlTdR2"></textarea>
-            <small class="form-hint">Hỗ trợ dán trực tiếp hàng chục tài khoản cùng lúc. Hệ thống sẽ tự động xử lý tuần tự.</small>
-          </div>
-
-          <div class="upgrade-actions-row">
-            <button id="btnSubmitBulk" class="btn btn-purple btn-lg" onclick="executeBulkUpgrade()">
-              <span class="btn-icon">📦</span>
-              <span>XỬ LÝ NẠP HÀNG LOẠT</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Result Alert Box -->
-        <div id="upgradeAlertBox" class="alert-box"></div>
-      </div>
-
-      <!-- Quick Mini DNS Section inside Tab 1 -->
-      <div class="mini-dns-card" id="miniDnsSection" style="display: none;">
-        <div class="mini-dns-header">
-          <span class="tag-cyan">FILE CẤU HÌNH TRỰC TIẾP</span>
-          <h3>Tải Cấu Hình MobileConfig Trực Tiếp Từ Cổng 5000</h3>
-        </div>
-        <p class="mini-dns-desc">Mở Safari trên iPhone và nhấp vào nút tải dưới đây để cài đặt Profile trực tiếp không qua trung gian:</p>
-        <div class="mini-dns-actions">
-          <a href="/LacVietMedia.mobileconfig" class="btn btn-cyan" download>📥 Tải Apple MobileConfig (iOS)</a>
-          <a href="/locket.sgmodule" class="btn btn-glass" target="_blank">📄 Xem Module Shadowrocket</a>
-        </div>
-      </div>
-    </main>
-
-    <!-- ======================================================== -->
-    <!-- TAB 2: QUẢN TRỊ KHÁCH HÀNG (FULL ADMIN CRM & FINANCIAL) -->
-    <!-- ======================================================== -->
-    <main id="tab-content-admin" class="tab-content">
-      <!-- Financial CRM Metric Cards -->
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-icon">👥</div>
-          <div class="stat-info">
-            <span class="stat-label">Tổng Khách Quản Lý</span>
-            <h2 class="stat-value" id="adminTotalUsers">--</h2>
-          </div>
-        </div>
-        <div class="stat-card stat-success">
-          <div class="stat-icon">💰</div>
-          <div class="stat-info">
-            <span class="stat-label">Tổng Doanh Thu Tạm Tính</span>
-            <h2 class="stat-value" id="adminTotalRevenue">--</h2>
-          </div>
-        </div>
-        <div class="stat-card stat-purple">
-          <div class="stat-icon">🎬</div>
-          <div class="stat-info">
-            <span class="stat-label">Đã Mở Khóa 15s Video</span>
-            <h2 class="stat-value" id="admin15sUsers">--</h2>
-          </div>
-        </div>
-        <div class="stat-card stat-gold">
-          <div class="stat-icon">🔑</div>
-          <div class="stat-info">
-            <span class="stat-label">Hạn Master Key</span>
-            <h2 class="stat-value" id="adminMasterExpiry">03/10/2026</h2>
+            <div id="previewUidTxt" class="preview-uid">UID: ----------------------------</div>
           </div>
         </div>
       </div>
 
-      <!-- Bulk Actions Toolbar (Visible when rows selected) -->
-      <div id="bulkActionsToolbar" class="bulk-toolbar" style="display: none;">
-        <span class="bulk-selected-text" id="bulkSelectedText">Đã chọn 0 tài khoản</span>
-        <div class="bulk-btn-group">
-          <button class="btn btn-sm btn-gold" onclick="executeBulkAction('re_upgrade')">🔄 Gia Hạn Đã Chọn</button>
-          <button class="btn btn-sm btn-cyan" onclick="executeBulkAction('mark_paid')">💵 Đánh Dấu Đã TT</button>
-          <button class="btn btn-sm btn-outline" style="color: var(--danger-color); border-color: rgba(255,61,113,0.4);" onclick="executeBulkAction('delete')">🗑️ Xóa Đã Chọn</button>
+      <!-- Step 2: Choose Gold Package -->
+      <div class="step-box">
+        <label class="step-label">
+          <span class="step-num">2</span>
+          <span>Chọn Gói Locket Gold Muốn Nâng Cấp:</span>
+        </label>
+
+        <div class="packages-grid" style="grid-template-columns: 1fr; max-width: 580px; margin: 0 auto;">
+          <!-- Package 1: No-DNS Standard (Only Active Package) -->
+          <div class="package-card selected" data-pkg-id="nodns-standard" onclick="selectPackage('nodns-standard')">
+            <div class="package-ribbon package-ribbon-hot">🔥 GÓI BẢN QUYỀN VIP 1 NĂM</div>
+            <div class="package-header">
+              <div class="package-title">💛 Locket Gold No-DNS Chuẩn (App Gốc 100%)</div>
+              <div class="package-desc">Bản quyền StoreKit Apple Chính Hãng • Bảo Hành 1 Đổi 1 Trọn Gói 1 Năm</div>
+            </div>
+            <div class="package-price-wrap">
+              <span class="package-price">60.000đ</span>
+              <span class="package-old-price">150.000đ</span>
+            </div>
+            <ul class="package-features">
+              <li><span class="feature-check">✓</span> <strong>Huy hiệu Locket Gold Vàng rực</strong> chính chủ</li>
+              <li><span class="feature-check">✓</span> <strong>Không cần cài VPN / Không cần cài DNS</strong> (Dùng App gốc 100%)</li>
+              <li><span class="feature-check">✓</span> Đăng tải & gửi khoảnh khắc ảnh/video chất lượng cao không nén</li>
+              <li><span class="feature-check">✓</span> Cập nhật phiên bản Locket trên App Store thoải mái không lo mất Gold</li>
+              <li><span class="feature-check">✓</span> Kích hoạt tự động tức thì trong 30 giây sau khi chuyển khoản</li>
+              <li><span class="feature-check">✓</span> <strong>Bảo hành VIP 1 đổi 1</strong> trọn đời gói mua</li>
+            </ul>
+          </div>
+
+          <!-- Package 2: No-DNS 15s Video Ultra (Hidden) -->
+          <div class="package-card" data-pkg-id="nodns-15s" onclick="selectPackage('nodns-15s')" style="display: none;">
+            <div class="package-ribbon package-ribbon-hot">🔥 GÓI VIP BÁN CHẠY NHẤT</div>
+            <div class="package-header">
+              <div class="package-title">⚡ No-DNS 15s Ultra Video</div>
+              <div class="package-desc">Combo Full Tính Năng + Video 15 Giây</div>
+            </div>
+            <div class="package-price-wrap">
+              <span class="package-price">89.000đ</span>
+              <span class="package-old-price">180.000đ</span>
+            </div>
+          </div>
+
+          <!-- Package 3: DNS Cheap (Hidden) -->
+          <div class="package-card" data-pkg-id="dns-cheap" onclick="selectPackage('dns-cheap')" style="display: none;">
+            <div class="package-header">
+              <div class="package-title">🛡️ Gói DNS Profile</div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- Admin Table Container -->
-      <div class="workspace-card">
-        <div class="workspace-header">
-          <div>
-            <h2 class="workspace-title">👑 Bảng Điều Khiển & Dữ Liệu Khách Hàng</h2>
-            <p class="workspace-subtitle">Tự động đồng bộ trên toàn bộ 3 thư mục hệ thống</p>
-          </div>
-          <div class="admin-top-actions">
-            <div class="search-box">
-              <span class="search-icon">🔍</span>
-              <input type="text" id="adminSearchInput" placeholder="Tìm theo tên, UID, kênh..." oninput="filterAdminUsers()">
-            </div>
-            <select id="adminFilterChannel" class="form-input" style="padding: 6px 10px; font-size: 12px; width: 130px;" onchange="filterAdminUsers()">
-              <option value="all">Tất cả kênh</option>
-              <option value="zalo">Zalo</option>
-              <option value="facebook">Facebook</option>
-              <option value="tiktok">TikTok</option>
-              <option value="direct">Khách Quen</option>
-            </select>
-            <select id="adminFilterStatus" class="form-input" style="padding: 6px 10px; font-size: 12px; width: 130px;" onchange="filterAdminUsers()">
-              <option value="all">Tất cả thanh toán</option>
-              <option value="paid">Đã TT (Paid)</option>
-              <option value="pending">Chờ TT (Pending)</option>
-            </select>
-            <button class="btn btn-sm btn-outline" onclick="loadAdminData(true)">🔄 Làm Mới</button>
-            <button class="btn btn-sm btn-glass" onclick="exportData('csv')">📄 Xuất CSV</button>
-            <button class="btn btn-sm btn-glass" onclick="exportData('json')">💾 Sao Lưu</button>
-            <button class="btn btn-sm btn-gold" onclick="switchTab('upgrade')">➕ Thêm Khách</button>
-          </div>
+      <!-- Coupon / Promo Code Step Box -->
+      <div class="step-box coupon-step-box">
+        <label class="step-label">
+          <span class="step-num">🏷️</span>
+          <span>Mã Giảm Giá / Khuyến Mãi (Nếu có):</span>
+        </label>
+        <div class="input-coupon-group">
+          <input 
+            type="text" 
+            id="inputCouponCode" 
+            class="input-coupon" 
+            placeholder="Ví dụ: LACVIET, VIP2026..." 
+            autocomplete="off"
+            style="text-transform: uppercase;"
+          >
+          <button id="btnApplyCoupon" class="btn-apply-coupon" onclick="applyCouponCode()">
+            <span>Áp Dụng</span>
+          </button>
         </div>
 
-        <div class="table-wrapper">
-          <table class="custom-table" id="adminTable">
-            <thead>
-              <tr>
-                <th style="width: 36px;"><input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this)"></th>
-                <th>STT</th>
-                <th>Tài Khoản</th>
-                <th>Customer UID</th>
-                <th>Gói & Video</th>
-                <th>Kênh Bán</th>
-                <th>Đơn Giá</th>
-                <th>Thanh Toán</th>
-                <th>Hạn Sử Dụng</th>
-                <th>Hành Động</th>
-              </tr>
-            </thead>
-            <tbody id="adminTableBody">
-              <tr>
-                <td colspan="10" class="text-center py-4">Đang tải dữ liệu khách hàng...</td>
-              </tr>
-            </tbody>
-          </table>
+        <!-- Feedback Messages -->
+        <div id="couponMessage" class="coupon-message" style="display: none;"></div>
+
+        <!-- Applied Coupon Info Pill -->
+        <div id="appliedCouponWrap" class="applied-coupon-pill" style="display: none;">
+          <div class="pill-info">
+            <span class="pill-icon">🎉</span>
+            <span>Mã: <strong id="appliedCouponCodeTxt">LACVIET</strong></span>
+            <span class="pill-discount" id="appliedCouponDiscountTxt">-10.000 đ</span>
+          </div>
+          <button class="btn-remove-coupon" onclick="removeCouponCode()" title="Bỏ mã">✕</button>
         </div>
       </div>
-    </main>
 
-    <!-- ======================================================== -->
-    <!-- TAB 3: QUÉT REVENUECAT LIVE REALTIME -->
-    <!-- ======================================================== -->
-    <main id="tab-content-scanner" class="tab-content">
-      <div class="workspace-card">
-        <div class="workspace-header">
-          <div>
-            <h2 class="workspace-title">⚡ Trình Quét & Giám Sát Chữ Ký Số Apple RevenueCat</h2>
-            <p class="workspace-subtitle" id="scannerSubtitle">Kiểm tra tính hợp lệ của token và tình trạng sống/rụng của từng tài khoản theo thời gian thực.</p>
-          </div>
-          <div>
-            <button id="btnStartScan" class="btn btn-gold" onclick="startRevenueCatScan()">
-              <span class="btn-icon">⚡</span>
-              <span>QUÉT TOÀN BỘ DANH SÁCH NGAY</span>
-            </button>
-          </div>
-        </div>
+      <!-- Step 3: Payment via Dynamic VietQR -->
+      <div class="step-box">
+        <label class="step-label">
+          <span class="step-num">3</span>
+          <span>Quét Mã VietQR Chuyển Khoản Tự Động:</span>
+        </label>
 
-        <!-- Scan Progress Box -->
-        <div class="scan-summary-bar" id="scanSummaryBar" style="display: none;">
-          <div class="scan-stat-box live-box">
-            <span class="scan-num" id="scanLiveCount">0</span>
-            <span class="scan-txt">🟢 TÀI KHOẢN SỐNG 100%</span>
-          </div>
-          <div class="scan-stat-box dead-box">
-            <span class="scan-num" id="scanDeadCount">0</span>
-            <span class="scan-txt">🔴 TÀI KHOẢN BỊ RỤNG</span>
-          </div>
-          <div class="scan-stat-box total-box">
-            <span class="scan-num" id="scanTotalCount">0</span>
-            <span class="scan-txt">📊 TỔNG SỐ TÀI KHOẢN</span>
-          </div>
-        </div>
-
-        <!-- Scanner Table -->
-        <div class="table-wrapper">
-          <table class="custom-table" id="scannerTable">
-            <thead>
-              <tr>
-                <th>STT</th>
-                <th>Tài Khoản</th>
-                <th>Customer UID</th>
-                <th>Mã Gói Apple</th>
-                <th>Hạn Dùng Apple</th>
-                <th>Còn Lại</th>
-                <th>Storefront</th>
-                <th>Trạng Thái Live</th>
-              </tr>
-            </thead>
-            <tbody id="scannerTableBody">
-              <tr>
-                <td colspan="8" class="text-center py-4">Nhấn <strong>"QUÉT TOÀN BỘ DANH SÁCH NGAY"</strong> để bắt đầu kiểm tra.</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </main>
-
-    <!-- ======================================================== -->
-    <!-- TAB 4: CẤU HÌNH APPLE DNS & SHADOWROCKET -->
-    <!-- ======================================================== -->
-    <main id="tab-content-dns" class="tab-content">
-      <div class="dns-showcase-grid">
-        <div class="dns-card">
-          <div class="dns-card-header">
-            <span class="dns-card-tag tag-cyan">PHƯƠNG THỨC 1: APPLE MOBILECONFIG</span>
-            <h3>Cấu Hình Apple Cài Trực Tiếp (Không Cần App)</h3>
-          </div>
-          <p class="dns-card-desc">Cấu hình mã hóa DNS DoH trỏ về máy chủ chặn xác thực và kích hoạt Gold tự động trên iOS Safari.</p>
-          <div class="dns-guide-steps">
-            <div class="step-item">
-              <span class="step-num">1</span>
-              <span>Nhấp nút tải bên dưới bằng trình duyệt Safari.</span>
+        <div class="payment-box">
+          <div class="qr-display-wrap">
+            <div class="qr-image-container">
+              <img id="vietQrImage" class="qr-image" src="" alt="Mã VietQR Chuyển Khoản">
             </div>
-            <div class="step-item">
-              <span class="step-num">2</span>
-              <span>Vào <strong>Cài đặt</strong> trên iPhone > <strong>Đã tải về hồ sơ</strong> > Bấm <strong>Cài đặt</strong>.</span>
-            </div>
-            <div class="step-item">
-              <span class="step-num">3</span>
-              <span>Mở app Locket, vào cài đặt bấm <strong>Khôi phục giao dịch mua</strong>.</span>
-            </div>
+            <small style="color: var(--text-muted); font-size: 11px;">Hỗ trợ tất cả App Ngân Hàng & MoMo</small>
           </div>
-          <div class="dns-actions">
-            <a href="/LacVietMedia.mobileconfig" class="btn btn-cyan btn-lg" download>
-              <span>📥 Tải File Cấu Hình Apple (iOS)</span>
-            </a>
-          </div>
-        </div>
 
-        <div class="dns-card">
-          <div class="dns-card-header">
-            <span class="dns-card-tag tag-purple">PHƯƠNG THỨC 2: SHADOWROCKET MODULE</span>
-            <h3>Module Cho App Shadowrocket</h3>
-          </div>
-          <p class="dns-card-desc">Dành cho các bạn sử dụng Shadowrocket trên iOS để ghi đè dữ liệu RevenueCat trực tiếp tại tầng mạng.</p>
-          <div class="form-group" style="margin-top: 14px;">
-            <label class="form-label">Đường dẫn Module trực tiếp:</label>
-            <div class="input-with-action">
-              <input type="text" id="dnsModuleUrl" class="form-input font-mono" readonly value="http://localhost:5000/locket.sgmodule">
-              <button class="btn btn-glass btn-sm" onclick="copyDnsModuleUrl()">Copy Link</button>
+          <div class="payment-details">
+            <div class="detail-row">
+              <span class="detail-label">Gói đã chọn:</span>
+              <span id="selectedPkgName" class="detail-value text-gradient-gold">No-DNS Chuẩn (Gold 1 Năm)</span>
             </div>
-          </div>
-          <div class="dns-actions" style="margin-top: 20px;">
-            <a href="/locket.sgmodule" target="_blank" class="btn btn-purple">
-              <span>📄 Tải / Xem File .sgmodule</span>
-            </a>
-            <a href="/locket.js" target="_blank" class="btn btn-glass">
-              <span>📜 Xem Script Response .js</span>
-            </a>
-          </div>
-        </div>
-      </div>
-    </main>
-
-    <!-- ======================================================== -->
-    <!-- TAB 5: KHO MASTER KEY & CÀI ĐẶT HỆ THỐNG PRO -->
-    <!-- ======================================================== -->
-    <main id="tab-content-master" class="tab-content">
-      <div class="vault-grid" style="margin-bottom: 24px;">
-        <!-- Card 1: Live Master Status & Countdown -->
-        <div class="vault-card">
-          <div class="vault-header">
-            <span class="vault-tag">MASTER STOREKIT 2 KEY ĐANG KÍCH HOẠT</span>
-            <span class="vault-status">🟢 Verified Active</span>
-          </div>
-          <div class="vault-body">
-            <!-- Countdown Timer Box -->
-            <div class="countdown-widget-box">
-              <span class="countdown-title">⏳ THỜI GIAN CÒN LẠI CỦA TOKEN MASTER:</span>
-              <div class="countdown-digits-row" id="masterCountdownRow">
-                <div class="count-digit-block"><span id="cdDays" class="count-num">28</span><small>Ngày</small></div>
-                <div class="count-sep">:</div>
-                <div class="count-digit-block"><span id="cdHours" class="count-num">16</span><small>Giờ</small></div>
-                <div class="count-sep">:</div>
-                <div class="count-digit-block"><span id="cdMins" class="count-num">46</span><small>Phút</small></div>
-                <div class="count-sep">:</div>
-                <div class="count-digit-block"><span id="cdSecs" class="count-num">11</span><small>Giây</small></div>
-              </div>
-              <div class="countdown-bar-wrap">
-                <div class="countdown-bar-fill" id="countdownBarFill" style="width: 88%;"></div>
+            <div id="discountDetailRow" class="detail-row" style="display: none;">
+              <span class="detail-label" style="color: #34d399;">Ưu đãi giảm giá:</span>
+              <span id="discountDetailVal" class="detail-value" style="color: #34d399; font-weight: 700;">-10.000 đ</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Số tiền thanh toán:</span>
+              <span id="selectedPkgPrice" class="detail-value" style="color: var(--gold-glow); font-size: 19px; font-weight: 800;">60.000 đ</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Ngân hàng thụ hưởng:</span>
+              <span id="bankNameTxt" class="detail-value">VietinBank (Công Thương)</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Số tài khoản:</span>
+              <div class="detail-value">
+                <span id="bankAccTxt">102668820501</span>
+                <button class="btn-copy-code" onclick="copyBankAcc()">Copy</button>
               </div>
             </div>
-
-            <div class="vault-row">
-              <span class="vault-label">Master Fetch Token:</span>
-              <code class="vault-code" id="vaultTokenDisplay">510002836840566</code>
+            <div class="detail-row">
+              <span class="detail-label">Chủ tài khoản:</span>
+              <span id="bankOwnerTxt" class="detail-value">VIETINBANK AUTO</span>
             </div>
-            <div class="vault-row">
-              <span class="vault-label">Public API Key RevenueCat:</span>
-              <code class="vault-code">appl_JngFETzdodyLmCREOlwTUtXdQik</code>
-            </div>
-            <div class="vault-row">
-              <span class="vault-label">Hạn Dùng Máy Chủ:</span>
-              <span class="vault-val text-gold" id="vaultExpiryDisplay">2026-10-03T11:26:26Z</span>
+            <div class="detail-row" style="background: rgba(245, 158, 11, 0.08); padding: 10px 12px; border-radius: 8px; border: 1px dashed rgba(245, 158, 11, 0.4);">
+              <span class="detail-label" style="color: #fff; font-weight: 700;">Nội dung chuyển khoản (Bắt buộc):</span>
+              <div class="detail-value">
+                <strong id="transferContentTxt" style="color: var(--gold-glow); font-family: 'JetBrains Mono', monospace; font-size: 15px;">SEVQR LOCKET KHACH</strong>
+                <button class="btn-copy-code" onclick="copyTransferContent()">Copy</button>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Card 2: Form Thêm Master Key Mới Vào Kho -->
-        <div class="vault-card">
-          <div class="vault-header">
-            <span class="vault-tag">➕ THÊM MASTER KEY MỚI VÀO KHO</span>
-            <span class="vault-status">🔑 Thêm Key mới</span>
-          </div>
-          <div class="vault-body">
-            <div class="form-group">
-              <label class="form-label">Tên Gợi Nhớ Cho Key:</label>
-              <input type="text" id="inputNewMasterName" class="form-input" placeholder="Ví dụ: Key 1 Năm VIP 2027, Key Gói Tháng Dự Phòng...">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Mã Fetch Token / Transaction ID (StoreKit 2):</label>
-              <input type="text" id="inputNewMasterToken" class="form-input font-mono" placeholder="Dán mã Token hoặc chuỗi JWS mới...">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Ngày Hết Hạn (ISO Date):</label>
-              <input type="text" id="inputNewMasterExpiry" class="form-input font-mono" placeholder="Ví dụ: 2027-09-05T12:00:00Z hoặc 2026-10-03T11:26:26Z">
-            </div>
-
-            <div style="display: flex; align-items: center; gap: 8px; margin: 4px 0 10px 0;">
-              <input type="checkbox" id="checkSetActiveImmediately" checked>
-              <label for="checkSetActiveImmediately" style="font-size: 12px; color: var(--gold-primary); font-weight: 600; cursor: pointer;">
-                Kích hoạt làm Master Key chính ngay sau khi thêm
-              </label>
-            </div>
-
-            <div style="display: flex; gap: 8px;">
-              <button class="btn btn-glass" style="flex: 1;" onclick="testMasterTokenBeforeSave()">
-                <span>🧪 Test Thử Với Apple</span>
-              </button>
-              <button class="btn btn-gold" style="flex: 1;" onclick="submitAddNewMasterKey()">
-                <span>➕ Thêm Vào Kho Khóa</span>
-              </button>
-            </div>
-            <div id="masterUpdateAlert" class="alert-box" style="margin-top: 10px;"></div>
-          </div>
-        </div>
-
-        <!-- Card 3: 1-Click System Backup & Quick Settings -->
-        <div class="vault-card">
-          <div class="vault-header">
-            <span class="vault-tag">SAO LƯU & CÀI ĐẶT TOÀN HỆ THỐNG</span>
-            <span class="vault-status">🛡️ An toàn</span>
-          </div>
-          <div class="vault-body">
-            <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 12px;">
-              Tải file sao lưu dữ liệu toàn bộ danh sách khách hàng, Master Token và cấu hình để lưu trữ hoặc chuyển sang máy tính khác:
-            </p>
-            <a href="/api/backup" class="btn btn-purple" style="width: 100%; margin-bottom: 14px;" download>
-              <span>💾 Tải File Sao Lưu Toàn Bộ Dữ Liệu (.json)</span>
-            </a>
-            <div class="vault-row">
-              <span class="vault-label">Đơn Giá Mặc Định:</span>
-              <span class="vault-val text-gold font-mono">50.000 đ</span>
-            </div>
-            <div class="vault-row">
-              <span class="vault-label">Cổng Trung Tâm Hub:</span>
-              <span class="vault-val">Port 5000 (All-In-One Pro)</span>
-            </div>
-          </div>
-        </div>
+        <!-- Submit Button -->
+        <button id="btnSubmitOrder" class="btn-submit-order" onclick="submitCustomerOrder()">
+          <span>🚀 Tôi Đã Chuyển Khoản • Kích Hoạt Ngay</span>
+        </button>
       </div>
-
-      <!-- Master Keys Pool Table Container -->
-      <div class="workspace-card">
-        <div class="workspace-header">
-          <div>
-            <h2 class="workspace-title">📋 Danh Sách Toàn Bộ Key Master Trong Kho (Master Pool)</h2>
-            <p class="workspace-subtitle">Quản lý nhiều Token dự phòng và chuyển đổi Master Key chỉ bằng 1 cú nhấp chuột</p>
-          </div>
-          <button class="btn btn-sm btn-outline" onclick="loadMasterInfo(true)">🔄 Làm Mới Kho Key</button>
-        </div>
-
-        <div class="table-wrapper">
-          <table class="custom-table" id="masterKeysTable">
-            <thead>
-              <tr>
-                <th>STT</th>
-                <th>Tên Key Master</th>
-                <th>Mã Fetch Token</th>
-                <th>Hạn Sử Dụng</th>
-                <th>Ngày Thêm</th>
-                <th>Trạng Thái</th>
-                <th>Hành Động</th>
-              </tr>
-            </thead>
-            <tbody id="masterKeysTableBody">
-              <tr>
-                <td colspan="7" class="text-center py-4">Đang tải danh sách Master Key...</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </main>
+    </section>
 
     <!-- Footer -->
-    <footer class="hub-footer">
-      <p>Hệ Thống Locket Gold Unified Master Hub v3.5 Pro • All-In-One Unified Local Engine • Cổng 5000</p>
+    <footer class="footer">
+      <div class="footer-links">
+        <a href="https://zalo.me" target="_blank">💬 Hỗ Trợ Zalo CSKH (24/7)</a>
+        <a href="#orderSection">⚡ Nạp Locket Gold Tự Động</a>
+      </div>
+      <p>© 2026 Locket Gold Store • All-In-One Unified Ecosystem. Bản quyền StoreKit 2 Apple.</p>
     </footer>
   </div>
 
-  <!-- ======================================================== -->
-  <!-- MODAL 1: VIP WARRANTY CARD & BILL GENERATOR (APPLE STORE VIP) -->
-  <!-- ======================================================== -->
-  <div id="billModal" class="modal-backdrop">
-    <div class="modal-card bill-modal-card">
-      <div class="modal-header">
-        <h3 class="modal-title">🌟 THẺ BẢO HÀNH & BILL LOCKET GOLD VIP</h3>
-        <button class="modal-close" onclick="closeBillModal()">✕</button>
+  <!-- Live Floating Order Notification Ticker -->
+  <div id="floatingOrderToast" class="floating-order-toast">
+    <img id="tickerAvatar" class="toast-avatar" src="" alt="Avatar">
+    <div class="toast-text">
+      <div><span id="tickerUser" class="toast-user">@khachhang</span> vừa kích hoạt</div>
+      <div id="tickerPkg" class="toast-action">No-DNS 15s Video Ultra</div>
+      <div id="tickerTime" class="toast-time">1 phút trước</div>
+    </div>
+  </div>
+
+  <!-- Success Celebration Modal -->
+  <div id="successModal" class="modal-overlay">
+    <div class="success-modal-card">
+      <div class="success-icon">🎉</div>
+      <h3 class="success-title">NÂNG CẤP THÀNH CÔNG!</h3>
+      <p class="success-desc">
+        Tài khoản <strong id="modalSuccessUser" class="text-gradient-gold">@username</strong> đã được kích hoạt gói <strong id="modalSuccessPkg">No-DNS 15s Video Ultra</strong> bản quyền StoreKit Apple!
+      </p>
+
+      <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 12px; padding: 16px; margin-bottom: 24px; text-align: left; font-size: 13.5px;">
+        <div style="color: #fff; font-weight: 700; margin-bottom: 6px;">📱 HƯỚNG DẪN KIỂM TRA TRÊN ĐIỆN THOẠI:</div>
+        <ol style="padding-left: 18px; color: #cbd5e1; line-height: 1.6;">
+          <li>Vuốt tắt hoàn toàn ứng dụng <strong>Locket</strong> (Đóng App chạy ngầm).</li>
+          <li>Mở lại Locket ➔ Vào mục Cài đặt (Icon Avatar góc trên).</li>
+          <li>Kiểm tra huy hiệu <strong>Locket Gold</strong> và tính năng quay video 15s!</li>
+        </ol>
       </div>
 
-      <!-- Rendered VIP Card -->
-      <div id="billCardElement" class="vip-warranty-card">
-        <div class="vip-card-glow"></div>
-        <div class="vip-card-header">
-          <div class="vip-apple-logo">
-            <span class="vip-logo-icon"></span>
-            <div class="vip-logo-text">
-              <span class="vip-brand-name">LOCKET GOLD PRO</span>
-              <span class="vip-sub-brand">APPLE STOREKIT 2 VIP CERTIFICATE</span>
-            </div>
-          </div>
-          <div class="vip-chip-box">
-            <div class="vip-chip"></div>
-          </div>
-        </div>
-
-        <div class="vip-card-body">
-          <div class="vip-user-row">
-            <img id="billAvatarImg" src="" alt="Avatar" class="vip-user-avatar">
-            <div class="vip-user-text">
-              <h2 id="billUsernameTxt" class="vip-username">@username</h2>
-              <span class="vip-status-badge" id="billStatusBadgeTxt">🟢 NO-DNS CHUẨN • FULL GOLD ACTIVE</span>
-            </div>
-          </div>
-
-          <div class="vip-details-grid">
-            <div class="vip-detail-item">
-              <span class="vip-d-label">GÓI DỊCH VỤ</span>
-              <span class="vip-d-val text-gold" id="billServiceNameTxt">Locket Gold No-DNS Chuẩn</span>
-            </div>
-            <div class="vip-detail-item">
-              <span class="vip-d-label">HẠN BẢO HÀNH</span>
-              <span class="vip-d-val" id="billExpiryTxt">03/10/2026</span>
-            </div>
-            <div class="vip-detail-item">
-              <span class="vip-d-label">TRANSACTION ID</span>
-              <span class="vip-d-val font-mono" id="billTransIdTxt">510002836840566</span>
-            </div>
-            <div class="vip-detail-item">
-              <span class="vip-d-label">STOREFRONT</span>
-              <span class="vip-d-val" id="billStorefrontTxt">Vietnam (VNM) / StoreKit 2</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="vip-card-footer">
-          <span class="vip-footer-auth">VERIFIED BY REVENUECAT & APPLE SECURITY</span>
-          <span class="vip-footer-serial font-mono" id="billSerialTxt">SN-510002836840566</span>
-        </div>
-      </div>
-
-      <!-- Action Buttons -->
-      <div class="bill-actions-row">
-        <button class="btn btn-gold" onclick="copyBillMessage()">
-          <span>📋 Copy Lời Nhắn Gửi Khách</span>
+      <div style="display: flex; gap: 12px;">
+        <button class="btn-submit-order" style="margin-top: 0; flex: 1;" onclick="closeSuccessModal()">
+          <span>✓ Tuyệt Vời!</span>
         </button>
-        <button class="btn btn-purple" onclick="downloadBillCard()">
-          <span>📸 Tải Ảnh Bill (PNG)</span>
-        </button>
-        <button class="btn btn-glass" onclick="closeBillModal()">Đóng</button>
       </div>
     </div>
   </div>
 
-  <!-- ======================================================== -->
-  <!-- MODAL 2: MOBILE LAN QR CODE -->
-  <!-- ======================================================== -->
-  <div id="mobileQrModal" class="modal-backdrop">
-    <div class="modal-card" style="max-width: 400px; text-align: center;">
-      <div class="modal-header">
-        <h3 class="modal-title">📱 ĐIỀU KHIỂN TRÊN ĐIỆN THOẠI</h3>
-        <button class="modal-close" onclick="closeMobileQrModal()">✕</button>
-      </div>
-      <div class="modal-body" style="align-items: center;">
-        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">
-          Kết nối cùng mạng WiFi và dùng camera iPhone quét mã QR dưới đây:
-        </p>
-        <img id="mobileQrImg" src="" alt="QR Code" style="width: 200px; height: 200px; border-radius: 12px; border: 2px solid var(--gold-primary); margin-bottom: 12px;">
-        <code id="mobileUrlTxt" class="font-mono text-gold" style="font-size: 13px; word-break: break-all;">http://192.168.44.100:5000</code>
-      </div>
-      <div class="modal-footer" style="justify-content: center;">
-        <button class="btn btn-glass" onclick="copyMobileUrl()">Copy Link</button>
-        <button class="btn btn-gold" onclick="closeMobileQrModal()">Xong</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ======================================================== -->
-  <!-- MODAL 3: EDIT USER CRM -->
-  <!-- ======================================================== -->
-  <div id="editModal" class="modal-backdrop">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3 class="modal-title">✏️ Chỉnh Sửa Thông Tin Khách Hàng</h3>
-        <button class="modal-close" onclick="closeEditModal()">✕</button>
-      </div>
-      <div class="modal-body">
-        <div class="form-group">
-          <label class="form-label">Tên Tài Khoản (Username):</label>
-          <input type="text" id="editUsername" class="form-input">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Customer UID:</label>
-          <input type="text" id="editUid" class="form-input font-mono" readonly style="opacity: 0.7;">
-        </div>
-        <div class="form-grid">
-          <div class="form-group">
-            <label class="form-label">Kênh Bán Hàng:</label>
-            <select id="editChannel" class="form-input">
-              <option value="zalo">Zalo</option>
-              <option value="facebook">Facebook</option>
-              <option value="tiktok">TikTok</option>
-              <option value="direct">Khách Quen</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Đơn Giá (VNĐ):</label>
-            <input type="number" id="editPrice" class="form-input font-mono">
-          </div>
-        </div>
-        <div class="form-grid">
-          <div class="form-group">
-            <label class="form-label">Trạng Thái Thanh Toán:</label>
-            <select id="editPaymentStatus" class="form-input">
-              <option value="paid">🟢 Đã Thanh Toán</option>
-              <option value="pending">🟡 Chờ Thanh Toán</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Mở Khóa 15s Video:</label>
-            <select id="editVideo15s" class="form-input">
-              <option value="true">Đã Mở Khóa (15s Ultra)</option>
-              <option value="false">Chưa Mở Khóa (No-DNS Thường)</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Ghi Chú Đơn Hàng:</label>
-          <input type="text" id="editNotes" class="form-input">
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-glass" onclick="closeEditModal()">Hủy</button>
-        <button class="btn btn-gold" onclick="saveEditedUser()">Lưu Thay Đổi</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- VIP Admin Security Lock Overlay -->
-  <div id="adminLockOverlay" class="modal-overlay open">
-    <div class="admin-gate-card">
-      <div class="admin-gate-icon">🛡️</div>
-      <h2 class="admin-gate-title">KHÓA QUẢN TRỊ VIÊN</h2>
-      <p class="admin-gate-subtitle">Hệ thống phân quyền bảo mật cao cấp dành riêng cho <strong>Lucifer</strong> & <strong>Kwang</strong></p>
-
-      <form id="adminLoginForm" onsubmit="event.preventDefault(); handleAdminLogin();" style="text-align: left;">
-        <div class="form-group" style="margin-bottom: 14px;">
-          <label class="form-label" style="font-size: 12px;">Tài Khoản / Quản Trị:</label>
-          <select id="adminUserInput" class="form-input" style="font-weight: 600;">
-            <option value="lucifer">👑 Lucifer (Admin Chính)</option>
-            <option value="kwang">⚡ Kwang (Admin Quản Trị)</option>
-          </select>
-        </div>
-
-        <div class="form-group" style="margin-bottom: 18px;">
-          <label class="form-label" style="font-size: 12px;">Mật Khẩu / Mã PIN:</label>
-          <input type="password" id="adminPassInput" class="form-input font-mono" placeholder="Nhập mật khẩu quản trị..." style="padding: 12px 14px; font-size: 14px;" autocomplete="current-password" autofocus required>
-          <div id="adminLoginError" style="color: #ef4444; font-size: 12.5px; margin-top: 8px; display: none; line-height: 1.4;"></div>
-        </div>
-
-        <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 22px;">
-          <button type="submit" id="btnAdminLogin" class="btn btn-gold btn-lg" style="width: 100%; justify-content: center;">
-            <span>🔓 Đăng Nhập Quản Trị</span>
-          </button>
-          <a href="/shop" class="btn btn-glass" style="width: 100%; justify-content: center; text-decoration: none; padding: 11px;">
-            <span>🛍️ Tôi Là Khách Hàng ➔ Đến Trang Mua Gold</span>
-          </a>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Toast Notification -->
-  <div id="toast" class="toast"></div>
-
-  <!-- html2canvas Library for Instant Bill PNG Generation -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="app.js"></script>
+  <script src="/shop.js"></script>
 </body>
 </html>

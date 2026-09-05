@@ -54,16 +54,24 @@
       "dest": "/server.js"
     },
     {
-      "src": "/shop",
-      "dest": "/server.js"
+      "src": "/admin",
+      "dest": "/public/admin.html"
     },
     {
-      "src": "/shop/(.*)",
-      "dest": "/server.js"
+      "src": "/admin/",
+      "dest": "/public/admin.html"
+    },
+    {
+      "src": "/shop",
+      "dest": "/public/index.html"
+    },
+    {
+      "src": "/shop/",
+      "dest": "/public/index.html"
     },
     {
       "src": "/store",
-      "dest": "/server.js"
+      "dest": "/public/index.html"
     },
     {
       "src": "/(.*)",
