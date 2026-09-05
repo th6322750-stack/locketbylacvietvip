@@ -628,6 +628,94 @@ app.post('/api/upgrade/bulk', async (req, res) => {
   res.json({ success: true, processed: results.length, users: results });
 });
 
+// -------------------------------------------------------------
+// 6b. SEPAY WEBHOOK ENDPOINT (AUTO-PAYMENT & AUTO-UPGRADE)
+// -------------------------------------------------------------
+app.post(['/api/sepay/webhook', '/api/webhook/sepay', '/hooks/sepay-payment'], async (req, res) => {
+  try {
+    const data = req.body || {};
+    console.log('--- NHẬN WEBHOOK SEPAY ---', JSON.stringify(data));
+
+    // SePay standard fields: content, transferAmount, gateway, referenceCode, id, transactionDate
+    const content = (data.content || data.description || '').trim();
+    const transferAmount = Number(data.transferAmount || data.amount || 0);
+    const gateway = data.gateway || 'Bank';
+    const transactionId = data.id || data.referenceCode || Date.now();
+
+    if (!content) {
+      return res.status(200).json({ success: true, message: 'Bỏ qua: Không có nội dung chuyển khoản' });
+    }
+
+    // Extract username or UID from content (e.g. "LOCKET tnmai06", "LK tnmai06", "tnmai06", "C2A5eSIG...")
+    let target = content
+      .replace(/^(LOCKET|LK|LKT|CK|NAP|GD)\s*/i, '')
+      .replace(/[^a-zA-Z0-9_.-]/g, ' ')
+      .trim()
+      .split(' ')[0];
+
+    if (!target) {
+      return res.status(200).json({ success: true, message: 'Bỏ qua: Không tìm thấy Username hoặc UID trong nội dung' });
+    }
+
+    // Resolve profile via Smart Resolver
+    const resolved = await resolveLocketProfile(target);
+    const finalUid = resolved.uid || (target.length >= 15 ? target : null);
+    const finalUsername = resolved.username || target.replace('@', '');
+
+    if (!finalUid) {
+      console.warn('SePay: Không phân giải được UID cho target:', target);
+      return res.status(200).json({ 
+        success: true, 
+        message: `Chưa tìm thấy UID cho @${finalUsername}. Vui lòng kiểm tra lại nội dung chuyển khoản.` 
+      });
+    }
+
+    // Auto Inject Gold to RevenueCat
+    const injectRes = await injectToRevenueCat(finalUid, false);
+
+    // Save record
+    const userObj = {
+      username: finalUsername,
+      customer_uid: finalUid,
+      uid: finalUid,
+      master_uid: "C2A5eSIG79UquwvohWpirajDTVx2",
+      has_gold: true,
+      video_15s: false,
+      expires_date: MASTER_EXPIRES_DATE,
+      upgraded_at: new Date().toISOString(),
+      price: transferAmount || DEFAULT_PRICE,
+      payment_status: 'paid',
+      channel: 'sepay_auto',
+      avatar: resolved.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(finalUsername)}&backgroundColor=f59e0b,fbbf24&textColor=ffffff&fontWeight=700`,
+      notes: `SePay Auto Webhook: Ngân hàng ${gateway} • GD #${transactionId} • Nội dung: "${content}"`
+    };
+
+    saveUserToAllFiles(userObj);
+
+    // Send Instant Telegram Notification
+    try {
+      sendTelegramOrderAlert({
+        ...userObj,
+        channel: 'sepay_auto',
+        notes: `Nạp tự động qua SePay (${gateway}) - GD #${transactionId}`
+      });
+    } catch (e) {
+      console.error('Telegram alert error:', e.message);
+    }
+
+    console.log(`✅ SEPAY TỰ ĐỘNG NẠP THÀNH CÔNG CHO @${finalUsername} (${finalUid})!`);
+    return res.status(200).json({
+      success: true,
+      message: `Đã tự động kích hoạt Locket Gold cho @${finalUsername}!`,
+      user: userObj,
+      rc_result: injectRes
+    });
+  } catch (err) {
+    console.error('Lỗi xử lý Webhook SePay:', err);
+    return res.status(200).json({ success: false, error: err.message });
+  }
+});
+
 // 7. Bulk Admin Actions (Multi-select)
 app.post('/api/users/bulk-action', async (req, res) => {
   const { action, uids = [] } = req.body;
