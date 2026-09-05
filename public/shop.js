@@ -36,7 +36,7 @@ const STORE_CONFIG = {
   }
 };
 
-let currentSelectedPkg = 'nodns-15s';
+let currentSelectedPkg = 'nodns-standard';
 let resolvedCustomer = {
   username: '',
   uid: '',
@@ -45,7 +45,7 @@ let resolvedCustomer = {
 
 // Initial setup on DOM Ready
 document.addEventListener('DOMContentLoaded', () => {
-  selectPackage('nodns-15s');
+  selectPackage('nodns-standard');
   startFloatingOrderTicker();
 
   // Enter key trigger for resolve

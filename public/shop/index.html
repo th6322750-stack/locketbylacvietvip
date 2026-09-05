@@ -120,28 +120,30 @@
           <span>Chọn Gói Locket Gold Muốn Nâng Cấp:</span>
         </label>
 
-        <div class="packages-grid">
-          <!-- Package 1: No-DNS Standard -->
-          <div class="package-card" data-pkg-id="nodns-standard" onclick="selectPackage('nodns-standard')">
-            <div class="package-ribbon">TIẾT KIỆM 58%</div>
+        <div class="packages-grid" style="grid-template-columns: 1fr; max-width: 580px; margin: 0 auto;">
+          <!-- Package 1: No-DNS Standard (Only Active Package) -->
+          <div class="package-card selected" data-pkg-id="nodns-standard" onclick="selectPackage('nodns-standard')">
+            <div class="package-ribbon package-ribbon-hot">🔥 GÓI BẢN QUYỀN VIP 1 NĂM</div>
             <div class="package-header">
-              <div class="package-title">💛 No-DNS Chuẩn</div>
-              <div class="package-desc">Bản quyền StoreKit Gold 1 Năm</div>
+              <div class="package-title">💛 Locket Gold No-DNS Chuẩn (App Gốc 100%)</div>
+              <div class="package-desc">Bản quyền StoreKit Apple Chính Hãng • Bảo Hành 1 Đổi 1 Trọn Gói 1 Năm</div>
             </div>
             <div class="package-price-wrap">
               <span class="package-price">50.000đ</span>
               <span class="package-old-price">120.000đ</span>
             </div>
             <ul class="package-features">
-              <li><span class="feature-check">✓</span> Huy hiệu Locket Gold Vàng rực</li>
-              <li><span class="feature-check">✓</span> Không cần cài VPN / DNS</li>
-              <li><span class="feature-check">✓</span> Đăng khoảnh khắc chất lượng cao</li>
-              <li><span class="feature-check">✓</span> Bảo hành 1 đổi 1 trọn gói 1 năm</li>
+              <li><span class="feature-check">✓</span> <strong>Huy hiệu Locket Gold Vàng rực</strong> chính chủ</li>
+              <li><span class="feature-check">✓</span> <strong>Không cần cài VPN / Không cần cài DNS</strong> (Dùng App gốc 100%)</li>
+              <li><span class="feature-check">✓</span> Đăng tải & gửi khoảnh khắc ảnh/video chất lượng cao không nén</li>
+              <li><span class="feature-check">✓</span> Cập nhật phiên bản Locket trên App Store thoải mái không lo mất Gold</li>
+              <li><span class="feature-check">✓</span> Kích hoạt tự động tức thì trong 30 giây sau khi chuyển khoản</li>
+              <li><span class="feature-check">✓</span> <strong>Bảo hành VIP 1 đổi 1</strong> trọn đời gói mua</li>
             </ul>
           </div>
 
-          <!-- Package 2: No-DNS 15s Video Ultra (Default Selected) -->
-          <div class="package-card selected" data-pkg-id="nodns-15s" onclick="selectPackage('nodns-15s')">
+          <!-- Package 2: No-DNS 15s Video Ultra (Hidden) -->
+          <div class="package-card" data-pkg-id="nodns-15s" onclick="selectPackage('nodns-15s')" style="display: none;">
             <div class="package-ribbon package-ribbon-hot">🔥 GÓI VIP BÁN CHẠY NHẤT</div>
             <div class="package-header">
               <div class="package-title">⚡ No-DNS 15s Ultra Video</div>
@@ -151,32 +153,13 @@
               <span class="package-price">79.000đ</span>
               <span class="package-old-price">180.000đ</span>
             </div>
-            <ul class="package-features">
-              <li><span class="feature-check">✓</span> <strong>Mở khóa quay & gửi video 15s</strong></li>
-              <li><span class="feature-check">✓</span> Full đặc quyền Locket Gold VIP</li>
-              <li><span class="feature-check">✓</span> Không VPN / Không rụng cấu hình</li>
-              <li><span class="feature-check">✓</span> Cập nhật App Store thoải mái</li>
-              <li><span class="feature-check">✓</span> Bảo hành VIP ưu tiên 24/7</li>
-            </ul>
           </div>
 
-          <!-- Package 3: DNS Cheap -->
-          <div class="package-card" data-pkg-id="dns-cheap" onclick="selectPackage('dns-cheap')">
-            <div class="package-ribbon" style="background: rgba(255,255,255,0.15); color: #fff;">HỌC SINH / SV</div>
+          <!-- Package 3: DNS Cheap (Hidden) -->
+          <div class="package-card" data-pkg-id="dns-cheap" onclick="selectPackage('dns-cheap')" style="display: none;">
             <div class="package-header">
               <div class="package-title">🛡️ Gói DNS Profile</div>
-              <div class="package-desc">Cài đặt qua Profile MobileConfig</div>
             </div>
-            <div class="package-price-wrap">
-              <span class="package-price">30.000đ</span>
-              <span class="package-old-price">70.000đ</span>
-            </div>
-            <ul class="package-features">
-              <li><span class="feature-check">✓</span> Nâng cấp qua Profile Apple DNS</li>
-              <li><span class="feature-check">✓</span> Xem lại ảnh full lịch sử</li>
-              <li><span class="feature-check">✓</span> Giá siêu tiết kiệm cho HSSV</li>
-              <li><span class="feature-check">✓</span> Hỗ trợ cài đặt từ xa</li>
-            </ul>
           </div>
         </div>
       </div>
