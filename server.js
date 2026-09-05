@@ -1303,6 +1303,45 @@ app.get(['/locket.sgmodule', '/module.sgmodule'], (req, res) => {
   res.send('#!name=Locket Gold\n[MITM]\nhostname = %APPEND% api.revenuecat.com');
 });
 
+// 12. AUTOMATED WATCHDOG & SELF-HEALING ENGINE (CHỐNG RỤNG ACC TỰ ĐỘNG)
+async function runAutoWatchdogScan() {
+  try {
+    const userMap = getAllUsersMap();
+    const users = Array.from(userMap.values());
+    if (users.length === 0) return;
+
+    console.log(`[WATCHDOG] 🛡️ Đang quét tự động ${users.length} tài khoản để chống rụng...`);
+    let healedCount = 0;
+
+    for (const u of users) {
+      if (!u.uid) continue;
+      const rc = await queryRevenueCatLive(u.uid);
+      const isDead = !rc.is_live;
+      const isExpiring = rc.days_left !== null && rc.days_left <= 3;
+
+      if (isDead || isExpiring) {
+        console.warn(`[WATCHDOG] ⚠️ Phát hiện @${u.username} (${u.uid}) ${isDead ? 'mất Gold' : 'sắp hết hạn'}! Tự động cứu acc...`);
+        const injectRes = await injectToRevenueCat(u.uid, u.video_15s || false);
+        if (injectRes.success) {
+          healedCount++;
+          u.has_gold = true;
+          u.expires_date = MASTER_EXPIRES_DATE;
+          saveUserToAllFiles(u);
+          console.log(`[WATCHDOG] ✅ Đã hồi sinh Gold thành công cho @${u.username} (Hạn mới: ${MASTER_EXPIRES_DATE})!`);
+        }
+      }
+    }
+
+    if (healedCount > 0) {
+      console.log(`[WATCHDOG] 🎉 Đã tự động cứu sống ${healedCount} tài khoản!`);
+    } else {
+      console.log(`[WATCHDOG] 🟢 Tất cả ${users.length} tài khoản đều đang LIVE ổn định 100%!`);
+    }
+  } catch (err) {
+    console.error('[WATCHDOG ERROR]:', err.message);
+  }
+}
+
 // Start Server
 app.listen(PORT, () => {
   const lanIp = getLanIp();
@@ -1311,4 +1350,8 @@ app.listen(PORT, () => {
   console.log(`👉 Bảng Điều Khiển Máy Tính: http://localhost:${PORT}`);
   console.log(`📱 Điều Khiển Qua Điện Thoại: http://${lanIp}:${PORT}`);
   console.log('======================================================');
+
+  // Trigger Watchdog immediately after 5 seconds, then every 30 minutes
+  setTimeout(runAutoWatchdogScan, 5000);
+  setInterval(runAutoWatchdogScan, 30 * 60 * 1000);
 });
