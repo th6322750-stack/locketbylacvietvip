@@ -389,10 +389,17 @@ app.get('/api/network-info', (req, res) => {
 });
 
 // 2. Smart Profile Resolver
-app.post('/api/resolve', async (req, res) => {
-  const input = req.body.input || '';
+app.all(['/api/resolve', '/api/resolve-locket-profile'], async (req, res) => {
+  const input = req.body?.input || req.query?.input || '';
   const result = await resolveLocketProfile(input);
   res.json(result);
+});
+
+// 2b. Single User RevenueCat Live Scanner
+app.get('/api/revenuecat-check/:uid', async (req, res) => {
+  const uid = req.params.uid;
+  const rc = await queryRevenueCatLive(uid);
+  res.json(rc);
 });
 
 // 3. Get All Users (with Financial CRM Stats)
