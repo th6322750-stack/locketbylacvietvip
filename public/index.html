@@ -760,25 +760,36 @@
   </div>
 
   <!-- VIP Admin Security Lock Overlay -->
-  <div id="adminLockOverlay" class="modal-overlay" style="background: rgba(8, 9, 14, 0.96); backdrop-filter: blur(18px); z-index: 99999; display: none;">
-    <div class="modal-card" style="max-width: 420px; text-align: center; border-color: rgba(245, 158, 11, 0.4); box-shadow: 0 0 60px rgba(245, 158, 11, 0.2);">
-      <div style="font-size: 48px; margin-bottom: 12px;">🔒</div>
-      <h3 style="font-size: 22px; font-weight: 800; color: #fff; margin-bottom: 6px;">KHÓA BẢO MẬT ADMIN</h3>
-      <p style="color: var(--text-muted); font-size: 13.5px; margin-bottom: 24px;">Nhập mã PIN quản trị viên để mở khóa Bảng Điều Khiển</p>
+  <div id="adminLockOverlay" class="modal-overlay open">
+    <div class="admin-gate-card">
+      <div class="admin-gate-icon">🛡️</div>
+      <h2 class="admin-gate-title">KHÓA QUẢN TRỊ VIÊN</h2>
+      <p class="admin-gate-subtitle">Hệ thống phân quyền bảo mật cao cấp dành riêng cho <strong>Lucifer</strong> & <strong>Kwang</strong></p>
 
-      <div class="form-group" style="margin-bottom: 20px;">
-        <input type="password" id="adminPinInput" class="form-input font-mono" placeholder="••••••" style="text-align: center; font-size: 24px; letter-spacing: 8px; padding: 12px;" autofocus>
-        <div id="pinErrorMsg" style="color: #ef4444; font-size: 13px; margin-top: 8px; display: none;">❌ Mã PIN không chính xác!</div>
-      </div>
+      <form id="adminLoginForm" onsubmit="event.preventDefault(); handleAdminLogin();" style="text-align: left;">
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label class="form-label" style="font-size: 12px;">Tài Khoản / Quản Trị:</label>
+          <select id="adminUserInput" class="form-input" style="font-weight: 600;">
+            <option value="lucifer">👑 Lucifer (Admin Chính)</option>
+            <option value="kwang">⚡ Kwang (Admin Quản Trị)</option>
+          </select>
+        </div>
 
-      <div style="display: flex; flex-direction: column; gap: 10px;">
-        <button class="btn btn-gold btn-lg" style="width: 100%; justify-content: center;" onclick="verifyAdminPin()">
-          <span>🔓 Mở Khóa Quản Trị</span>
-        </button>
-        <a href="/shop" class="btn btn-glass" style="width: 100%; justify-content: center; text-decoration: none;">
-          <span>🛍️ Tôi Là Khách Hàng ➔ Đến Trang Mua Gold</span>
-        </a>
-      </div>
+        <div class="form-group" style="margin-bottom: 18px;">
+          <label class="form-label" style="font-size: 12px;">Mật Khẩu / Mã PIN:</label>
+          <input type="password" id="adminPassInput" class="form-input font-mono" placeholder="Nhập mật khẩu quản trị..." style="padding: 12px 14px; font-size: 14px;" autocomplete="current-password" autofocus required>
+          <div id="adminLoginError" style="color: #ef4444; font-size: 12.5px; margin-top: 8px; display: none; line-height: 1.4;"></div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 22px;">
+          <button type="submit" id="btnAdminLogin" class="btn btn-gold btn-lg" style="width: 100%; justify-content: center;">
+            <span>🔓 Đăng Nhập Quản Trị</span>
+          </button>
+          <a href="/shop" class="btn btn-glass" style="width: 100%; justify-content: center; text-decoration: none; padding: 11px;">
+            <span>🛍️ Tôi Là Khách Hàng ➔ Đến Trang Mua Gold</span>
+          </a>
+        </div>
+      </form>
     </div>
   </div>
 

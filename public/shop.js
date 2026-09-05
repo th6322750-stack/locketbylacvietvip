@@ -6,10 +6,10 @@
 // Default Store Configuration
 const STORE_CONFIG = {
   bank: {
-    name: "MB Bank (Quân Đội)",
-    code: "MB",
-    accountNumber: "0988888888",
-    accountName: "NGUYEN VAN DUC",
+    name: "VietinBank (Ngân Hàng Công Thương)",
+    code: "ICB",
+    accountNumber: "102668820501",
+    accountName: "VIETINBANK",
   },
   packages: {
     'nodns-standard': {
@@ -142,9 +142,10 @@ async function resolveCustomerProfile() {
 
 // 3. GENERATE DYNAMIC VIETQR
 function updatePaymentQR() {
-  const pkg = STORE_CONFIG.packages[currentSelectedPkg];
-  const username = resolvedCustomer.username || (document.getElementById('inputLocketCustomer')?.value.trim().replace('@', '')) || 'KHACH';
-  const cleanTransferContent = `LOCKET ${username}`.toUpperCase().replace(/[^A-Z0-9 ]/g, '').substring(0, 20);
+  const pkg = STORE_CONFIG.packages[currentSelectedPkg] || { price: 50000 };
+  const rawUsername = resolvedCustomer.username || (document.getElementById('inputLocketCustomer')?.value.trim().replace('@', '')) || 'KHACH';
+  const cleanUsername = rawUsername.toUpperCase().replace(/[^A-Z0-9_.-]/g, '').substring(0, 15) || 'KHACH';
+  const cleanTransferContent = `SEVQR LOCKET ${cleanUsername}`.trim();
 
   // Update transfer content displays
   const contentEl = document.getElementById('transferContentTxt');
@@ -159,9 +160,9 @@ function updatePaymentQR() {
   const bankOwnerEl = document.getElementById('bankOwnerTxt');
   if (bankOwnerEl) bankOwnerEl.innerText = STORE_CONFIG.bank.accountName;
 
-  // VietQR QuickLink format
-  const amount = pkg.price;
-  const qrUrl = `https://img.vietqr.io/image/${STORE_CONFIG.bank.code}-${STORE_CONFIG.bank.accountNumber}-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(cleanTransferContent)}&accountName=${encodeURIComponent(STORE_CONFIG.bank.accountName)}`;
+  // VietQR QuickLink format with VietinBank & SEVQR
+  const amount = pkg.price || 50000;
+  const qrUrl = `https://img.vietqr.io/image/${STORE_CONFIG.bank.code}-${STORE_CONFIG.bank.accountNumber}-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(cleanTransferContent)}`;
 
   const qrImg = document.getElementById('vietQrImage');
   if (qrImg) {
