@@ -54,6 +54,66 @@ if (!fs.existsSync(LOCAL_SETTINGS_FILE)) {
   }, null, 2), 'utf8');
 }
 
+// Telegram Bot Notification Configuration
+const TELEGRAM_CONFIG = {
+  enabled: true,
+  botToken: '8526627556:AAGoqOQ9KFQ-C5L7G-qBPc5stvM8v4NZrIc',
+  chatId: '-5088834251' // CHECK ĐƠN SHOP
+};
+
+function sendTelegramOrderAlert(orderData) {
+  if (!TELEGRAM_CONFIG.enabled || !TELEGRAM_CONFIG.botToken || !TELEGRAM_CONFIG.chatId) return;
+
+  const {
+    username,
+    uid,
+    price = 50000,
+    channel = 'website_store',
+    notes = ''
+  } = orderData;
+
+  const timeStr = new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
+  const formattedPrice = (Number(price) || 50000).toLocaleString('vi-VN') + ' đ';
+  const sourceName = channel === 'website_store' ? '🌐 Website Shop Tự Động (/shop)' : (channel === 'zalo' ? '💬 Quản Trị Zalo' : `👑 Admin (${channel})`);
+
+  const message = `🔔 <b>CÓ ĐƠN HÀNG LOCKET GOLD MỚI!</b>
+━━━━━━━━━━━━━━━━━━
+👤 <b>Khách hàng:</b> <code>@${username || 'N/A'}</code>
+🆔 <b>UID Locket:</b> <code>${uid}</code>
+🎁 <b>Gói dịch vụ:</b> 💛 Locket Gold No-DNS Chuẩn (1 Năm)
+💰 <b>Số tiền:</b> <b>${formattedPrice}</b>
+📍 <b>Nguồn đơn:</b> ${sourceName}
+⏰ <b>Thời gian:</b> ${timeStr}
+🔑 <b>Trạng thái:</b> 🟢 <b>ĐÃ KÍCH HOẠT THÀNH CÔNG</b>
+${notes ? `📝 <b>Ghi chú:</b> <i>${notes}</i>\n` : ''}━━━━━━━━━━━━━━━━━━
+⚡ <i>Hệ thống Locket Gold Store tự động</i>`;
+
+  const payload = JSON.stringify({
+    chat_id: TELEGRAM_CONFIG.chatId,
+    text: message,
+    parse_mode: 'HTML'
+  });
+
+  const req = https.request({
+    hostname: 'api.telegram.org',
+    path: '/bot' + TELEGRAM_CONFIG.botToken + '/sendMessage',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Content-Length': Buffer.byteLength(payload)
+    }
+  }, (res) => {
+    // logged
+  });
+
+  req.on('error', (err) => {
+    console.error('Telegram notification error:', err.message);
+  });
+
+  req.write(payload);
+  req.end();
+}
+
 // -------------------------------------------------------------
 // HELPER: GET LAN IP ADDRESS
 // -------------------------------------------------------------
@@ -513,6 +573,13 @@ app.post('/api/upgrade', async (req, res) => {
 
   saveUserToAllFiles(userObj);
 
+  // Send Instant Telegram Notification
+  try {
+    sendTelegramOrderAlert(userObj);
+  } catch (err) {
+    console.error('Failed to send Telegram alert:', err.message);
+  }
+
   res.json({
     success: true,
     message: `Đã nâng cấp thành công Locket Gold cho @${cleanUsername}!`,
@@ -523,7 +590,7 @@ app.post('/api/upgrade', async (req, res) => {
 
 // 6. Bulk Fast Upgrade
 app.post('/api/upgrade/bulk', async (req, res) => {
-  const { entries, mode = '15s', price = DEFAULT_PRICE, channel = 'zalo' } = req.body;
+  const { entries, mode = 'nodns', price = DEFAULT_PRICE, channel = 'zalo' } = req.body;
   if (!entries || !Array.isArray(entries)) {
     return res.status(400).json({ success: false, error: 'Danh sách không hợp lệ' });
   }
@@ -551,6 +618,10 @@ app.post('/api/upgrade/bulk', async (req, res) => {
       };
       saveUserToAllFiles(userObj);
       results.push(userObj);
+
+      try {
+        sendTelegramOrderAlert(userObj);
+      } catch (e) {}
     }
   }
 
