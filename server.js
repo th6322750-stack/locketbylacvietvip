@@ -870,9 +870,55 @@ function resolveLocketProfile(input) {
 }
 
 // -------------------------------------------------------------
-// REVENUECAT INJECTION & VERIFICATION
+// REVENUECAT ALIAS & CLUSTER INJECTION ENGINE
 // -------------------------------------------------------------
-function injectToRevenueCat(uid, is15s = false, customToken = null) {
+const MASTER_CLUSTER_UID = 'VBo5nZiVs4ee3JIyV9L5zlijIa23';
+
+function linkAliasToMaster(masterUid, customerUid) {
+  return new Promise((resolve) => {
+    const payload = JSON.stringify({ new_app_user_id: customerUid });
+    const req = https.request({
+      hostname: 'api.revenuecat.com',
+      path: '/v1/subscribers/' + encodeURIComponent(masterUid) + '/alias',
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + LOCKET_RC_KEY,
+        'Content-Type': 'application/json',
+        'X-Platform': 'ios',
+        'Content-Length': Buffer.byteLength(payload)
+      }
+    }, (res) => {
+      let b = '';
+      res.on('data', c => b += c);
+      res.on('end', () => {
+        resolve({ success: res.statusCode >= 200 && res.statusCode < 300, statusCode: res.statusCode, body: b });
+      });
+    });
+    req.on('error', (err) => {
+      resolve({ success: false, error: err.message });
+    });
+    req.write(payload);
+    req.end();
+  });
+}
+
+async function injectToRevenueCat(uid, is15s = false, customToken = null) {
+  // 1. Alias Cluster Grouping (Prevents receipt transfer conflict across multiple accounts)
+  if (uid !== MASTER_CLUSTER_UID) {
+    try {
+      const aliasRes = await linkAliasToMaster(MASTER_CLUSTER_UID, uid);
+      if (aliasRes.success) {
+        const check = await queryRevenueCatLive(uid);
+        if (check.is_live) {
+          return { success: true, method: 'alias_cluster', data: check.raw };
+        }
+      }
+    } catch (e) {
+      console.warn('[ALIAS ERROR]:', e.message);
+    }
+  }
+
+  // 2. Direct Token / StoreKit 2 Receipt Injection Fallback
   return new Promise((resolve) => {
     let tokenToUse = customToken || MASTER_FETCH_TOKEN;
     if (!tokenToUse || !tokenToUse.startsWith('ey')) {
@@ -911,7 +957,7 @@ function injectToRevenueCat(uid, is15s = false, customToken = null) {
       res.on('end', () => {
         try {
           const json = JSON.parse(body);
-          resolve({ success: res.statusCode >= 200 && res.statusCode < 300, statusCode: res.statusCode, data: json });
+          resolve({ success: res.statusCode >= 200 && res.statusCode < 300, statusCode: res.statusCode, data: json, method: 'receipt_inject' });
         } catch (e) {
           resolve({ success: false, statusCode: res.statusCode, error: body });
         }
