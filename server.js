@@ -444,8 +444,8 @@ function injectToRevenueCat(uid, is15s = true, customToken = null) {
       currency: "USD",
       is_restore: true,
       attributes: {
-        "$storefront": { value: is15s ? "USA" : "VNM" },
-        "$appVersion": { value: "1.144.0" },
+        "storefront": { value: is15s ? "USA" : "VNM" },
+        "app_version": { value: "1.144.0" },
         "platform": { value: "iOS" },
         "video_15s_enabled": { value: is15s ? "true" : "false" }
       }
