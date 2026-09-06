@@ -312,5 +312,19 @@
     "channel": "admin",
     "avatar": "https://firebasestorage.googleapis.com:443/v0/b/locket-img/o/users%2FVBo5nZiVs4ee3JIyV9L5zlijIa23%2Fpublic%2Fprofile_pic.webp?alt=media&token=0dd1f89b-b3b9-4018-ae0e-ef807bc4a9ab",
     "notes": "No-DNS Chuẩn StoreKit 2 (Bản quyền 1 Năm)"
+  },
+  "TwJrNzsg6yMzxXoPVnxeAWUxemR2": {
+    "username": "misaphake",
+    "customer_uid": "TwJrNzsg6yMzxXoPVnxeAWUxemR2",
+    "master_uid": "C2A5eSIG79UquwvohWpirajDTVx2",
+    "has_gold": true,
+    "video_15s_unlocked": false,
+    "expires_date": "2026-10-03T11:26:26Z",
+    "upgraded_at": "2026-09-06T09:19:42.000Z",
+    "price": 50000,
+    "payment_status": "paid",
+    "channel": "zalo",
+    "avatar": "https://api.dicebear.com/7.x/initials/svg?seed=misaphake&backgroundColor=f59e0b,fbbf24&textColor=ffffff&fontWeight=700",
+    "notes": "Admin Kwang nâng cấp qua Zalo lúc 16:19"
   }
 }
