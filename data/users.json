@@ -326,5 +326,19 @@
     "channel": "zalo",
     "avatar": "https://api.dicebear.com/7.x/initials/svg?seed=misaphake&backgroundColor=f59e0b,fbbf24&textColor=ffffff&fontWeight=700",
     "notes": "Admin Kwang nâng cấp qua Zalo lúc 16:19"
+  },
+  "dalObdmoDORgzRwrXJWITU3oQ0N2": {
+    "username": "thtrungg210",
+    "customer_uid": "dalObdmoDORgzRwrXJWITU3oQ0N2",
+    "master_uid": "C2A5eSIG79UquwvohWpirajDTVx2",
+    "has_gold": true,
+    "video_15s_unlocked": false,
+    "expires_date": "2026-10-03T11:26:26Z",
+    "upgraded_at": "2026-09-06T16:53:33.672Z",
+    "price": 50000,
+    "payment_status": "paid",
+    "channel": "zalo",
+    "avatar": "https://firebasestorage.googleapis.com:443/v0/b/locket-img/o/users%2FdalObdmoDORgzRwrXJWITU3oQ0N2%2Fpublic%2Fprofile_pic.webp?alt=media&token=fba18161-bf49-4909-bf2e-7d2f153000c6",
+    "notes": ""
   }
 }

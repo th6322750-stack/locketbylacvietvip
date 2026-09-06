@@ -870,9 +870,12 @@ function resolveLocketProfile(input) {
 }
 
 // -------------------------------------------------------------
-// REVENUECAT ALIAS & CLUSTER INJECTION ENGINE
+// REVENUECAT MULTI-CLUSTER MASTER POOL ENGINE
 // -------------------------------------------------------------
-const MASTER_CLUSTER_UID = 'VBo5nZiVs4ee3JIyV9L5zlijIa23';
+const MASTER_CLUSTERS = [
+  { id: 'MASTER_02', uid: 'lacviet_master_node_02_2026', name: 'Master Cụm 2' },
+  { id: 'MASTER_01', uid: 'VBo5nZiVs4ee3JIyV9L5zlijIa23', name: 'Master Cụm 1' }
+];
 
 function linkAliasToMaster(masterUid, customerUid) {
   return new Promise((resolve) => {
@@ -903,18 +906,19 @@ function linkAliasToMaster(masterUid, customerUid) {
 }
 
 async function injectToRevenueCat(uid, is15s = false, customToken = null) {
-  // 1. Alias Cluster Grouping (Prevents receipt transfer conflict across multiple accounts)
-  if (uid !== MASTER_CLUSTER_UID) {
+  // 1. Alias Cluster Grouping (Try active clusters in order to avoid hitting alias limit 7255)
+  for (const cluster of MASTER_CLUSTERS) {
+    if (uid === cluster.uid) continue;
     try {
-      const aliasRes = await linkAliasToMaster(MASTER_CLUSTER_UID, uid);
+      const aliasRes = await linkAliasToMaster(cluster.uid, uid);
       if (aliasRes.success) {
         const check = await queryRevenueCatLive(uid);
         if (check.is_live) {
-          return { success: true, method: 'alias_cluster', data: check.raw };
+          return { success: true, method: 'alias_cluster', cluster: cluster.id, data: check.raw };
         }
       }
     } catch (e) {
-      console.warn('[ALIAS ERROR]:', e.message);
+      console.warn(`[ALIAS ERROR on ${cluster.id}]:`, e.message);
     }
   }
 
