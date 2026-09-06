@@ -1,10 +1,10 @@
 {
   "default_price": 50000,
   "auto_scan_hours": 6,
-  "last_scan": "2026-09-06T08:34:06.952Z",
+  "last_scan": "2026-09-06T08:46:03.273Z",
   "expiring_soon_count": 0,
-  "last_scan_total": 20,
+  "last_scan_total": 21,
   "last_scan_live": 20,
-  "last_scan_healed": 0,
+  "last_scan_healed": 1,
   "last_scan_dropped": 0
 }

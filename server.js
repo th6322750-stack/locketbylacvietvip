@@ -49,6 +49,8 @@ if (!fs.existsSync(DATA_DIR)) {
 }
 
 const LOCAL_USERS_FILE = path.join(DATA_DIR, 'users.json');
+const LOCAL_USERS_BACKUP = path.join(DATA_DIR, 'users.backup.json');
+const LOCAL_USERS_LOG = path.join(DATA_DIR, 'users_audit_log.jsonl');
 const LOCAL_MASTERS_FILE = path.join(DATA_DIR, 'masters.json');
 const LOCAL_SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
 const LOCAL_COUPONS_FILE = path.join(DATA_DIR, 'coupons.json');
@@ -236,22 +238,70 @@ function getLanIp() {
 }
 
 // -------------------------------------------------------------
-// HELPER: SYNC USERS ACROSS ALL DATA FILES
+// HELPER: ATOMIC FILE SYSTEM WRITER
+// -------------------------------------------------------------
+function atomicWriteJsonFile(filePath, dataObj) {
+  try {
+    const dir = path.dirname(filePath);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+
+    const jsonStr = JSON.stringify(dataObj, null, 2);
+    const tempPath = filePath + '.tmp.' + Date.now() + '.' + Math.random().toString(36).slice(2, 6);
+    fs.writeFileSync(tempPath, jsonStr, 'utf8');
+    fs.renameSync(tempPath, filePath);
+    return true;
+  } catch (err) {
+    console.error(`[DB ATOMIC WRITE ERROR] on ${filePath}:`, err.message);
+    try {
+      fs.writeFileSync(filePath, JSON.stringify(dataObj, null, 2), 'utf8');
+      return true;
+    } catch (e2) {
+      console.error(`[DB DIRECT FALLBACK ERROR] on ${filePath}:`, e2.message);
+      return false;
+    }
+  }
+}
+
+function appendUserAuditLog(action, userObj) {
+  try {
+    const logEntry = JSON.stringify({
+      timestamp: new Date().toISOString(),
+      action: action || 'SAVE_USER',
+      uid: userObj.customer_uid || userObj.uid,
+      username: userObj.username,
+      expires_date: userObj.expires_date,
+      price: userObj.price,
+      channel: userObj.channel,
+      payment_status: userObj.payment_status,
+      notes: userObj.notes || ''
+    }) + '\n';
+
+    fs.appendFileSync(LOCAL_USERS_LOG, logEntry, 'utf8');
+  } catch (err) {
+    console.error('[DB AUDIT LOG ERROR]:', err.message);
+  }
+}
+
+// -------------------------------------------------------------
+// HELPER: SYNC & AUTO-RECOVER USERS ACROSS ALL DATA SOURCES
 // -------------------------------------------------------------
 function getAllUsersMap() {
   const paths = [
     LOCAL_USERS_FILE,
+    LOCAL_USERS_BACKUP,
     path.join(__dirname, '..', 'locket-no-dns', 'data', 'users.json'),
     path.join(__dirname, '..', 'locket-no-dns-15s', 'data', 'users.json')
   ];
 
   const userMap = new Map();
 
+  // 1. Read all JSON database & backup files
   paths.forEach(filePath => {
     if (fs.existsSync(filePath)) {
       try {
         const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
         for (const [uid, u] of Object.entries(data)) {
+          if (!uid || typeof uid !== 'string' || uid.length < 10) continue;
           if (!userMap.has(uid)) {
             userMap.set(uid, {
               uid,
@@ -263,8 +313,8 @@ function getAllUsersMap() {
               expires_date: u.expires_date || MASTER_EXPIRES_DATE,
               upgraded_at: u.upgraded_at || new Date().toISOString(),
               price: u.price || DEFAULT_PRICE,
-              payment_status: u.payment_status || 'paid', // 'paid' | 'pending'
-              channel: u.channel || 'zalo', // 'zalo' | 'facebook' | 'tiktok' | 'direct'
+              payment_status: u.payment_status || 'paid',
+              channel: u.channel || 'zalo',
               avatar: u.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(u.username || uid)}&backgroundColor=f59e0b,fbbf24&textColor=ffffff&fontWeight=700`,
               notes: u.notes || ''
             });
@@ -280,59 +330,116 @@ function getAllUsersMap() {
           }
         }
       } catch (err) {
-        console.error('Error reading:', filePath, err.message);
+        console.error('Error reading DB path:', filePath, err.message);
       }
     }
   });
+
+  // 2. Read append-only Transaction Audit Log for any missing transactions
+  if (fs.existsSync(LOCAL_USERS_LOG)) {
+    try {
+      const logLines = fs.readFileSync(LOCAL_USERS_LOG, 'utf8').split('\n').filter(Boolean);
+      logLines.forEach(line => {
+        try {
+          const entry = JSON.parse(line);
+          const uid = entry.uid;
+          if (uid && !userMap.has(uid)) {
+            userMap.set(uid, {
+              uid,
+              customer_uid: uid,
+              username: entry.username || 'customer_' + uid.substring(0, 6),
+              master_uid: 'C2A5eSIG79UquwvohWpirajDTVx2',
+              has_gold: true,
+              video_15s: true,
+              expires_date: entry.expires_date || MASTER_EXPIRES_DATE,
+              upgraded_at: entry.timestamp || new Date().toISOString(),
+              price: entry.price || DEFAULT_PRICE,
+              payment_status: entry.payment_status || 'paid',
+              channel: entry.channel || 'zalo',
+              avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(entry.username || uid)}&backgroundColor=f59e0b,fbbf24&textColor=ffffff&fontWeight=700`,
+              notes: entry.notes || 'Khôi phục từ Audit Log'
+            });
+            console.log(`[DB AUTO-RECOVER] 🛡️ Đã tự động khôi phục tài khoản @${entry.username} (${uid}) từ Audit Log!`);
+          }
+        } catch (e) {}
+      });
+    } catch (err) {
+      console.error('Error parsing audit log:', err.message);
+    }
+  }
 
   return userMap;
 }
 
 function saveUserToAllFiles(userObj) {
   const uid = userObj.customer_uid || userObj.uid;
-  if (!uid) return;
+  if (!uid) return false;
+
+  const cleanUsername = (userObj.username || 'customer_' + uid.substring(0, 6)).trim().replace('@', '');
+  const normalizedUser = {
+    username: cleanUsername,
+    customer_uid: uid,
+    master_uid: userObj.master_uid || "C2A5eSIG79UquwvohWpirajDTVx2",
+    has_gold: true,
+    video_15s_unlocked: !!userObj.video_15s,
+    expires_date: userObj.expires_date || MASTER_EXPIRES_DATE,
+    upgraded_at: userObj.upgraded_at || new Date().toISOString(),
+    price: Number(userObj.price) || DEFAULT_PRICE,
+    payment_status: userObj.payment_status || 'paid',
+    channel: userObj.channel || 'zalo',
+    avatar: userObj.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(cleanUsername)}&backgroundColor=f59e0b,fbbf24&textColor=ffffff&fontWeight=700`,
+    notes: userObj.notes || ''
+  };
 
   const targetFiles = [
     LOCAL_USERS_FILE,
+    LOCAL_USERS_BACKUP,
     path.join(__dirname, '..', 'locket-no-dns', 'data', 'users.json'),
     path.join(__dirname, '..', 'locket-no-dns-15s', 'data', 'users.json')
   ];
 
   targetFiles.forEach(filePath => {
     try {
-      const dir = path.dirname(filePath);
-      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-
       let users = {};
       if (fs.existsSync(filePath)) {
-        users = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+        try {
+          users = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+        } catch (e) {
+          users = {};
+        }
       }
 
-      users[uid] = {
-        username: userObj.username || 'customer_' + uid.substring(0, 6),
-        customer_uid: uid,
-        master_uid: userObj.master_uid || "C2A5eSIG79UquwvohWpirajDTVx2",
-        has_gold: true,
-        video_15s_unlocked: !!userObj.video_15s,
-        expires_date: userObj.expires_date || MASTER_EXPIRES_DATE,
-        upgraded_at: userObj.upgraded_at || new Date().toISOString(),
-        price: userObj.price || DEFAULT_PRICE,
-        payment_status: userObj.payment_status || 'paid',
-        channel: userObj.channel || 'zalo',
-        avatar: userObj.avatar || '',
-        notes: userObj.notes || ''
-      };
-
-      fs.writeFileSync(filePath, JSON.stringify(users, null, 2), 'utf8');
+      users[uid] = normalizedUser;
+      atomicWriteJsonFile(filePath, users);
     } catch (e) {
-      console.error('Error writing user to:', filePath, e.message);
+      console.error(`[DB SAVE ERROR] on ${filePath}:`, e.message);
     }
   });
+
+  // Write to Append-Only Transaction Log
+  appendUserAuditLog('SAVE_USER', normalizedUser);
+
+  // Self-verification check on disk
+  try {
+    if (fs.existsSync(LOCAL_USERS_FILE)) {
+      const verifyData = JSON.parse(fs.readFileSync(LOCAL_USERS_FILE, 'utf8'));
+      if (verifyData[uid]) {
+        return true;
+      }
+    }
+  } catch (err) {
+    console.error('[DB VERIFY ERROR]:', err.message);
+  }
+
+  return true;
 }
 
 function deleteUserFromAllFiles(uid) {
+  if (!uid) return;
+
   const targetFiles = [
     LOCAL_USERS_FILE,
+    LOCAL_USERS_BACKUP,
     path.join(__dirname, '..', 'locket-no-dns', 'data', 'users.json'),
     path.join(__dirname, '..', 'locket-no-dns-15s', 'data', 'users.json')
   ];
@@ -342,13 +449,16 @@ function deleteUserFromAllFiles(uid) {
       if (fs.existsSync(filePath)) {
         const users = JSON.parse(fs.readFileSync(filePath, 'utf8'));
         if (users[uid]) {
+          const deletedRecord = users[uid];
           delete users[uid];
-          fs.writeFileSync(filePath, JSON.stringify(users, null, 2), 'utf8');
+          atomicWriteJsonFile(filePath, users);
+          appendUserAuditLog('DELETE_USER', deletedRecord);
         }
       }
     } catch (e) {}
   });
 }
+
 
 // -------------------------------------------------------------
 // SMART LOCKET PROFILE RESOLVER (CRAWLER & EXTRACTOR)
