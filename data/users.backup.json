@@ -304,14 +304,13 @@
     "customer_uid": "VBo5nZiVs4ee3JIyV9L5zlijIa23",
     "master_uid": "C2A5eSIG79UquwvohWpirajDTVx2",
     "has_gold": true,
-    "video_15s_unlocked": false,
+    "video_15s_unlocked": true,
     "expires_date": "2026-10-03T11:26:26Z",
     "upgraded_at": "2026-09-06T08:45:12.290Z",
     "price": 60000,
     "payment_status": "paid",
     "channel": "zalo",
     "avatar": "https://api.dicebear.com/7.x/initials/svg?seed=hannhnguyn&backgroundColor=f59e0b,fbbf24&textColor=ffffff&fontWeight=700",
-    "notes": "Nâng cấp Locket Gold StoreKit 2 cho @hannhnguyn",
-    "video_15s": false
+    "notes": "Nâng cấp Locket Gold StoreKit 2 cho @hannhnguyn"
   }
 }
