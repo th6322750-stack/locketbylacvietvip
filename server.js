@@ -56,6 +56,35 @@ const LOCAL_SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
 const LOCAL_COUPONS_FILE = path.join(DATA_DIR, 'coupons.json');
 const LOCAL_SEPAY_FILE = path.join(DATA_DIR, 'sepay_transactions.json');
 const LOCAL_SEPAY_LOG = path.join(DATA_DIR, 'sepay_transactions.jsonl');
+const LOCAL_ANOMALIES_FILE = path.join(DATA_DIR, 'anomalies.json');
+const LOCAL_ANOMALIES_LOG = path.join(DATA_DIR, 'anomalies.jsonl');
+
+function getAnomalies() {
+  try {
+    if (fs.existsSync(LOCAL_ANOMALIES_FILE)) {
+      return JSON.parse(fs.readFileSync(LOCAL_ANOMALIES_FILE, 'utf8'));
+    }
+  } catch (e) {
+    console.error('Error reading anomalies:', e);
+  }
+  return [];
+}
+
+function saveAnomalyEvent(event) {
+  try {
+    const list = getAnomalies();
+    list.unshift(event);
+    if (list.length > 500) list.length = 500;
+    fs.writeFileSync(LOCAL_ANOMALIES_FILE, JSON.stringify(list, null, 2), 'utf8');
+    try {
+      fs.appendFileSync(LOCAL_ANOMALIES_LOG, JSON.stringify(event) + '\n', 'utf8');
+    } catch (e) {}
+    return true;
+  } catch (e) {
+    console.error('Error saving anomaly event:', e);
+    return false;
+  }
+}
 
 function getSepayTransactions() {
   try {
@@ -657,6 +686,21 @@ function queryRevenueCatLive(uid) {
           const purchaseDate = (gold && gold.purchase_date) || (subObj && subObj.purchase_date) || null;
           const daysLeft = isLive ? Math.max(0, Math.ceil((new Date(expiresDate).getTime() - now.getTime()) / (1000 * 60 * 60 * 24))) : 0;
 
+          let dropReason = null;
+          if (!isLive) {
+            if (!gold) {
+              dropReason = "Entitlements Gold bị xóa (App Locket hoặc Apple thu hồi quyền)";
+            } else if (new Date(gold.expires_date) <= now) {
+              dropReason = `Quyền Gold đã hết hạn lúc ${gold.expires_date}`;
+            } else if (subObj && subObj.unsubscribe_detected_at) {
+              dropReason = `Apple phát hiện hủy gói lúc ${subObj.unsubscribe_detected_at}`;
+            } else if (subObj && subObj.billing_issues_detected_at) {
+              dropReason = `Lỗi thanh toán từ StoreKit (${subObj.billing_issues_detected_at})`;
+            } else {
+              dropReason = "Tài khoản bị mất Gold trên hệ thống RevenueCat";
+            }
+          }
+
           resolve({
             uid,
             is_live: isLive,
@@ -665,7 +709,9 @@ function queryRevenueCatLive(uid) {
             expires_date: expiresDate,
             purchase_date: purchaseDate,
             days_left: daysLeft,
-            store: (gold && gold.store) || (subObj && subObj.store) || 'app_store'
+            store: (gold && gold.store) || (subObj && subObj.store) || 'app_store',
+            drop_reason: dropReason,
+            raw: sub
           });
         } catch (e) {
           resolve({
@@ -677,6 +723,7 @@ function queryRevenueCatLive(uid) {
             purchase_date: null,
             days_left: 0,
             store: 'N/A',
+            drop_reason: `Lỗi parse JSON từ RevenueCat: ${e.message}`,
             error: e.message
           });
         }
@@ -1583,6 +1630,21 @@ app.post('/api/telegram/test-alert', requireAdminAuth, (req, res) => {
   res.json({ success: true, message: 'Đã gửi thông báo kiểm tra đến Telegram nhóm CHECK ĐƠN SHOP!' });
 });
 
+// 12b. Anomaly Incident Log API
+app.get('/api/anomalies', requireAdminAuth, (req, res) => {
+  const anomalies = getAnomalies();
+  res.json({
+    success: true,
+    total: anomalies.length,
+    anomalies
+  });
+});
+
+app.post('/api/watchdog/scan-now', requireAdminAuth, async (req, res) => {
+  runAutoWatchdogScan();
+  res.json({ success: true, message: 'Đã kích hoạt quét Watchdog toàn diện ngay lập tức!' });
+});
+
 // 13. AUTOMATED WATCHDOG & SELF-HEALING ENGINE (CHỐNG RỤNG ACC TỰ ĐỘNG & BÁO ĐỘNG TELEGRAM)
 async function runAutoWatchdogScan() {
   try {
@@ -1609,9 +1671,28 @@ async function runAutoWatchdogScan() {
       const isExpiring = rc.days_left !== null && rc.days_left <= 3;
 
       if (isDead || isExpiring) {
-        console.warn(`[WATCHDOG] ⚠️ Phát hiện @${u.username} (${u.uid}) ${isDead ? 'mất Gold' : 'sắp hết hạn'}! Tự động cứu acc...`);
+        const rootCause = rc.drop_reason || (isDead ? 'Mất quyền Gold trên RevenueCat' : `Tài khoản sắp hết hạn (còn ${rc.days_left} ngày)`);
+        console.warn(`[WATCHDOG] ⚠️ Phát hiện @${u.username} (${u.uid}): ${rootCause}! Tự động cứu acc...`);
+        
         const injectRes = await injectToRevenueCat(u.uid, u.video_15s || false);
-        if (injectRes.success) {
+        const isHealed = injectRes.success;
+
+        const anomalyRecord = {
+          id: 'LOG_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+          timestamp: new Date().toISOString(),
+          username: u.username,
+          uid: u.uid,
+          event_type: isDead ? 'DROP_DETECTED' : 'EXPIRING_SOON',
+          root_cause: rootCause,
+          revenuecat_snapshot: rc.raw || null,
+          auto_heal_attempted: true,
+          auto_heal_success: isHealed,
+          new_expires_date: isHealed ? MASTER_EXPIRES_DATE : null,
+          status: isHealed ? 'RESOLVED' : 'UNRESOLVED'
+        };
+        saveAnomalyEvent(anomalyRecord);
+
+        if (isHealed) {
           u.has_gold = true;
           u.expires_date = MASTER_EXPIRES_DATE;
           saveUserToAllFiles(u);
@@ -1619,14 +1700,14 @@ async function runAutoWatchdogScan() {
           healedList.push({
             username: u.username,
             uid: u.uid,
-            reason: isDead ? 'Phát hiện tài khoản bị mất quyền lợi Gold' : `Tài khoản sắp hết hạn (còn ${rc.days_left} ngày)`,
+            reason: rootCause,
             action: `🟢 Đã tự động kích hoạt lại Gold StoreKit 2 (Hạn: ${MASTER_EXPIRES_DATE.split('T')[0]})`
           });
         } else {
           droppedList.push({
             username: u.username,
             uid: u.uid,
-            reason: `Bơm lại thất bại (HTTP ${injectRes.statusCode || 'Err'})`,
+            reason: `Bơm lại thất bại: ${rootCause} (HTTP ${injectRes.statusCode || 'Err'})`,
             action: '🔴 Cần admin kiểm tra thủ công Master Token'
           });
         }
@@ -1650,8 +1731,8 @@ async function runAutoWatchdogScan() {
     if (healedList.length > 0) {
       sendTelegramAnomalyAlert({
         type: 'heal',
-        title: 'BÁO CÁO WATCHDOG: TỰ ĐỘNG CỨU ACC THÀNH CÔNG',
-        message: `Hệ thống vừa phát hiện và tự động hồi sinh Gold StoreKit 2 cho <b>${healedList.length}</b> tài khoản!`,
+        title: 'BÁO CÁO WATCHDOG: PHÁT HIỆN LỖI & TỰ ĐỘNG CỨU ACC THÀNH CÔNG',
+        message: `Hệ thống vừa phát hiện sự cố từ log RevenueCat và tự động hồi sinh Gold StoreKit 2 cho <b>${healedList.length}</b> tài khoản!`,
         details: healedList
       });
     }
@@ -1696,8 +1777,8 @@ app.listen(PORT, () => {
   console.log(`📱 Điều Khiển Qua Điện Thoại: http://${lanIp}:${PORT}`);
   console.log('======================================================');
 
-  // Trigger Watchdog immediately after 5 seconds, then every 30 minutes
-  setTimeout(runAutoWatchdogScan, 5000);
-  setInterval(runAutoWatchdogScan, 30 * 60 * 1000);
+  // Trigger Watchdog immediately after 3 seconds, then every 10 minutes
+  setTimeout(runAutoWatchdogScan, 3000);
+  setInterval(runAutoWatchdogScan, 10 * 60 * 1000);
 });
 
