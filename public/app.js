@@ -265,7 +265,7 @@ async function executeSingleUpgrade() {
   alertBox.innerText = '';
 
   try {
-    const res = await fetch('/api/upgrade', {
+    const res = await authFetch('/api/upgrade', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -333,11 +333,12 @@ async function executeBulkUpgrade() {
   btn.innerHTML = `<span class="btn-icon">⏳</span><span>Đang xử lý ${entries.length} tài khoản...</span>`;
 
   try {
-    const res = await fetch('/api/upgrade/bulk', {
+    const res = await authFetch('/api/upgrade/bulk', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ entries, mode: 'nodns', price, channel })
     });
+
 
     const data = await res.json();
     if (data.success) {

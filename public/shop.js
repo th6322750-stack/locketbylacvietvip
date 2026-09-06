@@ -294,62 +294,81 @@ function removeCouponCode() {
   showToast('Đã hủy mã giảm giá');
 }
 
-// 4. SUBMIT ORDER & INSTANT ACTIVATION (1-Touch)
+// 4. VERIFY PAYMENT STATUS (SePay Webhook Verification)
+let paymentPollingInterval = null;
+
 async function submitCustomerOrder() {
   const rawInput = document.getElementById('inputLocketCustomer')?.value.trim();
   if (!rawInput && !resolvedCustomer.uid) {
-    alert('Vui lòng nhập Username hoặc Link Locket trước khi kích hoạt!');
+    alert('Vui lòng nhập Username hoặc Link Locket trước khi kiểm tra thanh toán!');
     document.getElementById('inputLocketCustomer')?.focus();
     return;
   }
 
-  const pkg = STORE_CONFIG.packages[currentSelectedPkg];
+  const pkg = STORE_CONFIG.packages[currentSelectedPkg] || { price: 60000, name: 'No-DNS Chuẩn' };
   const uid = resolvedCustomer.uid || rawInput;
   const username = resolvedCustomer.username || rawInput.replace('@', '');
-  const avatar = resolvedCustomer.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(username)}`;
 
   const submitBtn = document.getElementById('btnSubmitOrder');
-  submitBtn.disabled = true;
-  submitBtn.innerHTML = '<span>⚡ Đang gửi lệnh kích hoạt lên Apple...</span>';
-
-  let discountAmount = 0;
-  if (appliedCoupon) {
-    if (appliedCoupon.type === 'percent') {
-      discountAmount = Math.round((pkg.price * appliedCoupon.value) / 100);
-    } else {
-      discountAmount = Number(appliedCoupon.discount || appliedCoupon.value) || 0;
-    }
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span>⏳ Đang kiểm tra giao dịch từ Ngân Hàng...</span>';
   }
-  discountAmount = Math.min(discountAmount, Math.max(0, pkg.price - 10000));
-  const finalPrice = Math.max(10000, pkg.price - discountAmount);
 
   try {
-    const res = await fetch('/api/upgrade', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    const res = await fetch('/api/revenuecat-check/' + encodeURIComponent(uid));
+    const data = await res.json();
+
+    if (data && data.is_live) {
+      if (paymentPollingInterval) {
+        clearInterval(paymentPollingInterval);
+        paymentPollingInterval = null;
+      }
+      showSuccessCelebration({
         username: username,
         uid: uid,
-        mode: pkg.mode,
-        price: finalPrice,
-        payment_status: 'paid',
-        channel: 'website_store',
-        avatar: avatar,
-        notes: `Khách đặt gói ${pkg.name}${appliedCoupon ? ` [Mã KM: ${appliedCoupon.code} (-${discountAmount.toLocaleString('vi-VN')}đ)]` : ''}`
-      })
-    });
-
-    const data = await res.json();
-    if (data.success) {
-      showSuccessCelebration(data.user || { username, uid, mode: pkg.mode, price: pkg.price });
+        expires_date: data.expires_date,
+        video_15s: false
+      });
+      showToast(`🎉 Xác nhận thành công! Gói Gold của @${username} đã được kích hoạt.`);
     } else {
-      alert('Lỗi kích hoạt: ' + (data.error || 'Vui lòng liên hệ CSKH để được hỗ trợ ngay!'));
+      alert(`⏳ Hệ thống chưa nhận được chuyển khoản cho @${username}.\n\n👉 Vui lòng kiểm tra:\n1. Đã chuyển đúng STK VietinBank: 102668820501 chưa?\n2. Nội dung chuyển khoản: SEVQR LOCKET ${username.toUpperCase()}\n\n⚡ Hệ thống đang quét tự động... Ngay khi SePay nhận được tiền từ Ngân hàng, màn hình sẽ tự động báo thành công sau 5-10 giây!`);
+
+      // Start auto polling
+      if (!paymentPollingInterval) {
+        let attempts = 0;
+        paymentPollingInterval = setInterval(async () => {
+          attempts++;
+          if (attempts > 40) {
+            clearInterval(paymentPollingInterval);
+            paymentPollingInterval = null;
+            return;
+          }
+          try {
+            const checkRes = await fetch('/api/revenuecat-check/' + encodeURIComponent(uid));
+            const checkData = await checkRes.json();
+            if (checkData && checkData.is_live) {
+              clearInterval(paymentPollingInterval);
+              paymentPollingInterval = null;
+              showSuccessCelebration({
+                username: username,
+                uid: uid,
+                expires_date: checkData.expires_date,
+                video_15s: false
+              });
+              showToast(`🎉 Đã nhận được chuyển khoản! Kích hoạt thành công cho @${username}`);
+            }
+          } catch (e) {}
+        }, 3000);
+      }
     }
   } catch (err) {
-    alert('Lỗi kết nối máy chủ: ' + err.message);
+    alert('Lỗi kiểm tra giao dịch: ' + err.message);
   } finally {
-    submitBtn.disabled = false;
-    submitBtn.innerHTML = '<span>🚀 Tôi Đã Chuyển Khoản • Kích Hoạt Ngay</span>';
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<span>🚀 Tôi Đã Chuyển Khoản • Kiểm Tra Ngay</span>';
+    }
   }
 }
 
@@ -360,7 +379,7 @@ function showSuccessCelebration(user) {
 
   // Populate Modal
   document.getElementById('modalSuccessUser').innerText = '@' + (user.username || 'Khách Hàng');
-  document.getElementById('modalSuccessPkg').innerText = user.video_15s ? 'No-DNS 15s Video Ultra' : 'No-DNS Chuẩn (Gold 1 Năm)';
+  document.getElementById('modalSuccessPkg').innerText = 'No-DNS Chuẩn (Gold 1 Năm)';
   
   const modal = document.getElementById('successModal');
   modal.classList.add('open');
@@ -369,6 +388,7 @@ function showSuccessCelebration(user) {
 function closeSuccessModal() {
   document.getElementById('successModal').classList.remove('open');
 }
+
 
 // 6. COPY HELPER
 function copyText(text, msg = 'Đã sao chép vào bộ nhớ tạm!') {

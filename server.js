@@ -970,8 +970,8 @@ app.get('/api/scan-all', requireAdminAuth, async (req, res) => {
   });
 });
 
-// 5. Fast Upgrade (Single)
-app.post('/api/upgrade', async (req, res) => {
+// 5. Fast Upgrade (Single - Protected with Admin Auth)
+app.post('/api/upgrade', requireAdminAuth, async (req, res) => {
   const { username, uid, mode = 'nodns', price = DEFAULT_PRICE, payment_status = 'paid', channel = 'zalo', notes = '', avatar = '' } = req.body;
   if (!uid || typeof uid !== 'string' || uid.trim().length < 10) {
     return res.status(400).json({ success: false, error: 'UID Locket không hợp lệ!' });
@@ -1018,8 +1018,8 @@ app.post('/api/upgrade', async (req, res) => {
   });
 });
 
-// 6. Bulk Fast Upgrade
-app.post('/api/upgrade/bulk', async (req, res) => {
+// 6. Bulk Fast Upgrade (Protected with Admin Auth)
+app.post('/api/upgrade/bulk', requireAdminAuth, async (req, res) => {
   const { entries, mode = 'nodns', price = DEFAULT_PRICE, channel = 'zalo' } = req.body;
   if (!entries || !Array.isArray(entries)) {
     return res.status(400).json({ success: false, error: 'Danh sách không hợp lệ' });
