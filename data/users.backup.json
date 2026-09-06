@@ -309,8 +309,8 @@
     "upgraded_at": "2026-09-06T09:14:49.206Z",
     "price": 60000,
     "payment_status": "paid",
-    "channel": "sepay_auto",
+    "channel": "admin",
     "avatar": "https://firebasestorage.googleapis.com:443/v0/b/locket-img/o/users%2FVBo5nZiVs4ee3JIyV9L5zlijIa23%2Fpublic%2Fprofile_pic.webp?alt=media&token=0dd1f89b-b3b9-4018-ae0e-ef807bc4a9ab",
-    "notes": "SePay Auto Webhook: Ngân hàng VietinBank • GD #TEST_99999 • Nội dung: \"SEVQR LOCKET hannhnguyn\""
+    "notes": "No-DNS Chuẩn StoreKit 2 (Bản quyền 1 Năm)"
   }
 }
