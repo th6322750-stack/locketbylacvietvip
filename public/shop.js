@@ -43,9 +43,11 @@ let resolvedCustomer = {
   uid: '',
   avatar: ''
 };
+let orderSessionStartTime = Date.now();
 
 // Initial setup on DOM Ready
 document.addEventListener('DOMContentLoaded', () => {
+  orderSessionStartTime = Date.now();
   selectPackage('nodns-standard');
   startFloatingOrderTicker();
 
@@ -316,44 +318,44 @@ async function submitCustomerOrder() {
   }
 
   try {
-    const res = await fetch('/api/revenuecat-check/' + encodeURIComponent(uid));
+    const res = await fetch(`/api/orders/check-payment?username=${encodeURIComponent(username)}&uid=${encodeURIComponent(uid)}&order_time=${orderSessionStartTime}`);
     const data = await res.json();
 
-    if (data && data.is_live) {
+    if (data && data.paid) {
       if (paymentPollingInterval) {
         clearInterval(paymentPollingInterval);
         paymentPollingInterval = null;
       }
-      showSuccessCelebration({
+      showSuccessCelebration(data.user || {
         username: username,
         uid: uid,
-        expires_date: data.expires_date,
+        expires_date: '2026-10-03T11:26:26Z',
         video_15s: false
       });
       showToast(`🎉 Xác nhận thành công! Gói Gold của @${username} đã được kích hoạt.`);
     } else {
-      alert(`⏳ Hệ thống chưa nhận được chuyển khoản cho @${username}.\n\n👉 Vui lòng kiểm tra:\n1. Đã chuyển đúng STK VietinBank: 102668820501 chưa?\n2. Nội dung chuyển khoản: SEVQR LOCKET ${username.toUpperCase()}\n\n⚡ Hệ thống đang quét tự động... Ngay khi SePay nhận được tiền từ Ngân hàng, màn hình sẽ tự động báo thành công sau 5-10 giây!`);
+      alert(`⏳ Hệ thống CHƯA nhận được tiền chuyển khoản từ Ngân Hàng cho đơn hàng @${username}!\n\n👉 Vui lòng kiểm tra:\n1. Quét đúng mã VietQR hoặc chuyển đúng STK VietinBank: 102668820501\n2. Nội dung chuyển khoản: SEVQR LOCKET ${username.toUpperCase()}\n\n⚡ Hệ thống đang quét tự động qua SePay... Ngay khi tiền vào tài khoản ngân hàng, hệ thống sẽ tự động kích hoạt sau 3-5 giây!`);
 
       // Start auto polling
       if (!paymentPollingInterval) {
         let attempts = 0;
         paymentPollingInterval = setInterval(async () => {
           attempts++;
-          if (attempts > 40) {
+          if (attempts > 60) { // 3 minutes max
             clearInterval(paymentPollingInterval);
             paymentPollingInterval = null;
             return;
           }
           try {
-            const checkRes = await fetch('/api/revenuecat-check/' + encodeURIComponent(uid));
+            const checkRes = await fetch(`/api/orders/check-payment?username=${encodeURIComponent(username)}&uid=${encodeURIComponent(uid)}&order_time=${orderSessionStartTime}`);
             const checkData = await checkRes.json();
-            if (checkData && checkData.is_live) {
+            if (checkData && checkData.paid) {
               clearInterval(paymentPollingInterval);
               paymentPollingInterval = null;
-              showSuccessCelebration({
+              showSuccessCelebration(checkData.user || {
                 username: username,
                 uid: uid,
-                expires_date: checkData.expires_date,
+                expires_date: '2026-10-03T11:26:26Z',
                 video_15s: false
               });
               showToast(`🎉 Đã nhận được chuyển khoản! Kích hoạt thành công cho @${username}`);

@@ -54,6 +54,37 @@ const LOCAL_USERS_LOG = path.join(DATA_DIR, 'users_audit_log.jsonl');
 const LOCAL_MASTERS_FILE = path.join(DATA_DIR, 'masters.json');
 const LOCAL_SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
 const LOCAL_COUPONS_FILE = path.join(DATA_DIR, 'coupons.json');
+const LOCAL_SEPAY_FILE = path.join(DATA_DIR, 'sepay_transactions.json');
+const LOCAL_SEPAY_LOG = path.join(DATA_DIR, 'sepay_transactions.jsonl');
+
+function getSepayTransactions() {
+  try {
+    if (fs.existsSync(LOCAL_SEPAY_FILE)) {
+      return JSON.parse(fs.readFileSync(LOCAL_SEPAY_FILE, 'utf8'));
+    }
+  } catch (e) {
+    console.error('Error reading sepay transactions:', e);
+  }
+  return [];
+}
+
+function saveSepayTransaction(tx) {
+  try {
+    const list = getSepayTransactions();
+    if (!list.some(t => t.id && String(t.id) === String(tx.id))) {
+      list.unshift(tx);
+      if (list.length > 1000) list.length = 1000;
+      fs.writeFileSync(LOCAL_SEPAY_FILE, JSON.stringify(list, null, 2), 'utf8');
+      try {
+        fs.appendFileSync(LOCAL_SEPAY_LOG, JSON.stringify(tx) + '\n', 'utf8');
+      } catch (e) {}
+    }
+    return true;
+  } catch (e) {
+    console.error('Error saving sepay transaction:', e);
+    return false;
+  }
+}
 
 // Initialize coupons file if not exists
 if (!fs.existsSync(LOCAL_COUPONS_FILE)) {
@@ -1104,6 +1135,20 @@ app.post(['/api/sepay/webhook', '/api/webhook/sepay', '/hooks/sepay-payment'], a
     // Auto Inject Gold to RevenueCat
     const injectRes = await injectToRevenueCat(finalUid, false);
 
+    // Record SePay transaction
+    const txRecord = {
+      id: transactionId,
+      gateway: gateway,
+      transferAmount: transferAmount,
+      content: content,
+      username: finalUsername,
+      uid: finalUid,
+      timestamp: Date.now(),
+      date: data.transactionDate || new Date().toISOString(),
+      status: 'SUCCESS'
+    };
+    saveSepayTransaction(txRecord);
+
     // Save record
     const userObj = {
       username: finalUsername,
@@ -1145,6 +1190,50 @@ app.post(['/api/sepay/webhook', '/api/webhook/sepay', '/hooks/sepay-payment'], a
     console.error('Lỗi xử lý Webhook SePay:', err);
     return res.status(200).json({ success: false, error: err.message });
   }
+});
+
+// -------------------------------------------------------------
+// 6c. ORDER PAYMENT CHECK (ONLY CONFIRMS IF SEPAY TRANSACTION RECEIVED)
+// -------------------------------------------------------------
+app.get('/api/orders/check-payment', (req, res) => {
+  const { username, uid, order_time } = req.query;
+  const cleanUsername = (username || '').trim().toLowerCase().replace('@', '');
+  const cleanUid = (uid || '').trim();
+  const orderTimeNum = Number(order_time) || (Date.now() - 15 * 60 * 1000);
+
+  if (!cleanUsername && !cleanUid) {
+    return res.json({ paid: false, message: 'Thiếu thông tin tra cứu đơn hàng' });
+  }
+
+  const transactions = getSepayTransactions();
+  const tx = transactions.find(t => {
+    const matchUser = cleanUsername && (
+      (t.username && t.username.toLowerCase() === cleanUsername) || 
+      (t.content && t.content.toLowerCase().includes(cleanUsername))
+    );
+    const matchUid = cleanUid && (
+      (t.uid && t.uid === cleanUid) || 
+      (t.content && t.content.includes(cleanUid))
+    );
+    const txTime = t.timestamp || new Date(t.date).getTime();
+    const matchTime = txTime >= (orderTimeNum - 30000); // 30s buffer
+    return (matchUser || matchUid) && matchTime && t.status === 'SUCCESS';
+  });
+
+  if (tx) {
+    const userMap = getAllUsersMap();
+    const user = userMap.get(cleanUid) || Array.from(userMap.values()).find(u => u.username?.toLowerCase() === cleanUsername);
+    return res.json({
+      paid: true,
+      transaction: tx,
+      user: user || { username: cleanUsername, uid: cleanUid, has_gold: true }
+    });
+  }
+
+  return res.json({
+    paid: false,
+    message: 'Chưa nhận được giao dịch chuyển khoản từ Ngân Hàng'
+  });
 });
 
 // 7. Bulk Admin Actions (Multi-select)
