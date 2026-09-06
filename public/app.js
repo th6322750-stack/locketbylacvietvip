@@ -271,7 +271,7 @@ async function executeSingleUpgrade() {
       body: JSON.stringify({
         username,
         uid,
-        mode: currentMode,
+        mode: 'nodns',
         channel,
         price,
         payment_status,
@@ -336,7 +336,7 @@ async function executeBulkUpgrade() {
     const res = await fetch('/api/upgrade/bulk', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ entries, mode: currentMode, price, channel })
+      body: JSON.stringify({ entries, mode: 'nodns', price, channel })
     });
 
     const data = await res.json();
@@ -458,14 +458,27 @@ async function loadAdminData(showToastMsg = false) {
     document.getElementById('adminTotalUsers').innerText = data.total || allUsers.length;
     document.getElementById('tabBadgeUserCount').innerText = data.total || allUsers.length;
 
-    const formattedRev = (data.total_revenue || allUsers.length * 50000).toLocaleString('vi-VN') + ' đ';
+    const formattedRev = (data.total_revenue || allUsers.length * 60000).toLocaleString('vi-VN') + ' đ';
     document.getElementById('adminTotalRevenue').innerText = formattedRev;
 
     const count15s = allUsers.filter(u => u.video_15s).length;
-    document.getElementById('admin15sUsers').innerText = count15s;
+    if (document.getElementById('admin15sUsers')) {
+      document.getElementById('admin15sUsers').innerText = data.total || allUsers.length;
+    }
 
     renderAdminTable(allUsers);
     if (showToastMsg) showToast('Đã làm mới dữ liệu khách hàng!');
+
+    // Real-time Auto Sync Polling every 5 seconds for both admins (kwang & lucifer)
+    if (!window._adminRealtimeSyncTimer) {
+      window._adminRealtimeSyncTimer = setInterval(() => {
+        const lockOverlay = document.getElementById('adminLockOverlay');
+        const isUnlocked = !lockOverlay || lockOverlay.style.display === 'none';
+        if (isUnlocked && !editingUid) {
+          loadAdminData(false);
+        }
+      }, 5000);
+    }
   } catch (err) {
     console.error('Error loading users:', err);
   }
@@ -481,12 +494,10 @@ function renderAdminTable(users) {
   tbody.innerHTML = users.map((u, idx) => {
     const isChecked = selectedUids.has(u.uid);
     const shortUid = (u.uid || '').substring(0, 10) + '...';
-    const featureBadge = u.video_15s 
-      ? `<span class="tag-15s-pill">15s Video</span>` 
-      : `<span class="tag-15s-pill" style="background: rgba(255,204,0,0.15); color: #ffcc00;">Gold</span>`;
+    const featureBadge = `<span class="tag-channel-pill" style="background: rgba(255,204,0,0.15); color: #ffcc00; border: 1px solid rgba(255,204,0,0.3); font-weight: 700;">No-DNS Chuẩn</span>`;
 
     const channelBadge = `<span class="tag-channel-pill">${u.channel || 'Zalo'}</span>`;
-    const priceFormatted = (Number(u.price) || 50000).toLocaleString('vi-VN') + ' đ';
+    const priceFormatted = (Number(u.price) || 60000).toLocaleString('vi-VN') + ' đ';
     const paymentBadge = u.payment_status === 'paid' 
       ? `<span class="badge-paid">Đã TT</span>` 
       : `<span class="badge-pending">Chờ TT</span>`;
@@ -523,6 +534,7 @@ function renderAdminTable(users) {
       </tr>
     `;
   }).join('');
+
 
   updateBulkToolbar();
 }

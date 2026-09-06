@@ -540,7 +540,7 @@ function resolveLocketProfile(input) {
 // -------------------------------------------------------------
 // REVENUECAT INJECTION & VERIFICATION
 // -------------------------------------------------------------
-function injectToRevenueCat(uid, is15s = true, customToken = null) {
+function injectToRevenueCat(uid, is15s = false, customToken = null) {
   return new Promise((resolve) => {
     let tokenToUse = customToken || MASTER_FETCH_TOKEN;
     if (!tokenToUse || !tokenToUse.startsWith('ey')) {
@@ -554,10 +554,9 @@ function injectToRevenueCat(uid, is15s = true, customToken = null) {
       currency: "USD",
       is_restore: true,
       attributes: {
-        "storefront": { value: is15s ? "USA" : "VNM" },
+        "storefront": { value: "VNM" },
         "app_version": { value: "1.144.0" },
-        "platform": { value: "iOS" },
-        "video_15s_enabled": { value: is15s ? "true" : "false" }
+        "platform": { value: "iOS" }
       }
     };
 
@@ -973,7 +972,7 @@ app.get('/api/scan-all', requireAdminAuth, async (req, res) => {
 
 // 5. Fast Upgrade (Single)
 app.post('/api/upgrade', async (req, res) => {
-  const { username, uid, mode = '15s', price = DEFAULT_PRICE, payment_status = 'paid', channel = 'zalo', notes = '', avatar = '' } = req.body;
+  const { username, uid, mode = 'nodns', price = DEFAULT_PRICE, payment_status = 'paid', channel = 'zalo', notes = '', avatar = '' } = req.body;
   if (!uid || typeof uid !== 'string' || uid.trim().length < 10) {
     return res.status(400).json({ success: false, error: 'UID Locket không hợp lệ!' });
   }
@@ -982,7 +981,7 @@ app.post('/api/upgrade', async (req, res) => {
   const cleanUsername = (username || 'customer_' + cleanUid.substring(0, 6)).trim().replace('@', '');
   const is15s = mode === '15s' || mode === 'nodns15s';
 
-  // Inject to RevenueCat
+  // Inject to RevenueCat with VNM storefront
   const injectRes = await injectToRevenueCat(cleanUid, is15s);
 
   // Save record
