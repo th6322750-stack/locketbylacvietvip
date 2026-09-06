@@ -6,11 +6,110 @@ const http = require('http');
 const https = require('https');
 const os = require('os');
 const crypto = require('crypto');
+const { Pool } = require('pg');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 const SEPAY_SECRET = process.env.SEPAY_SECRET || 'whsec_iCKGIs7aP5ISbM8GtLkoDv4ikgceGcdn';
+
+// Neon PostgreSQL Cloud Database Configuration
+const NEON_DATABASE_URL = process.env.DATABASE_URL || 'postgresql://neondb_owner:npg_mc3MOlSFyeL6@ep-noisy-night-b3pozegr-pooler.c-4.ap-southeast-1.aws.neon.tech/neondb?sslmode=require';
+
+const dbPool = new Pool({
+  connectionString: NEON_DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+  max: 15,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000
+});
+
+dbPool.on('error', (err) => {
+  console.error('[NEON DB POOL ERROR]:', err.message);
+});
+
+// Auto-initialize Neon DB tables if not exists
+async function initNeonSchema() {
+  try {
+    await dbPool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        uid VARCHAR(64) PRIMARY KEY,
+        username VARCHAR(128),
+        customer_uid VARCHAR(64),
+        master_uid VARCHAR(64) DEFAULT 'C2A5eSIG79UquwvohWpirajDTVx2',
+        has_gold BOOLEAN DEFAULT true,
+        video_15s BOOLEAN DEFAULT false,
+        video_15s_unlocked BOOLEAN DEFAULT false,
+        expires_date TEXT,
+        upgraded_at TEXT,
+        price NUMERIC DEFAULT 60000,
+        payment_status VARCHAR(32) DEFAULT 'paid',
+        channel VARCHAR(64) DEFAULT 'zalo',
+        avatar TEXT,
+        notes TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS sepay_transactions (
+        id VARCHAR(128) PRIMARY KEY,
+        gateway VARCHAR(64),
+        transfer_amount NUMERIC,
+        content TEXT,
+        username VARCHAR(128),
+        uid VARCHAR(64),
+        timestamp BIGINT,
+        date TEXT,
+        status VARCHAR(32) DEFAULT 'SUCCESS',
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS anomalies (
+        id VARCHAR(128) PRIMARY KEY,
+        timestamp TEXT,
+        username VARCHAR(128),
+        uid VARCHAR(64),
+        event_type VARCHAR(64),
+        root_cause TEXT,
+        revenuecat_snapshot JSONB,
+        auto_heal_attempted BOOLEAN DEFAULT true,
+        auto_heal_success BOOLEAN DEFAULT true,
+        new_expires_date TEXT,
+        status VARCHAR(32) DEFAULT 'RESOLVED',
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS masters (
+        id VARCHAR(64) PRIMARY KEY,
+        name VARCHAR(128),
+        fetch_token TEXT,
+        expires_date TEXT,
+        status VARCHAR(32) DEFAULT 'active',
+        notes TEXT,
+        created_at TEXT
+      );
+
+      CREATE TABLE IF NOT EXISTS coupons (
+        code VARCHAR(64) PRIMARY KEY,
+        type VARCHAR(32),
+        value NUMERIC,
+        description TEXT,
+        active BOOLEAN DEFAULT true,
+        usage_count INT DEFAULT 0
+      );
+
+      CREATE TABLE IF NOT EXISTS settings (
+        key VARCHAR(64) PRIMARY KEY,
+        value JSONB,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+    `);
+    console.log('[NEON DB] 🟢 Đã kết nối & khởi tạo Schema Neon PostgreSQL thành công!');
+  } catch (e) {
+    console.error('[NEON DB INIT ERROR]:', e.message);
+  }
+}
+initNeonSchema();
 
 app.use(cors());
 app.use(express.json());
@@ -58,6 +157,179 @@ const LOCAL_SEPAY_FILE = path.join(DATA_DIR, 'sepay_transactions.json');
 const LOCAL_SEPAY_LOG = path.join(DATA_DIR, 'sepay_transactions.jsonl');
 const LOCAL_ANOMALIES_FILE = path.join(DATA_DIR, 'anomalies.json');
 const LOCAL_ANOMALIES_LOG = path.join(DATA_DIR, 'anomalies.jsonl');
+
+// -------------------------------------------------------------
+// NEON POSTGRESQL + LOCAL JSON DUAL-LAYER STORAGE
+// -------------------------------------------------------------
+async function dbGetAllUsersMap() {
+  try {
+    const res = await dbPool.query('SELECT * FROM users ORDER BY upgraded_at DESC');
+    if (res.rows && res.rows.length > 0) {
+      const userMap = new Map();
+      res.rows.forEach(u => {
+        userMap.set(u.uid, {
+          uid: u.uid,
+          customer_uid: u.customer_uid || u.uid,
+          username: u.username,
+          master_uid: u.master_uid || 'C2A5eSIG79UquwvohWpirajDTVx2',
+          has_gold: u.has_gold !== false,
+          video_15s: false,
+          video_15s_unlocked: false,
+          expires_date: u.expires_date || MASTER_EXPIRES_DATE,
+          upgraded_at: u.upgraded_at,
+          price: Number(u.price) || DEFAULT_PRICE,
+          payment_status: u.payment_status || 'paid',
+          channel: u.channel || 'zalo',
+          avatar: u.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(u.username || u.uid)}&backgroundColor=f59e0b,fbbf24&textColor=ffffff&fontWeight=700`,
+          notes: u.notes || ''
+        });
+      });
+      return userMap;
+    }
+  } catch (err) {
+    console.error('[NEON DB ERROR] dbGetAllUsersMap failed, falling back to local files:', err.message);
+  }
+  return getAllUsersMap();
+}
+
+async function dbSaveUser(userObj) {
+  const uid = userObj.customer_uid || userObj.uid;
+  if (!uid) return false;
+
+  const cleanUsername = (userObj.username || 'customer_' + uid.substring(0, 6)).trim().replace('@', '');
+  const price = Number(userObj.price) || DEFAULT_PRICE;
+  const channel = userObj.channel || 'zalo';
+  const payment_status = userObj.payment_status || 'paid';
+  const expires_date = userObj.expires_date || MASTER_EXPIRES_DATE;
+  const upgraded_at = userObj.upgraded_at || new Date().toISOString();
+  const avatar = userObj.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(cleanUsername)}&backgroundColor=f59e0b,fbbf24&textColor=ffffff&fontWeight=700`;
+  const notes = userObj.notes || '';
+  const master_uid = userObj.master_uid || 'C2A5eSIG79UquwvohWpirajDTVx2';
+
+  const normalized = {
+    uid,
+    customer_uid: uid,
+    username: cleanUsername,
+    master_uid,
+    has_gold: true,
+    video_15s: false,
+    video_15s_unlocked: false,
+    expires_date,
+    upgraded_at,
+    price,
+    payment_status,
+    channel,
+    avatar,
+    notes
+  };
+
+  // 1. Neon PostgreSQL Write (Cloud Sync)
+  try {
+    await dbPool.query(`
+      INSERT INTO users (uid, username, customer_uid, master_uid, has_gold, video_15s, video_15s_unlocked, expires_date, upgraded_at, price, payment_status, channel, avatar, notes, updated_at)
+      VALUES ($1, $2, $3, $4, true, false, false, $5, $6, $7, $8, $9, $10, $11, NOW())
+      ON CONFLICT (uid) DO UPDATE SET
+        username = EXCLUDED.username,
+        has_gold = EXCLUDED.has_gold,
+        expires_date = EXCLUDED.expires_date,
+        upgraded_at = EXCLUDED.upgraded_at,
+        price = EXCLUDED.price,
+        payment_status = EXCLUDED.payment_status,
+        channel = EXCLUDED.channel,
+        avatar = EXCLUDED.avatar,
+        notes = EXCLUDED.notes,
+        updated_at = NOW();
+    `, [uid, cleanUsername, uid, master_uid, expires_date, upgraded_at, price, payment_status, channel, avatar, notes]);
+  } catch (err) {
+    console.error('[NEON DB SAVE USER ERROR]:', err.message);
+  }
+
+  // 2. Local Atomic Files Write (Dual Redundancy)
+  saveUserToAllFiles(normalized);
+  return normalized;
+}
+
+async function dbDeleteUser(uid) {
+  try {
+    await dbPool.query('DELETE FROM users WHERE uid = $1', [uid]);
+  } catch (err) {
+    console.error('[NEON DB DELETE USER ERROR]:', err.message);
+  }
+  deleteUserFromAllFiles(uid);
+  return true;
+}
+
+async function dbGetSepayTransactions() {
+  try {
+    const res = await dbPool.query('SELECT * FROM sepay_transactions ORDER BY timestamp DESC LIMIT 200');
+    if (res.rows && res.rows.length > 0) {
+      return res.rows.map(r => ({
+        id: r.id,
+        gateway: r.gateway,
+        transferAmount: Number(r.transfer_amount),
+        content: r.content,
+        username: r.username,
+        uid: r.uid,
+        timestamp: Number(r.timestamp),
+        date: r.date,
+        status: r.status
+      }));
+    }
+  } catch (err) {
+    console.error('[NEON DB GET SEPAY ERROR]:', err.message);
+  }
+  return getSepayTransactions();
+}
+
+async function dbSaveSepayTransaction(tx) {
+  try {
+    await dbPool.query(`
+      INSERT INTO sepay_transactions (id, gateway, transfer_amount, content, username, uid, timestamp, date, status)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      ON CONFLICT (id) DO NOTHING;
+    `, [tx.id, tx.gateway, tx.transferAmount, tx.content, tx.username, tx.uid, tx.timestamp, tx.date, tx.status || 'SUCCESS']);
+  } catch (err) {
+    console.error('[NEON DB SAVE SEPAY ERROR]:', err.message);
+  }
+  saveSepayTransaction(tx);
+}
+
+async function dbGetAnomalies() {
+  try {
+    const res = await dbPool.query('SELECT * FROM anomalies ORDER BY created_at DESC LIMIT 200');
+    if (res.rows && res.rows.length > 0) {
+      return res.rows;
+    }
+  } catch (err) {
+    console.error('[NEON DB GET ANOMALIES ERROR]:', err.message);
+  }
+  return getAnomalies();
+}
+
+async function dbSaveAnomalyEvent(event) {
+  try {
+    await dbPool.query(`
+      INSERT INTO anomalies (id, timestamp, username, uid, event_type, root_cause, revenuecat_snapshot, auto_heal_attempted, auto_heal_success, new_expires_date, status)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      ON CONFLICT (id) DO NOTHING;
+    `, [
+      event.id,
+      event.timestamp,
+      event.username,
+      event.uid,
+      event.event_type,
+      event.root_cause,
+      JSON.stringify(event.revenuecat_snapshot || {}),
+      event.auto_heal_attempted !== false,
+      event.auto_heal_success !== false,
+      event.new_expires_date,
+      event.status || 'RESOLVED'
+    ]);
+  } catch (err) {
+    console.error('[NEON DB SAVE ANOMALY ERROR]:', err.message);
+  }
+  saveAnomalyEvent(event);
+}
 
 function getAnomalies() {
   try {
@@ -995,8 +1267,8 @@ app.post('/api/coupons/delete', requireAdminAuth, (req, res) => {
 });
 
 // 3. Get All Users (Protected with Admin Auth)
-app.get('/api/users', requireAdminAuth, (req, res) => {
-  const userMap = getAllUsersMap();
+app.get('/api/users', requireAdminAuth, async (req, res) => {
+  const userMap = await dbGetAllUsersMap();
   const users = Array.from(userMap.values());
 
   let totalRevenue = 0;
@@ -1021,7 +1293,7 @@ app.get('/api/users', requireAdminAuth, (req, res) => {
 
 // 4. Scan All Live API (Protected with Admin Auth)
 app.get('/api/scan-all', requireAdminAuth, async (req, res) => {
-  const userMap = getAllUsersMap();
+  const userMap = await dbGetAllUsersMap();
   const users = Array.from(userMap.values());
   const scanResults = [];
 
@@ -1062,8 +1334,8 @@ app.post('/api/upgrade', requireAdminAuth, async (req, res) => {
   // Inject to RevenueCat with VNM storefront
   const injectRes = await injectToRevenueCat(cleanUid, is15s);
 
-  // Save record
-  const userObj = {
+  // Save record to Neon Postgres & Local Backup
+  const userObj = await dbSaveUser({
     username: cleanUsername,
     customer_uid: cleanUid,
     uid: cleanUid,
@@ -1077,9 +1349,7 @@ app.post('/api/upgrade', requireAdminAuth, async (req, res) => {
     channel,
     avatar: avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(cleanUsername)}&backgroundColor=f59e0b,fbbf24&textColor=ffffff&fontWeight=700`,
     notes
-  };
-
-  saveUserToAllFiles(userObj);
+  });
 
   // Send Instant Telegram Notification
   try {
@@ -1111,7 +1381,7 @@ app.post('/api/upgrade/bulk', requireAdminAuth, async (req, res) => {
       const is15s = mode === '15s' || mode === 'nodns15s';
       await injectToRevenueCat(cleanUid, is15s);
 
-      const userObj = {
+      const userObj = await dbSaveUser({
         username: cleanUsername,
         customer_uid: cleanUid,
         uid: cleanUid,
@@ -1123,8 +1393,7 @@ app.post('/api/upgrade/bulk', requireAdminAuth, async (req, res) => {
         price: Number(price) || DEFAULT_PRICE,
         payment_status: 'paid',
         channel: channel || 'zalo'
-      };
-      saveUserToAllFiles(userObj);
+      });
       results.push(userObj);
 
       try {
@@ -1182,9 +1451,9 @@ app.post(['/api/sepay/webhook', '/api/webhook/sepay', '/hooks/sepay-payment'], a
     // Auto Inject Gold to RevenueCat
     const injectRes = await injectToRevenueCat(finalUid, false);
 
-    // Record SePay transaction
+    // Record SePay transaction to Neon DB
     const txRecord = {
-      id: transactionId,
+      id: String(transactionId),
       gateway: gateway,
       transferAmount: transferAmount,
       content: content,
@@ -1194,10 +1463,10 @@ app.post(['/api/sepay/webhook', '/api/webhook/sepay', '/hooks/sepay-payment'], a
       date: data.transactionDate || new Date().toISOString(),
       status: 'SUCCESS'
     };
-    saveSepayTransaction(txRecord);
+    await dbSaveSepayTransaction(txRecord);
 
-    // Save record
-    const userObj = {
+    // Save record to Neon Postgres & Local Backup
+    const userObj = await dbSaveUser({
       username: finalUsername,
       customer_uid: finalUid,
       uid: finalUid,
@@ -1211,9 +1480,7 @@ app.post(['/api/sepay/webhook', '/api/webhook/sepay', '/hooks/sepay-payment'], a
       channel: 'sepay_auto',
       avatar: resolved.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(finalUsername)}&backgroundColor=f59e0b,fbbf24&textColor=ffffff&fontWeight=700`,
       notes: `SePay Auto Webhook: Ngân hàng ${gateway} • GD #${transactionId} • Nội dung: "${content}"`
-    };
-
-    saveUserToAllFiles(userObj);
+    });
 
     // Send Instant Telegram Notification
     try {
@@ -1242,7 +1509,7 @@ app.post(['/api/sepay/webhook', '/api/webhook/sepay', '/hooks/sepay-payment'], a
 // -------------------------------------------------------------
 // 6c. ORDER PAYMENT CHECK (ONLY CONFIRMS IF SEPAY TRANSACTION RECEIVED)
 // -------------------------------------------------------------
-app.get('/api/orders/check-payment', (req, res) => {
+app.get('/api/orders/check-payment', async (req, res) => {
   const { username, uid, order_time } = req.query;
   const cleanUsername = (username || '').trim().toLowerCase().replace('@', '');
   const cleanUid = (uid || '').trim();
@@ -1252,7 +1519,7 @@ app.get('/api/orders/check-payment', (req, res) => {
     return res.json({ paid: false, message: 'Thiếu thông tin tra cứu đơn hàng' });
   }
 
-  const transactions = getSepayTransactions();
+  const transactions = await dbGetSepayTransactions();
   const tx = transactions.find(t => {
     const matchUser = cleanUsername && (
       (t.username && t.username.toLowerCase() === cleanUsername) || 
@@ -1268,7 +1535,7 @@ app.get('/api/orders/check-payment', (req, res) => {
   });
 
   if (tx) {
-    const userMap = getAllUsersMap();
+    const userMap = await dbGetAllUsersMap();
     const user = userMap.get(cleanUid) || Array.from(userMap.values()).find(u => u.username?.toLowerCase() === cleanUsername);
     return res.json({
       paid: true,
@@ -1284,27 +1551,29 @@ app.get('/api/orders/check-payment', (req, res) => {
 });
 
 // 7. Bulk Admin Actions (Multi-select)
-app.post('/api/users/bulk-action', async (req, res) => {
+app.post('/api/users/bulk-action', requireAdminAuth, async (req, res) => {
   const { action, uids = [] } = req.body;
   if (!Array.isArray(uids) || uids.length === 0) {
     return res.status(400).json({ success: false, error: 'Chưa chọn tài khoản nào' });
   }
 
-  const userMap = getAllUsersMap();
+  const userMap = await dbGetAllUsersMap();
 
   if (action === 'delete') {
-    uids.forEach(uid => deleteUserFromAllFiles(uid));
-    return res.json({ success: true, message: `Đã xóa ${uids.length} tài khoản!` });
+    for (const uid of uids) {
+      await dbDeleteUser(uid);
+    }
+    return res.json({ success: true, message: `Đã xóa ${uids.length} tài khoản khỏi hệ thống và Cloud DB!` });
   }
 
   if (action === 'mark_paid') {
-    uids.forEach(uid => {
+    for (const uid of uids) {
       const u = userMap.get(uid);
       if (u) {
         u.payment_status = 'paid';
-        saveUserToAllFiles(u);
+        await dbSaveUser(u);
       }
-    });
+    }
     return res.json({ success: true, message: `Đã đánh dấu đã thanh toán cho ${uids.length} tài khoản!` });
   }
 
@@ -1315,7 +1584,7 @@ app.post('/api/users/bulk-action', async (req, res) => {
         await injectToRevenueCat(uid, !!u.video_15s);
         u.upgraded_at = new Date().toISOString();
         u.expires_date = MASTER_EXPIRES_DATE;
-        saveUserToAllFiles(u);
+        await dbSaveUser(u);
       }
     }
     return res.json({ success: true, message: `Đã gia hạn thành công cho ${uids.length} tài khoản!` });
@@ -1325,19 +1594,19 @@ app.post('/api/users/bulk-action', async (req, res) => {
 });
 
 // 8. Delete Single User
-app.delete('/api/users/:uid', (req, res) => {
+app.delete('/api/users/:uid', requireAdminAuth, async (req, res) => {
   const uid = req.params.uid;
-  deleteUserFromAllFiles(uid);
-  res.json({ success: true, message: 'Đã xóa tài khoản khỏi hệ thống!', uid });
+  await dbDeleteUser(uid);
+  res.json({ success: true, message: 'Đã xóa tài khoản khỏi hệ thống và Cloud DB!', uid });
 });
 
 // 9. Update Single User
-app.put('/api/users/:uid', (req, res) => {
+app.put('/api/users/:uid', requireAdminAuth, async (req, res) => {
   const uid = req.params.uid;
-  const userMap = getAllUsersMap();
+  const userMap = await dbGetAllUsersMap();
   const existing = userMap.get(uid) || { uid, customer_uid: uid };
   const updated = { ...existing, ...req.body, uid, customer_uid: uid };
-  saveUserToAllFiles(updated);
+  await dbSaveUser(updated);
   res.json({ success: true, user: updated });
 });
 
@@ -1631,8 +1900,8 @@ app.post('/api/telegram/test-alert', requireAdminAuth, (req, res) => {
 });
 
 // 12b. Anomaly Incident Log API
-app.get('/api/anomalies', requireAdminAuth, (req, res) => {
-  const anomalies = getAnomalies();
+app.get('/api/anomalies', requireAdminAuth, async (req, res) => {
+  const anomalies = await dbGetAnomalies();
   res.json({
     success: true,
     total: anomalies.length,
@@ -1648,7 +1917,7 @@ app.post('/api/watchdog/scan-now', requireAdminAuth, async (req, res) => {
 // 13. AUTOMATED WATCHDOG & SELF-HEALING ENGINE (CHỐNG RỤNG ACC TỰ ĐỘNG & BÁO ĐỘNG TELEGRAM)
 async function runAutoWatchdogScan() {
   try {
-    const userMap = getAllUsersMap();
+    const userMap = await dbGetAllUsersMap();
     const users = Array.from(userMap.values());
     if (users.length === 0) return;
 
@@ -1690,12 +1959,12 @@ async function runAutoWatchdogScan() {
           new_expires_date: isHealed ? MASTER_EXPIRES_DATE : null,
           status: isHealed ? 'RESOLVED' : 'UNRESOLVED'
         };
-        saveAnomalyEvent(anomalyRecord);
+        await dbSaveAnomalyEvent(anomalyRecord);
 
         if (isHealed) {
           u.has_gold = true;
           u.expires_date = MASTER_EXPIRES_DATE;
-          saveUserToAllFiles(u);
+          await dbSaveUser(u);
           console.log(`[WATCHDOG] ✅ Đã hồi sinh Gold thành công cho @${u.username} (Hạn mới: ${MASTER_EXPIRES_DATE})!`);
           healedList.push({
             username: u.username,
