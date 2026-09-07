@@ -1487,6 +1487,103 @@ app.post(['/api/sepay/webhook', '/api/webhook/sepay', '/hooks/sepay-payment'], a
       return res.status(200).json({ success: true, message: 'Bỏ qua: Không có nội dung chuyển khoản' });
     }
 
+    // 1. Check if content matches a Telegram Bot order payment_ref (SHOP...)
+    const shopRefMatch = content.match(/SHOP[0-9A-Za-z_-]{6,20}/i);
+    if (shopRefMatch) {
+      const orderRef = shopRefMatch[0].toUpperCase();
+      try {
+        const botOrderRes = await dbPool.query(
+          `SELECT o.*, p.name as product_name, p.delivery_type, u.telegram_id, u.username as tg_username
+           FROM bot_orders o
+           LEFT JOIN bot_products p ON o.product_id = p.id
+           LEFT JOIN bot_users u ON o.user_id = u.id
+           WHERE UPPER(o.payment_ref) = $1 LIMIT 1`,
+          [orderRef]
+        );
+        if (botOrderRes.rows.length > 0) {
+          const matchedBotOrder = botOrderRes.rows[0];
+          const targetLocket = matchedBotOrder.locket_username || matchedBotOrder.locket_uid;
+          let injectRes = { success: false };
+          let finalUid = null;
+          let finalUsername = targetLocket;
+
+          if (targetLocket) {
+            const resolved = await resolveLocketProfile(targetLocket);
+            finalUid = resolved.uid || (targetLocket.length >= 15 ? targetLocket : null);
+            finalUsername = resolved.username || targetLocket.replace('@', '');
+            if (finalUid) {
+              injectRes = await injectToRevenueCat(finalUid, false);
+              if (injectRes.success) {
+                await dbSaveUser({
+                  username: finalUsername,
+                  customer_uid: finalUid,
+                  uid: finalUid,
+                  master_uid: injectRes.cluster_uid || MASTER_CLUSTERS[0].uid,
+                  has_gold: true,
+                  video_15s: false,
+                  expires_date: MASTER_EXPIRES_DATE,
+                  upgraded_at: new Date().toISOString(),
+                  price: transferAmount || matchedBotOrder.final_price,
+                  payment_status: 'paid',
+                  channel: 'telegram_bot',
+                  avatar: resolved.avatar,
+                  notes: `Nạp tự động qua Telegram Bot #${orderRef} (${injectRes.cluster || 'Cụm 2'})`
+                });
+              }
+            }
+          }
+
+          // Update bot_orders table on Neon DB
+          await dbPool.query(
+            `UPDATE bot_orders 
+             SET status = 'DELIVERED', paid_amount = $1, transaction_id = $2, paid_at = NOW(), delivered_at = NOW()
+             WHERE id = $3`,
+            [transferAmount || matchedBotOrder.final_price, String(transactionId), matchedBotOrder.id]
+          );
+
+          // Notify customer directly on Telegram
+          if (matchedBotOrder.telegram_id) {
+            const teleToken = '7798628777:AAGjA9r0yjI8y83l5sCfAn-kOET-UYSg4Sw';
+            let teleMsg = `🎉 <b>ĐƠN HÀNG #${matchedBotOrder.payment_ref} ĐÃ THANH TOÁN THÀNH CÔNG!</b>\n` +
+              `━━━━━━━━━━━━━━━━━━━\n` +
+              `🛍️ <b>Sản phẩm:</b> ${matchedBotOrder.product_name}\n` +
+              `💰 <b>Số tiền:</b> ${Number(transferAmount || matchedBotOrder.final_price).toLocaleString('vi-VN')} đ\n`;
+            if (injectRes.success) {
+              teleMsg += `👤 <b>Tài khoản Locket:</b> @${finalUsername}\n` +
+                `🔑 <b>Trạng thái:</b> 🟢 ĐÃ KÍCH HOẠT LOCKET GOLD THÀNH CÔNG (Cụm StoreKit 2)\n\n` +
+                `👉 <b>Khách vui lòng vuốt tắt hẳn app Locket và mở lại để nhận đặc quyền Gold ngay!</b>\n`;
+            } else {
+              teleMsg += `⚠️ <b>Trạng thái:</b> Đã ghi nhận tiền. Hệ thống đang đồng bộ Locket Gold cho @${finalUsername}!\n`;
+            }
+            teleMsg += `━━━━━━━━━━━━━━━━━━━\n🤖 <i>KwSHOP PREMIUM xin chân thành cảm ơn!</i>`;
+
+            const teleReq = https.request({
+              hostname: 'api.telegram.org',
+              path: '/bot' + teleToken + '/sendMessage',
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' }
+            });
+            teleReq.on('error', () => {});
+            teleReq.write(JSON.stringify({
+              chat_id: matchedBotOrder.telegram_id,
+              text: teleMsg,
+              parse_mode: 'HTML'
+            }));
+            teleReq.end();
+          }
+
+          return res.status(200).json({
+            success: true,
+            message: `Đã tự động xác nhận đơn Telegram Bot #${orderRef}!`,
+            order_id: matchedBotOrder.id,
+            rc_result: injectRes
+          });
+        }
+      } catch (botErr) {
+        console.error('Lỗi kiểm tra đơn Bot Telegram trong SePay webhook:', botErr);
+      }
+    }
+
     // Extract username or UID from content (e.g. "SEVQR LOCKET tnmai06", "LOCKET tnmai06", "SEVQR tnmai06", "tnmai06", "C2A5eSIG...")
     let target = content
       .replace(/^(SEVQR|LOCKET|LK|LKT|CK|NAP|GD)[_\s:]*/gi, '')
