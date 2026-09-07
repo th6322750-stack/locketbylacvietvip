@@ -2249,20 +2249,33 @@ async function runAutoWatchdogScan() {
 // GET /api/bot/overview: financial and order metrics
 app.get('/api/bot/overview', async (req, res) => {
   try {
-    const ordersCountRes = await dbPool.query(`SELECT COUNT(*) as count FROM bot_orders`);
-    const revenueRes = await dbPool.query(`SELECT COALESCE(SUM(final_price), 0) as total FROM bot_orders WHERE status::text IN ('PAID', 'DELIVERED')`);
-    const usersCountRes = await dbPool.query(`SELECT COUNT(*) as count FROM bot_users`);
-    const productsCountRes = await dbPool.query(`SELECT COUNT(*) as count FROM bot_products WHERE is_active = true`);
-    const locketOrdersRes = await dbPool.query(`SELECT COUNT(*) as count FROM bot_orders WHERE locket_username IS NOT NULL OR product_id IN (SELECT id FROM bot_products WHERE delivery_type::text = 'LOCKET_GOLD')`);
+    const ordersCountRes = await dbPool.query(`SELECT COUNT(*) as count FROM "Order"`);
+    const revenueRes = await dbPool.query(`SELECT COALESCE(SUM("totalPrice"), 0) as total FROM "Order" WHERE status = 'COMPLETED'`);
+    const usersCountRes = await dbPool.query(`SELECT COUNT(*) as count FROM "User"`);
+    const productsCountRes = await dbPool.query(`SELECT COUNT(*) as count FROM "Product" WHERE "isActive" = true`);
+    const locketOrdersRes = await dbPool.query(`
+      SELECT COUNT(*) as count FROM "Order" o
+      JOIN "Product" p ON o."productId" = p.id
+      WHERE p.type = 'LOCKET'
+    `);
 
     const recentOrdersRes = await dbPool.query(`
-      SELECT o.id, o.payment_ref, o.quantity, o.final_price, o.status, o.locket_username, o.locket_uid, o.created_at,
-             p.name as product_name, p.delivery_type,
-             u.username as tg_username, u.full_name as tg_full_name, u.telegram_id
-      FROM bot_orders o
-      LEFT JOIN bot_products p ON o.product_id = p.id
-      LEFT JOIN bot_users u ON o.user_id = u.id
-      ORDER BY o.created_at DESC
+      SELECT o.id, 
+             CONCAT('DH-', o.id) as payment_ref,
+             o.quantity, 
+             o."totalPrice" as final_price, 
+             o.status, 
+             o."deliveredContent" as locket_username, 
+             o."createdAt" as created_at,
+             p.name as product_name, 
+             p.type as delivery_type,
+             u.username as tg_username, 
+             u."firstName" as tg_full_name, 
+             u."telegramId" as telegram_id
+      FROM "Order" o
+      LEFT JOIN "Product" p ON o."productId" = p.id
+      LEFT JOIN "User" u ON o."userId" = u.id
+      ORDER BY o."createdAt" DESC
       LIMIT 10
     `);
 
@@ -2283,15 +2296,20 @@ app.get('/api/bot/overview', async (req, res) => {
   }
 });
 
-// GET /api/bot/products: list all bot products
+// GET /api/bot/products: list all bot products from unified Prisma tables
 app.get('/api/bot/products', async (req, res) => {
   try {
     const result = await dbPool.query(`
-      SELECT p.id, p.name, p.description, p.price, p.delivery_type, p.stock, p.is_active, p.total_sold, p.created_at,
-             c.name as category_name, c.emoji as category_emoji
-      FROM bot_products p
-      LEFT JOIN bot_categories c ON p.category_id = c.id
-      ORDER BY p.id ASC
+      SELECT p.id, p.name, p.description, p.price, p.type as delivery_type,
+             COALESCE((SELECT COUNT(*) FROM "StockItem" s WHERE s."productId" = p.id AND s."isSold" = false), 0) as stock,
+             p."isActive" as is_active,
+             COALESCE((SELECT COUNT(*) FROM "Order" o WHERE o."productId" = p.id AND o.status = 'COMPLETED'), 0) as total_sold,
+             p."createdAt" as created_at,
+             c.name as category_name,
+             c."iconCustomEmojiId" as category_emoji
+      FROM "Product" p
+      LEFT JOIN "Category" c ON p."categoryId" = c.id
+      ORDER BY c."sortOrder" ASC, p."sortOrder" ASC, p.id ASC
     `);
     res.json({ success: true, products: result.rows });
   } catch (err) {
@@ -2305,20 +2323,33 @@ app.get('/api/bot/orders', async (req, res) => {
   try {
     const status = req.query.status;
     let query = `
-      SELECT o.id, o.payment_ref, o.quantity, o.unit_price, o.final_price, o.status, 
-             o.locket_username, o.locket_uid, o.transaction_id, o.paid_amount, o.paid_at, o.delivered_at, o.created_at,
-             p.name as product_name, p.delivery_type,
-             u.username as tg_username, u.full_name as tg_full_name, u.telegram_id
-      FROM bot_orders o
-      LEFT JOIN bot_products p ON o.product_id = p.id
-      LEFT JOIN bot_users u ON o.user_id = u.id
+      SELECT o.id, 
+             CONCAT('DH-', o.id) as payment_ref,
+             o.quantity, 
+             o."totalPrice" / GREATEST(o.quantity, 1) as unit_price,
+             o."totalPrice" as final_price, 
+             o.status, 
+             o."deliveredContent" as locket_username, 
+             o."externalOrderCode" as transaction_id, 
+             o."totalPrice" as paid_amount, 
+             o."createdAt" as paid_at, 
+             o."createdAt" as delivered_at, 
+             o."createdAt" as created_at,
+             p.name as product_name, 
+             p.type as delivery_type,
+             u.username as tg_username, 
+             u."firstName" as tg_full_name, 
+             u."telegramId" as telegram_id
+      FROM "Order" o
+      LEFT JOIN "Product" p ON o."productId" = p.id
+      LEFT JOIN "User" u ON o."userId" = u.id
     `;
     const params = [];
     if (status && status !== 'all') {
       params.push(status.toUpperCase());
-      query += ` WHERE UPPER(o.status::text) = $1`;
+      query += ` WHERE UPPER(o.status) = $1`;
     }
-    query += ` ORDER BY o.created_at DESC LIMIT 100`;
+    query += ` ORDER BY o."createdAt" DESC LIMIT 100`;
 
     const result = await dbPool.query(query, params);
     res.json({ success: true, orders: result.rows });
