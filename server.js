@@ -873,9 +873,48 @@ function resolveLocketProfile(input) {
 // REVENUECAT MULTI-CLUSTER MASTER POOL ENGINE
 // -------------------------------------------------------------
 const MASTER_CLUSTERS = [
-  { id: 'MASTER_02', uid: 'lacviet_master_node_02_2026', name: 'Master Cụm 2' },
-  { id: 'MASTER_01', uid: 'VBo5nZiVs4ee3JIyV9L5zlijIa23', name: 'Master Cụm 1' }
+  { id: 'MASTER_01', uid: 'VBo5nZiVs4ee3JIyV9L5zlijIa23', name: 'Master Cụm 1' },
+  { id: 'MASTER_02', uid: 'lacviet_cluster_02_master', name: 'Master Cụm 2' }
 ];
+
+async function ensureMasterClusterActive(masterUid) {
+  try {
+    const rc = await queryRevenueCatLive(masterUid);
+    if (!rc.is_live) {
+      console.log(`[MASTER POOL] 🔄 Kích hoạt lại Token gốc cho Master Cluster ${masterUid}...`);
+      await new Promise((resolve) => {
+        const payload = JSON.stringify({
+          app_user_id: masterUid,
+          fetch_token: DEFAULT_MASTER_JWS_TOKEN,
+          price: 3.99,
+          currency: 'USD',
+          is_restore: true,
+          attributes: { "storefront": { value: "VNM" }, "platform": { value: "iOS" } }
+        });
+        const req = https.request({
+          hostname: 'api.revenuecat.com',
+          path: '/v1/receipts',
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + LOCKET_RC_KEY,
+            'Content-Type': 'application/json',
+            'X-Platform': 'ios',
+            'Content-Length': Buffer.byteLength(payload)
+          }
+        }, (res) => {
+          let b = '';
+          res.on('data', c => b += c);
+          res.on('end', () => resolve());
+        });
+        req.on('error', () => resolve());
+        req.write(payload);
+        req.end();
+      });
+    }
+  } catch (e) {
+    console.warn('[MASTER POOL] Error ensuring master active:', e.message);
+  }
+}
 
 function linkAliasToMaster(masterUid, customerUid) {
   return new Promise((resolve) => {
@@ -906,75 +945,35 @@ function linkAliasToMaster(masterUid, customerUid) {
 }
 
 async function injectToRevenueCat(uid, is15s = false, customToken = null) {
-  // 1. Alias Cluster Grouping (Try active clusters in order to avoid hitting alias limit 7255)
+  // 1. Alias Cluster Grouping (Thử lần lượt: Cụm 1 -> nếu kịch trần tự động chuyển sang Cụm 2, Cụm 3...)
   for (const cluster of MASTER_CLUSTERS) {
     if (uid === cluster.uid) continue;
     try {
+      // Đảm bảo Master Node của Cụm này luôn có Gold
+      await ensureMasterClusterActive(cluster.uid);
+
       const aliasRes = await linkAliasToMaster(cluster.uid, uid);
       if (aliasRes.success) {
         const check = await queryRevenueCatLive(uid);
         if (check.is_live) {
-          return { success: true, method: 'alias_cluster', cluster: cluster.id, data: check.raw };
+          console.log(`[CLUSTER POOL] 🟢 Nạp thành công @${uid} vào ${cluster.name} (${cluster.id})!`);
+          return { success: true, method: 'alias_cluster', cluster: cluster.id, cluster_uid: cluster.uid, data: check.raw };
         }
+      } else {
+        console.warn(`[CLUSTER POOL] ⚠️ ${cluster.name} (${cluster.id}) không thể nhận thêm (HTTP ${aliasRes.statusCode}). Đang tự động chuyển cụm tiếp theo...`);
       }
     } catch (e) {
       console.warn(`[ALIAS ERROR on ${cluster.id}]:`, e.message);
     }
   }
 
-  // 2. Direct Token / StoreKit 2 Receipt Injection Fallback
-  return new Promise((resolve) => {
-    let tokenToUse = customToken || MASTER_FETCH_TOKEN;
-    if (!tokenToUse || !tokenToUse.startsWith('ey')) {
-      tokenToUse = DEFAULT_MASTER_JWS_TOKEN;
-    }
-
-    const payload = {
-      app_user_id: uid,
-      fetch_token: tokenToUse,
-      price: 3.99,
-      currency: "USD",
-      is_restore: true,
-      attributes: {
-        "storefront": { value: "VNM" },
-        "app_version": { value: "1.144.0" },
-        "platform": { value: "iOS" }
-      }
-    };
-
-    const postData = JSON.stringify(payload);
-    const options = {
-      hostname: 'api.revenuecat.com',
-      path: '/v1/receipts',
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + LOCKET_RC_KEY,
-        'Content-Type': 'application/json',
-        'X-Platform': 'ios',
-        'Content-Length': Buffer.byteLength(postData)
-      }
-    };
-
-    const req = https.request(options, (res) => {
-      let body = '';
-      res.on('data', c => body += c);
-      res.on('end', () => {
-        try {
-          const json = JSON.parse(body);
-          resolve({ success: res.statusCode >= 200 && res.statusCode < 300, statusCode: res.statusCode, data: json, method: 'receipt_inject' });
-        } catch (e) {
-          resolve({ success: false, statusCode: res.statusCode, error: body });
-        }
-      });
-    });
-
-    req.on('error', (err) => {
-      resolve({ success: false, error: err.message });
-    });
-
-    req.write(postData);
-    req.end();
-  });
+  // 2. KHÔNG BAO GIỜ nạp token lẻ trực tiếp vào UID cá nhân (fix triệt để chống đá văng token)
+  console.error(`[CLUSTER POOL] ❌ TẤT CẢ CÁC CỤM MASTER ĐÃ ĐẦY! Không nạp lẻ vào UID cá nhân.`);
+  return {
+    success: false,
+    statusCode: 429,
+    error: 'Tất cả các Cụm Master đã kịch trần 50 Alias. Vui lòng thêm Cụm Master mới trên trang Admin để tiếp tục nhận khách!'
+  };
 }
 
 function queryRevenueCatLive(uid) {
@@ -1381,15 +1380,24 @@ app.post('/api/upgrade', requireAdminAuth, async (req, res) => {
   const cleanUsername = (username || 'customer_' + cleanUid.substring(0, 6)).trim().replace('@', '');
   const is15s = mode === '15s' || mode === 'nodns15s';
 
-  // Inject to RevenueCat with VNM storefront
+  // Inject to RevenueCat via Cascade Master Clusters (Cụm 1 -> nếu đầy tự động sang Cụm 2)
   const injectRes = await injectToRevenueCat(cleanUid, is15s);
+
+  if (!injectRes.success) {
+    return res.status(injectRes.statusCode || 500).json({
+      success: false,
+      error: injectRes.error || 'Nạp thất bại: Các cụm Master đều đã đầy!'
+    });
+  }
+
+  const assignedMasterUid = injectRes.cluster_uid || MASTER_CLUSTERS[0].uid;
 
   // Save record to Neon Postgres & Local Backup
   const userObj = await dbSaveUser({
     username: cleanUsername,
     customer_uid: cleanUid,
     uid: cleanUid,
-    master_uid: "C2A5eSIG79UquwvohWpirajDTVx2",
+    master_uid: assignedMasterUid,
     has_gold: true,
     video_15s: is15s,
     expires_date: MASTER_EXPIRES_DATE,
@@ -1398,7 +1406,7 @@ app.post('/api/upgrade', requireAdminAuth, async (req, res) => {
     payment_status,
     channel,
     avatar: avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(cleanUsername)}&backgroundColor=f59e0b,fbbf24&textColor=ffffff&fontWeight=700`,
-    notes
+    notes: (notes ? notes + ' | ' : '') + `Cụm: ${injectRes.cluster || 'Master'}`
   });
 
   // Send Instant Telegram Notification
@@ -1410,7 +1418,7 @@ app.post('/api/upgrade', requireAdminAuth, async (req, res) => {
 
   res.json({
     success: true,
-    message: `Đã nâng cấp thành công Locket Gold cho @${cleanUsername}!`,
+    message: `Đã nâng cấp thành công Locket Gold cho @${cleanUsername} vào ${injectRes.cluster || 'Cụm Master'}!`,
     user: userObj,
     rc_result: injectRes
   });
@@ -1429,26 +1437,32 @@ app.post('/api/upgrade/bulk', requireAdminAuth, async (req, res) => {
     if (cleanUid.length >= 10) {
       const cleanUsername = (item.username || 'customer_' + cleanUid.substring(0, 6)).trim().replace('@', '');
       const is15s = mode === '15s' || mode === 'nodns15s';
-      await injectToRevenueCat(cleanUid, is15s);
+      const injectRes = await injectToRevenueCat(cleanUid, is15s);
 
-      const userObj = await dbSaveUser({
-        username: cleanUsername,
-        customer_uid: cleanUid,
-        uid: cleanUid,
-        master_uid: "C2A5eSIG79UquwvohWpirajDTVx2",
-        has_gold: true,
-        video_15s: is15s,
-        expires_date: MASTER_EXPIRES_DATE,
-        upgraded_at: new Date().toISOString(),
-        price: Number(price) || DEFAULT_PRICE,
-        payment_status: 'paid',
-        channel: channel || 'zalo'
-      });
-      results.push(userObj);
+      if (injectRes.success) {
+        const userObj = await dbSaveUser({
+          username: cleanUsername,
+          customer_uid: cleanUid,
+          uid: cleanUid,
+          master_uid: injectRes.cluster_uid || MASTER_CLUSTERS[0].uid,
+          has_gold: true,
+          video_15s: is15s,
+          expires_date: MASTER_EXPIRES_DATE,
+          upgraded_at: new Date().toISOString(),
+          price: Number(price) || DEFAULT_PRICE,
+          payment_status: 'paid',
+          channel: channel || 'zalo',
+          avatar: item.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(cleanUsername)}&backgroundColor=f59e0b,fbbf24&textColor=ffffff&fontWeight=700`,
+          notes: (item.notes ? item.notes + ' | ' : '') + `Cụm: ${injectRes.cluster || 'Master'}`
+        });
+        results.push(userObj);
 
-      try {
-        sendTelegramOrderAlert(userObj);
-      } catch (e) {}
+        try {
+          sendTelegramOrderAlert(userObj);
+        } catch (e) {}
+      } else {
+        results.push({ username: cleanUsername, uid: cleanUid, success: false, error: injectRes.error });
+      }
     }
   }
 
@@ -1498,7 +1512,7 @@ app.post(['/api/sepay/webhook', '/api/webhook/sepay', '/hooks/sepay-payment'], a
       });
     }
 
-    // Auto Inject Gold to RevenueCat
+    // Auto Inject Gold to RevenueCat (Cụm 1 -> nếu đầy tự động sang Cụm 2)
     const injectRes = await injectToRevenueCat(finalUid, false);
 
     // Record SePay transaction to Neon DB
@@ -1511,7 +1525,7 @@ app.post(['/api/sepay/webhook', '/api/webhook/sepay', '/hooks/sepay-payment'], a
       uid: finalUid,
       timestamp: Date.now(),
       date: data.transactionDate || new Date().toISOString(),
-      status: 'SUCCESS'
+      status: injectRes.success ? 'SUCCESS' : 'FAILED'
     };
     await dbSaveSepayTransaction(txRecord);
 
@@ -1520,16 +1534,18 @@ app.post(['/api/sepay/webhook', '/api/webhook/sepay', '/hooks/sepay-payment'], a
       username: finalUsername,
       customer_uid: finalUid,
       uid: finalUid,
-      master_uid: "C2A5eSIG79UquwvohWpirajDTVx2",
-      has_gold: true,
+      master_uid: injectRes.cluster_uid || MASTER_CLUSTERS[0].uid,
+      has_gold: injectRes.success,
       video_15s: false,
-      expires_date: MASTER_EXPIRES_DATE,
+      expires_date: injectRes.success ? MASTER_EXPIRES_DATE : null,
       upgraded_at: new Date().toISOString(),
       price: transferAmount || DEFAULT_PRICE,
       payment_status: 'paid',
       channel: 'sepay_auto',
       avatar: resolved.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(finalUsername)}&backgroundColor=f59e0b,fbbf24&textColor=ffffff&fontWeight=700`,
-      notes: `SePay Auto Webhook: Ngân hàng ${gateway} • GD #${transactionId} • Nội dung: "${content}"`
+      notes: injectRes.success
+        ? `SePay Auto Webhook: Ngân hàng ${gateway} • GD #${transactionId} • ${injectRes.cluster || 'Cụm Master'}`
+        : `SePay Auto Webhook LỖI: Tất cả các cụm Master đầy, không thể nạp! GD #${transactionId}`
     });
 
     // Send Instant Telegram Notification
@@ -1631,10 +1647,14 @@ app.post('/api/users/bulk-action', requireAdminAuth, async (req, res) => {
     for (const uid of uids) {
       const u = userMap.get(uid);
       if (u) {
-        await injectToRevenueCat(uid, !!u.video_15s);
-        u.upgraded_at = new Date().toISOString();
-        u.expires_date = MASTER_EXPIRES_DATE;
-        await dbSaveUser(u);
+        const injectRes = await injectToRevenueCat(uid, !!u.video_15s);
+        if (injectRes.success) {
+          u.upgraded_at = new Date().toISOString();
+          u.expires_date = MASTER_EXPIRES_DATE;
+          if (injectRes.cluster_uid) u.master_uid = injectRes.cluster_uid;
+          u.has_gold = true;
+          await dbSaveUser(u);
+        }
       }
     }
     return res.json({ success: true, message: `Đã gia hạn thành công cho ${uids.length} tài khoản!` });
@@ -1733,6 +1753,35 @@ app.get('/api/masters', (req, res) => {
     api_key: LOCKET_RC_KEY,
     keys: masterData.keys || []
   });
+});
+
+// 10b. CLUSTER REAL-TIME SLOT STATUS & DISTRIBUTION
+app.get('/api/clusters/status', async (req, res) => {
+  try {
+    const userMap = await dbGetAllUsersMap();
+    const users = Array.from(userMap.values());
+    
+    const clusters = MASTER_CLUSTERS.map(c => {
+      const clusterUsers = users.filter(u => u.master_uid === c.uid || (c.id === 'MASTER_01' && (!u.master_uid || u.master_uid === 'C2A5eSIG79UquwvohWpirajDTVx2' || u.master_uid === c.uid)));
+      const paid = clusterUsers.filter(u => u.payment_status === 'paid').length;
+      const unpaid = clusterUsers.length - paid;
+      return {
+        id: c.id,
+        name: c.name,
+        uid: c.uid,
+        total_slots: 50,
+        used_slots: clusterUsers.length,
+        available_slots: Math.max(0, 50 - clusterUsers.length),
+        paid_count: paid,
+        unpaid_count: unpaid,
+        users: clusterUsers.map(u => ({ username: u.username, uid: u.uid, payment_status: u.payment_status, has_gold: u.has_gold }))
+      };
+    });
+
+    res.json({ success: true, clusters });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 app.post('/api/masters/add', (req, res) => {
@@ -1972,6 +2021,12 @@ async function runAutoWatchdogScan() {
     if (users.length === 0) return;
 
     console.log(`[WATCHDOG] 🛡️ Đang quét tự động ${users.length} tài khoản để chống rụng...`);
+
+    // 1. Luôn bảo trì trạng thái các Cụm Master (Cụm 1, Cụm 2...) trước khi quét khách
+    for (const cluster of MASTER_CLUSTERS) {
+      await ensureMasterClusterActive(cluster.uid);
+    }
+
     const healedList = [];
     const droppedList = [];
     const errorList = [];
@@ -1991,7 +2046,7 @@ async function runAutoWatchdogScan() {
 
       if (isDead || isExpiring) {
         const rootCause = rc.drop_reason || (isDead ? 'Mất quyền Gold trên RevenueCat' : `Tài khoản sắp hết hạn (còn ${rc.days_left} ngày)`);
-        console.warn(`[WATCHDOG] ⚠️ Phát hiện @${u.username} (${u.uid}): ${rootCause}! Tự động cứu acc...`);
+        console.warn(`[WATCHDOG] ⚠️ Phát hiện @${u.username} (${u.uid}): ${rootCause}! Tự động cứu acc qua Cụm Master...`);
         
         const injectRes = await injectToRevenueCat(u.uid, u.video_15s || false);
         const isHealed = injectRes.success;
@@ -2014,13 +2069,16 @@ async function runAutoWatchdogScan() {
         if (isHealed) {
           u.has_gold = true;
           u.expires_date = MASTER_EXPIRES_DATE;
+          if (injectRes.cluster_uid) {
+            u.master_uid = injectRes.cluster_uid;
+          }
           await dbSaveUser(u);
-          console.log(`[WATCHDOG] ✅ Đã hồi sinh Gold thành công cho @${u.username} (Hạn mới: ${MASTER_EXPIRES_DATE})!`);
+          console.log(`[WATCHDOG] ✅ Đã hồi sinh Gold thành công cho @${u.username} vào ${injectRes.cluster || 'Cụm'} (Hạn mới: ${MASTER_EXPIRES_DATE})!`);
           healedList.push({
             username: u.username,
             uid: u.uid,
             reason: rootCause,
-            action: `🟢 Đã tự động kích hoạt lại Gold StoreKit 2 (Hạn: ${MASTER_EXPIRES_DATE.split('T')[0]})`
+            action: `🟢 Đã gộp thành công vào ${injectRes.cluster || 'Cụm Master'} (Hạn: ${MASTER_EXPIRES_DATE.split('T')[0]})`
           });
         } else {
           droppedList.push({
