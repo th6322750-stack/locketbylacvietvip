@@ -1345,35 +1345,73 @@ async function deleteBotProduct(id) {
 
 // ---- Product Edit Modal ----
 async function openEditBotProductModal(id) {
-  const product = allBotProducts.find(p => p.id === id);
-  if (!product) return;
+  let product = (allBotProducts || []).find(p => String(p.id) === String(id));
+  if (!product) {
+    try {
+      const res = await authFetch('/api/bot/products');
+      const data = await res.json();
+      if (data.success && data.products) {
+        allBotProducts = data.products;
+        product = allBotProducts.find(p => String(p.id) === String(id));
+      }
+    } catch (e) {
+      console.warn('Fallback fetch products error:', e);
+    }
+  }
 
-  document.getElementById('botEditProdId').value = product.id;
-  document.getElementById('botEditProdName').value = product.name || '';
-  document.getElementById('botEditProdPrice').value = parseInt(product.price, 10) || 0;
-  document.getElementById('botEditProdDesc').value = product.description || '';
-  document.getElementById('botEditProdActive').value = String(Boolean(product.is_active));
+  if (!product) {
+    showToast('Không tìm thấy thông tin sản phẩm ID #' + id);
+    return;
+  }
 
+  const modal = document.getElementById('botEditProductModal');
+  if (!modal) {
+    showToast('Lỗi giao diện: Không tìm thấy modal sửa sản phẩm');
+    return;
+  }
+
+  // Pre-fill fields immediately
+  const idInput = document.getElementById('botEditProdId');
+  const nameInput = document.getElementById('botEditProdName');
+  const priceInput = document.getElementById('botEditProdPrice');
+  const descInput = document.getElementById('botEditProdDesc');
+  const activeInput = document.getElementById('botEditProdActive');
+  const catSelect = document.getElementById('botEditProdCategory');
+
+  if (idInput) idInput.value = product.id;
+  if (nameInput) nameInput.value = product.name || '';
+  if (priceInput) priceInput.value = parseInt(product.price, 10) || 0;
+  if (descInput) descInput.value = product.description || '';
+  if (activeInput) activeInput.value = String(Boolean(product.is_active));
+
+  if (catSelect) {
+    catSelect.innerHTML = `<option value="${product.category_id || 1}">${escapeHtml(product.category_name || 'Đang tải...')}</option>`;
+  }
+
+  // Show modal immediately so the user gets instant visual response
+  modal.classList.add('open', 'active');
+  modal.style.display = 'flex';
+
+  // Load all categories asynchronously to populate select dropdown
   try {
     const res = await authFetch('/api/bot/categories');
     const data = await res.json();
-    const select = document.getElementById('botEditProdCategory');
-    if (data.success && data.categories) {
-      select.innerHTML = data.categories.map(c => `
-        <option value="${c.id}" ${c.id === product.category_id || c.name === product.category_name ? 'selected' : ''}>${escapeHtml(c.name)}</option>
+    if (catSelect && data.success && data.categories) {
+      catSelect.innerHTML = data.categories.map(c => `
+        <option value="${c.id}" ${String(c.id) === String(product.category_id) || c.name === product.category_name ? 'selected' : ''}>${escapeHtml(c.name)}</option>
       `).join('');
     }
   } catch (err) {
     console.warn('Load categories error:', err);
   }
-
-  const modal = document.getElementById('botEditProductModal');
-  if (modal) modal.classList.add('active');
 }
 
 function closeBotEditModal() {
   const modal = document.getElementById('botEditProductModal');
-  if (modal) modal.classList.remove('active');
+  if (modal) {
+    modal.classList.remove('open', 'active');
+    modal.style.display = 'none';
+  }
 }
 
 async function saveBotProductEdit() {
@@ -1428,17 +1466,41 @@ async function toggleProductActive(id, currentActive) {
 
 // ---- Fill Stock Modal ----
 async function openFillStockModal(id) {
-  const product = allBotProducts.find(p => p.id === id);
-  if (!product) return;
+  let product = (allBotProducts || []).find(p => String(p.id) === String(id));
+  if (!product) {
+    try {
+      const res = await authFetch('/api/bot/products');
+      const data = await res.json();
+      if (data.success && data.products) {
+        allBotProducts = data.products;
+        product = allBotProducts.find(p => String(p.id) === String(id));
+      }
+    } catch (e) {
+      console.warn('Fallback fetch products error:', e);
+    }
+  }
+
+  if (!product) {
+    showToast('Không tìm thấy sản phẩm #' + id);
+    return;
+  }
 
   activeStockProductId = id;
-  document.getElementById('botFillStockProdId').value = product.id;
-  document.getElementById('botFillStockSubtitle').innerText = `Mặt hàng: ${product.name} • Đơn giá: ${Number(product.price).toLocaleString('vi-VN')} đ • Tồn kho: ${product.stock}`;
-  document.getElementById('botFillStockLines').value = '';
-  document.getElementById('botFillStockBroadcast').checked = true;
+  const prodIdInput = document.getElementById('botFillStockProdId');
+  const subtitle = document.getElementById('botFillStockSubtitle');
+  const linesInput = document.getElementById('botFillStockLines');
+  const broadcastCheck = document.getElementById('botFillStockBroadcast');
+
+  if (prodIdInput) prodIdInput.value = product.id;
+  if (subtitle) subtitle.innerText = `Mặt hàng: ${product.name} • Đơn giá: ${Number(product.price).toLocaleString('vi-VN')} đ • Tồn kho: ${product.stock}`;
+  if (linesInput) linesInput.value = '';
+  if (broadcastCheck) broadcastCheck.checked = true;
 
   const modal = document.getElementById('botFillStockModal');
-  if (modal) modal.classList.add('active');
+  if (modal) {
+    modal.classList.add('open', 'active');
+    modal.style.display = 'flex';
+  }
 
   await refreshCurrentStockList();
 }
@@ -1446,7 +1508,10 @@ async function openFillStockModal(id) {
 function closeBotFillStockModal() {
   activeStockProductId = null;
   const modal = document.getElementById('botFillStockModal');
-  if (modal) modal.classList.remove('active');
+  if (modal) {
+    modal.classList.remove('open', 'active');
+    modal.style.display = 'none';
+  }
 }
 
 async function refreshCurrentStockList() {
@@ -1535,15 +1600,24 @@ async function deleteStockItem(stockId) {
 
 // ---- Add Product Modal ----
 async function openAddBotProductModal() {
-  document.getElementById('botNewProdName').value = '';
-  document.getElementById('botNewProdPrice').value = '';
-  document.getElementById('botNewProdDesc').value = '';
+  const nameInput = document.getElementById('botNewProdName');
+  const priceInput = document.getElementById('botNewProdPrice');
+  const descInput = document.getElementById('botNewProdDesc');
+  if (nameInput) nameInput.value = '';
+  if (priceInput) priceInput.value = '';
+  if (descInput) descInput.value = '';
+
+  const modal = document.getElementById('botAddProductModal');
+  if (modal) {
+    modal.classList.add('open', 'active');
+    modal.style.display = 'flex';
+  }
 
   try {
     const res = await authFetch('/api/bot/categories');
     const data = await res.json();
     const select = document.getElementById('botNewProdCategory');
-    if (data.success && data.categories) {
+    if (select && data.success && data.categories) {
       select.innerHTML = data.categories.map(c => `
         <option value="${c.id}">${escapeHtml(c.name)}</option>
       `).join('');
@@ -1551,14 +1625,14 @@ async function openAddBotProductModal() {
   } catch (err) {
     console.warn('Load categories error:', err);
   }
-
-  const modal = document.getElementById('botAddProductModal');
-  if (modal) modal.classList.add('active');
 }
 
 function closeBotAddProductModal() {
   const modal = document.getElementById('botAddProductModal');
-  if (modal) modal.classList.remove('active');
+  if (modal) {
+    modal.classList.remove('open', 'active');
+    modal.style.display = 'none';
+  }
 }
 
 async function submitBotAddProduct() {
@@ -1634,14 +1708,21 @@ function renderBotCategories(categories) {
 }
 
 function openAddCategoryModal() {
-  document.getElementById('botNewCatName').value = '';
+  const catInput = document.getElementById('botNewCatName');
+  if (catInput) catInput.value = '';
   const modal = document.getElementById('botAddCategoryModal');
-  if (modal) modal.classList.add('active');
+  if (modal) {
+    modal.classList.add('open', 'active');
+    modal.style.display = 'flex';
+  }
 }
 
 function closeBotAddCategoryModal() {
   const modal = document.getElementById('botAddCategoryModal');
-  if (modal) modal.classList.remove('active');
+  if (modal) {
+    modal.classList.remove('open', 'active');
+    modal.style.display = 'none';
+  }
 }
 
 async function submitBotAddCategory() {
@@ -1742,18 +1823,29 @@ function renderBotUsers(users) {
 }
 
 function openAdjustBalanceModal(telegramId, name, balance) {
-  document.getElementById('botAdjustTelegramId').value = telegramId;
-  document.getElementById('botAdjustUserInfo').innerText = `Khách hàng: @${name || telegramId} • Số dư hiện tại: ${Number(balance).toLocaleString('vi-VN')} đ`;
-  document.getElementById('botAdjustAmount').value = '';
-  document.getElementById('botAdjustNote').value = '';
+  const tgIdInput = document.getElementById('botAdjustTelegramId');
+  const infoEl = document.getElementById('botAdjustUserInfo');
+  const amountInput = document.getElementById('botAdjustAmount');
+  const noteInput = document.getElementById('botAdjustNote');
+
+  if (tgIdInput) tgIdInput.value = telegramId;
+  if (infoEl) infoEl.innerText = `Khách hàng: @${name || telegramId} • Số dư hiện tại: ${Number(balance).toLocaleString('vi-VN')} đ`;
+  if (amountInput) amountInput.value = '';
+  if (noteInput) noteInput.value = '';
 
   const modal = document.getElementById('botAdjustBalanceModal');
-  if (modal) modal.classList.add('active');
+  if (modal) {
+    modal.classList.add('open', 'active');
+    modal.style.display = 'flex';
+  }
 }
 
 function closeBotAdjustBalanceModal() {
   const modal = document.getElementById('botAdjustBalanceModal');
-  if (modal) modal.classList.remove('active');
+  if (modal) {
+    modal.classList.remove('open', 'active');
+    modal.style.display = 'none';
+  }
 }
 
 async function submitBotAdjustBalance() {
@@ -1810,7 +1902,10 @@ async function toggleBanUser(telegramId, isBanned) {
 
 async function viewUserHistory(telegramId) {
   const modal = document.getElementById('botUserHistoryModal');
-  if (modal) modal.classList.add('active');
+  if (modal) {
+    modal.classList.add('open', 'active');
+    modal.style.display = 'flex';
+  }
 
   document.getElementById('botUserHistoryTitle').innerText = `📜 Lịch Sử Giao Dịch: ${telegramId}`;
   document.getElementById('botUserTxTableBody').innerHTML = `<tr><td colspan="5" class="text-center py-2">Đang tải lịch sử ví...</td></tr>`;
@@ -1864,8 +1959,19 @@ async function viewUserHistory(telegramId) {
 
 function closeBotUserHistoryModal() {
   const modal = document.getElementById('botUserHistoryModal');
-  if (modal) modal.classList.remove('active');
+  if (modal) {
+    modal.classList.remove('open', 'active');
+    modal.style.display = 'none';
+  }
 }
+
+// Global modal background click-to-dismiss handler
+window.addEventListener('click', (e) => {
+  if (e.target && e.target.classList && e.target.classList.contains('modal-backdrop')) {
+    e.target.classList.remove('open', 'active');
+    e.target.style.display = 'none';
+  }
+});
 
 // ---- Orders Management ----
 function debounceFilterBotOrders() {
