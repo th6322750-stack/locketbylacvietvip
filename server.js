@@ -2246,47 +2246,85 @@ async function runAutoWatchdogScan() {
 // BOT TELEGRAM SHOP & ORDER ENDPOINTS (Shared Neon DB)
 // ========================================================
 
-// GET /api/bot/overview: financial and order metrics
+// GET /api/bot/overview: financial, profit, and order metrics
 app.get('/api/bot/overview', async (req, res) => {
   try {
-    const ordersCountRes = await dbPool.query(`SELECT COUNT(*) as count FROM "Order"`);
-    const revenueRes = await dbPool.query(`SELECT COALESCE(SUM("totalPrice"), 0) as total FROM "Order" WHERE status = 'COMPLETED'`);
-    const usersCountRes = await dbPool.query(`SELECT COUNT(*) as count FROM "User"`);
-    const productsCountRes = await dbPool.query(`SELECT COUNT(*) as count FROM "Product" WHERE "isActive" = true`);
-    const locketOrdersRes = await dbPool.query(`
-      SELECT COUNT(*) as count FROM "Order" o
-      JOIN "Product" p ON o."productId" = p.id
-      WHERE p.type = 'LOCKET'
-    `);
+    const [
+      ordersCountRes,
+      ordersTodayRes,
+      revenueRes,
+      revenueTodayRes,
+      revenueMonthRes,
+      expenseRes,
+      expenseTodayRes,
+      expenseMonthRes,
+      usersCountRes,
+      productsCountRes,
+      walletBalanceRes,
+      availableStockRes,
+      soldTodayRes,
+      recentOrdersRes
+    ] = await Promise.all([
+      dbPool.query(`SELECT COUNT(*) as count FROM "Order"`),
+      dbPool.query(`SELECT COUNT(*) as count FROM "Order" WHERE "createdAt" >= CURRENT_DATE`),
+      dbPool.query(`SELECT COALESCE(SUM("totalPrice"), 0) as total FROM "Order" WHERE status = 'COMPLETED'`),
+      dbPool.query(`SELECT COALESCE(SUM("totalPrice"), 0) as total FROM "Order" WHERE status = 'COMPLETED' AND "createdAt" >= CURRENT_DATE`),
+      dbPool.query(`SELECT COALESCE(SUM("totalPrice"), 0) as total FROM "Order" WHERE status = 'COMPLETED' AND "createdAt" >= date_trunc('month', CURRENT_DATE)`),
+      dbPool.query(`SELECT COALESCE(SUM(amount), 0) as total FROM "Expense"`),
+      dbPool.query(`SELECT COALESCE(SUM(amount), 0) as total FROM "Expense" WHERE "createdAt" >= CURRENT_DATE`),
+      dbPool.query(`SELECT COALESCE(SUM(amount), 0) as total FROM "Expense" WHERE "createdAt" >= date_trunc('month', CURRENT_DATE)`),
+      dbPool.query(`SELECT COUNT(*) as count FROM "User"`),
+      dbPool.query(`SELECT COUNT(*) as count FROM "Product" WHERE "isActive" = true`),
+      dbPool.query(`SELECT COALESCE(SUM(balance), 0) as total FROM "User"`),
+      dbPool.query(`SELECT COUNT(*) as count FROM "StockItem" WHERE "isSold" = false`),
+      dbPool.query(`SELECT COUNT(*) as count FROM "StockItem" WHERE "isSold" = true AND "createdAt" >= CURRENT_DATE`),
+      dbPool.query(`
+        SELECT o.id, 
+               CONCAT('DH-', o.id) as payment_ref,
+               o.quantity, 
+               o."totalPrice" as final_price, 
+               o.status, 
+               o."deliveredContent" as locket_username, 
+               o."createdAt" as created_at,
+               p.name as product_name, 
+               p.type as delivery_type,
+               u.username as tg_username, 
+               u."firstName" as tg_full_name, 
+               u."telegramId" as telegram_id
+        FROM "Order" o
+        LEFT JOIN "Product" p ON o."productId" = p.id
+        LEFT JOIN "User" u ON o."userId" = u.id
+        ORDER BY o."createdAt" DESC
+        LIMIT 15
+      `)
+    ]);
 
-    const recentOrdersRes = await dbPool.query(`
-      SELECT o.id, 
-             CONCAT('DH-', o.id) as payment_ref,
-             o.quantity, 
-             o."totalPrice" as final_price, 
-             o.status, 
-             o."deliveredContent" as locket_username, 
-             o."createdAt" as created_at,
-             p.name as product_name, 
-             p.type as delivery_type,
-             u.username as tg_username, 
-             u."firstName" as tg_full_name, 
-             u."telegramId" as telegram_id
-      FROM "Order" o
-      LEFT JOIN "Product" p ON o."productId" = p.id
-      LEFT JOIN "User" u ON o."userId" = u.id
-      ORDER BY o."createdAt" DESC
-      LIMIT 10
-    `);
+    const revenue = parseFloat(revenueRes.rows[0]?.total || 0);
+    const revenueToday = parseFloat(revenueTodayRes.rows[0]?.total || 0);
+    const revenueMonth = parseFloat(revenueMonthRes.rows[0]?.total || 0);
+    const expense = parseFloat(expenseRes.rows[0]?.total || 0);
+    const expenseToday = parseFloat(expenseTodayRes.rows[0]?.total || 0);
+    const expenseMonth = parseFloat(expenseMonthRes.rows[0]?.total || 0);
 
     res.json({
       success: true,
       metrics: {
         orders_count: parseInt(ordersCountRes.rows[0]?.count || 0),
-        revenue: parseFloat(revenueRes.rows[0]?.total || 0),
+        orders_today: parseInt(ordersTodayRes.rows[0]?.count || 0),
+        revenue: revenue,
+        revenue_today: revenueToday,
+        revenue_month: revenueMonth,
+        expense: expense,
+        expense_today: expenseToday,
+        expense_month: expenseMonth,
+        profit: revenue - expense,
+        profit_today: revenueToday - expenseToday,
+        profit_month: revenueMonth - expenseMonth,
         users_count: parseInt(usersCountRes.rows[0]?.count || 0),
         products_count: parseInt(productsCountRes.rows[0]?.count || 0),
-        locket_orders_count: parseInt(locketOrdersRes.rows[0]?.count || 0)
+        total_wallet_balance: parseFloat(walletBalanceRes.rows[0]?.total || 0),
+        available_stock: parseInt(availableStockRes.rows[0]?.count || 0),
+        sold_today: parseInt(soldTodayRes.rows[0]?.count || 0)
       },
       recent_orders: recentOrdersRes.rows
     });
@@ -2296,11 +2334,92 @@ app.get('/api/bot/overview', async (req, res) => {
   }
 });
 
-// GET /api/bot/products: list all bot products from unified Prisma tables
+// GET /api/bot/categories: list all categories with product counts
+app.get('/api/bot/categories', async (req, res) => {
+  try {
+    const result = await dbPool.query(`
+      SELECT c.id, c.name, c."sortOrder", c."isActive", c."iconCustomEmojiId" as icon,
+             COUNT(p.id)::int as product_count
+      FROM "Category" c
+      LEFT JOIN "Product" p ON p."categoryId" = c.id
+      GROUP BY c.id
+      ORDER BY c."sortOrder" ASC, c.id ASC
+    `);
+    res.json({ success: true, categories: result.rows });
+  } catch (err) {
+    console.error('[API /api/bot/categories ERROR]:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/bot/categories: create new category
+app.post('/api/bot/categories', async (req, res) => {
+  try {
+    const { name } = req.body || {};
+    const trimmed = String(name || '').trim();
+    if (!trimmed) return res.status(400).json({ success: false, error: 'Tên danh mục không được để trống' });
+    const result = await dbPool.query(`
+      INSERT INTO "Category" (name, "sortOrder", "isActive", "createdAt")
+      VALUES ($1, 0, true, NOW())
+      RETURNING *
+    `, [trimmed]);
+    res.json({ success: true, category: result.rows[0], message: 'Tạo danh mục thành công!' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// PATCH /api/bot/categories/:id: edit category
+app.patch('/api/bot/categories/:id', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const { name, isActive, sortOrder } = req.body || {};
+    const updates = [];
+    const values = [id];
+    let idx = 2;
+
+    if (name !== undefined) {
+      updates.push(`name = $${idx++}`);
+      values.push(String(name).trim());
+    }
+    if (isActive !== undefined) {
+      updates.push(`"isActive" = $${idx++}`);
+      values.push(Boolean(isActive));
+    }
+    if (sortOrder !== undefined) {
+      updates.push(`"sortOrder" = $${idx++}`);
+      values.push(parseInt(sortOrder, 10));
+    }
+
+    if (updates.length === 0) return res.status(400).json({ success: false, error: 'Không có dữ liệu thay đổi' });
+    const result = await dbPool.query(`UPDATE "Category" SET ${updates.join(', ')} WHERE id = $1 RETURNING *`, values);
+    res.json({ success: true, category: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// DELETE /api/bot/categories/:id: delete category (if empty)
+app.delete('/api/bot/categories/:id', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const countRes = await dbPool.query(`SELECT COUNT(*) as count FROM "Product" WHERE "categoryId" = $1`, [id]);
+    if (parseInt(countRes.rows[0]?.count || 0) > 0) {
+      return res.status(400).json({ success: false, error: 'Danh mục còn sản phẩm bên trong - xoá hoặc chuyển sản phẩm trước!' });
+    }
+    await dbPool.query(`DELETE FROM "Category" WHERE id = $1`, [id]);
+    res.json({ success: true, message: 'Đã xóa danh mục' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET /api/bot/products: list all bot products
 app.get('/api/bot/products', async (req, res) => {
   try {
     const result = await dbPool.query(`
       SELECT p.id, p.name, p.description, p.price, p.type as delivery_type,
+             p."categoryId" as category_id,
              COALESCE((SELECT COUNT(*) FROM "StockItem" s WHERE s."productId" = p.id AND s."isSold" = false), 0) as stock,
              p."isActive" as is_active,
              COALESCE((SELECT COUNT(*) FROM "Order" o WHERE o."productId" = p.id AND o.status = 'COMPLETED'), 0) as total_sold,
@@ -2318,10 +2437,297 @@ app.get('/api/bot/products', async (req, res) => {
   }
 });
 
-// GET /api/bot/orders: list all bot orders
+// POST /api/bot/products: add new product
+app.post('/api/bot/products', async (req, res) => {
+  try {
+    const { category_id, name, price, type, description } = req.body || {};
+    if (!name || !price || !category_id) {
+      return res.status(400).json({ success: false, error: 'Vui lòng điền đầy đủ Tên, Giá và Danh mục' });
+    }
+    const upperType = String(type || 'STOCK').toUpperCase();
+    const result = await dbPool.query(`
+      INSERT INTO "Product" ("categoryId", name, price, type, description, "isActive", "sortOrder", "createdAt")
+      VALUES ($1, $2, $3, $4, $5, true, 0, NOW())
+      RETURNING *
+    `, [parseInt(category_id, 10), String(name).trim(), parseInt(price, 10), upperType, description ? String(description).trim() : null]);
+    res.json({ success: true, product: result.rows[0], message: 'Tạo mặt hàng mới thành công!' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// PATCH /api/bot/products/:id: edit product price, name, description, category, active status
+app.patch('/api/bot/products/:id', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const { name, price, description, is_active, category_id } = req.body || {};
+    const updates = [];
+    const values = [id];
+    let idx = 2;
+
+    if (name !== undefined) {
+      updates.push(`name = $${idx++}`);
+      values.push(String(name).trim());
+    }
+    if (price !== undefined) {
+      updates.push(`price = $${idx++}`);
+      values.push(parseInt(price, 10));
+    }
+    if (description !== undefined) {
+      updates.push(`description = $${idx++}`);
+      values.push(description ? String(description).trim() : null);
+    }
+    if (is_active !== undefined) {
+      updates.push(`"isActive" = $${idx++}`);
+      values.push(Boolean(is_active));
+    }
+    if (category_id !== undefined) {
+      updates.push(`"categoryId" = $${idx++}`);
+      values.push(parseInt(category_id, 10));
+    }
+
+    if (updates.length === 0) return res.status(400).json({ success: false, error: 'Không có dữ liệu thay đổi' });
+
+    const query = `UPDATE "Product" SET ${updates.join(', ')} WHERE id = $1 RETURNING *`;
+    const result = await dbPool.query(query, values);
+    if (result.rowCount === 0) return res.status(404).json({ success: false, error: 'Không tìm thấy sản phẩm' });
+
+    res.json({ success: true, product: result.rows[0], message: 'Đã cập nhật sản phẩm thành công!' });
+  } catch (err) {
+    console.error('[PATCH /api/bot/products/:id ERROR]:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// DELETE /api/bot/products/:id: delete or hide product
+app.delete('/api/bot/products/:id', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const orderCountRes = await dbPool.query(`SELECT COUNT(*) as count FROM "Order" WHERE "productId" = $1`, [id]);
+    if (parseInt(orderCountRes.rows[0]?.count || 0) > 0) {
+      await dbPool.query(`UPDATE "Product" SET "isActive" = false WHERE id = $1`, [id]);
+      return res.json({ success: true, message: 'Sản phẩm đã có đơn hàng nên được ẩn đi để lưu giữ lịch sử.' });
+    }
+    await dbPool.query(`DELETE FROM "StockItem" WHERE "productId" = $1 AND "isSold" = false`, [id]);
+    await dbPool.query(`DELETE FROM "Product" WHERE id = $1`, [id]);
+    res.json({ success: true, message: 'Đã xóa sản phẩm hoàn toàn' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET /api/bot/products/:id/stock: list unsold stock items
+app.get('/api/bot/products/:id/stock', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const result = await dbPool.query(`
+      SELECT id, content, "isSold", "createdAt"
+      FROM "StockItem"
+      WHERE "productId" = $1 AND "isSold" = false
+      ORDER BY id ASC
+      LIMIT 200
+    `, [id]);
+    res.json({ success: true, stock_items: result.rows });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/bot/products/:id/stock: fill stock (bulk lines) + broadcast announcement
+app.post('/api/bot/products/:id/stock', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const { lines, broadcast } = req.body || {};
+    const rawLines = String(lines || '').split('\n').map(l => l.trim()).filter(Boolean);
+
+    if (rawLines.length === 0) {
+      return res.status(400).json({ success: false, error: 'Vui lòng nhập ít nhất 1 dòng tài khoản/mã' });
+    }
+
+    for (const line of rawLines) {
+      await dbPool.query(`
+        INSERT INTO "StockItem" ("productId", content, "isSold", "createdAt")
+        VALUES ($1, $2, false, NOW())
+      `, [id, line]);
+    }
+
+    const stockRes = await dbPool.query(`SELECT COUNT(*) as count FROM "StockItem" WHERE "productId" = $1 AND "isSold" = false`, [id]);
+    const totalStock = parseInt(stockRes.rows[0]?.count || 0);
+
+    const prodRes = await dbPool.query(`SELECT name, price FROM "Product" WHERE id = $1`, [id]);
+    const product = prodRes.rows[0];
+
+    let broadcastSent = 0;
+    if (broadcast && product) {
+      try {
+        const usersRes = await dbPool.query(`SELECT "telegramId" FROM "User" WHERE "isBanned" = false`);
+        const botToken = process.env.TELEGRAM_BOT_TOKEN || '7798628777:AAGjA9r0yjI8y83l5sCfAn-kOET-UYSg4Sw';
+        const priceVnd = Number(product.price).toLocaleString('vi-VN') + 'đ';
+        const msgText = `📢 <b>Fill thêm hàng mới!</b>\n📦 Sản phẩm: <b>${product.name}</b>\n💵 Giá: <b>${priceVnd}</b>\n➕ Thêm: <b>${rawLines.length}</b>\n📊 Tồn kho hiện tại: <b>${totalStock}</b>`;
+        const keyboard = {
+          inline_keyboard: [
+            [{ text: '🛒 Mua ngay', callback_data: `buy:${id}` }],
+            [{ text: '📦 Sản phẩm / Gói khác', callback_data: 'menu:products' }]
+          ]
+        };
+
+        for (const u of usersRes.rows) {
+          fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              chat_id: u.telegramId,
+              text: msgText,
+              parse_mode: 'HTML',
+              reply_markup: keyboard
+            })
+          }).then(() => broadcastSent++).catch(() => {});
+        }
+      } catch (bcErr) {
+        console.warn('Broadcast error:', bcErr.message);
+      }
+    }
+
+    res.json({
+      success: true,
+      added: rawLines.length,
+      total_stock: totalStock,
+      broadcast_sent: broadcastSent,
+      message: `Đã nhập thành công ${rawLines.length} sản phẩm vào kho!`
+    });
+  } catch (err) {
+    console.error('[POST /api/bot/products/:id/stock ERROR]:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// DELETE /api/bot/stock/:stockId: delete a single stock line
+app.delete('/api/bot/stock/:stockId', async (req, res) => {
+  try {
+    const stockId = parseInt(req.params.stockId, 10);
+    await dbPool.query(`DELETE FROM "StockItem" WHERE id = $1 AND "isSold" = false`, [stockId]);
+    res.json({ success: true, message: 'Đã xóa mục khỏi kho' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET /api/bot/users: list users with search filter
+app.get('/api/bot/users', async (req, res) => {
+  try {
+    const search = String(req.query.search || '').trim();
+    let query = `
+      SELECT u.id, u."telegramId", u.username, u."firstName", u.language, u.balance,
+             u."referralCode", u."isBanned", u."createdAt",
+             COALESCE((SELECT COUNT(*) FROM "Order" o WHERE o."userId" = u.id), 0) as order_count,
+             COALESCE((SELECT SUM("totalPrice") FROM "Order" o WHERE o."userId" = u.id AND o.status = 'COMPLETED'), 0) as total_spent
+      FROM "User" u
+    `;
+    const params = [];
+    if (search) {
+      params.push(`%${search}%`);
+      query += ` WHERE u."telegramId" ILIKE $1 OR u.username ILIKE $1 OR u."firstName" ILIKE $1`;
+    }
+    query += ` ORDER BY u."createdAt" DESC LIMIT 100`;
+
+    const result = await dbPool.query(query, params);
+    res.json({ success: true, users: result.rows });
+  } catch (err) {
+    console.error('[API /api/bot/users ERROR]:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET /api/bot/users/:telegramId: get user profile and transactions
+app.get('/api/bot/users/:telegramId', async (req, res) => {
+  try {
+    const { telegramId } = req.params;
+    const userRes = await dbPool.query(`SELECT * FROM "User" WHERE "telegramId" = $1`, [telegramId]);
+    if (userRes.rows.length === 0) return res.status(404).json({ success: false, error: 'Không tìm thấy user' });
+    const user = userRes.rows[0];
+
+    const txRes = await dbPool.query(`
+      SELECT id, type, amount, "balanceAfter", note, "createdAt"
+      FROM "Transaction"
+      WHERE "userId" = $1
+      ORDER BY "createdAt" DESC
+      LIMIT 30
+    `, [user.id]);
+
+    const orderRes = await dbPool.query(`
+      SELECT o.id, o.quantity, o."totalPrice", o.status, o."createdAt", p.name as product_name
+      FROM "Order" o
+      LEFT JOIN "Product" p ON o."productId" = p.id
+      WHERE o."userId" = $1
+      ORDER BY o."createdAt" DESC
+      LIMIT 20
+    `, [user.id]);
+
+    res.json({ success: true, user, transactions: txRes.rows, orders: orderRes.rows });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/bot/users/:telegramId/adjust-balance: credit/debit user balance
+app.post('/api/bot/users/:telegramId/adjust-balance', async (req, res) => {
+  const client = await dbPool.connect();
+  try {
+    const { telegramId } = req.params;
+    const { amount, note } = req.body || {};
+    const amountInt = parseInt(amount, 10);
+    if (!Number.isInteger(amountInt) || amountInt === 0) {
+      return res.status(400).json({ success: false, error: 'Số tiền điều chỉnh không hợp lệ' });
+    }
+
+    await client.query('BEGIN');
+    const userRes = await client.query(`SELECT id, balance FROM "User" WHERE "telegramId" = $1 FOR UPDATE`, [telegramId]);
+    if (userRes.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ success: false, error: 'Không tìm thấy user' });
+    }
+
+    const user = userRes.rows[0];
+    const newBalance = user.balance + amountInt;
+    if (newBalance < 0) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ success: false, error: `Số dư sau khi trừ sẽ bị âm (${newBalance}đ)` });
+    }
+
+    await client.query(`UPDATE "User" SET balance = $1 WHERE id = $2`, [newBalance, user.id]);
+    await client.query(`
+      INSERT INTO "Transaction" ("userId", type, amount, "balanceAfter", note, "createdAt")
+      VALUES ($1, 'ADMIN_ADJUST', $2, $3, $4, NOW())
+    `, [user.id, amountInt, newBalance, note || 'Admin điều chỉnh số dư']);
+
+    await client.query('COMMIT');
+    res.json({ success: true, new_balance: newBalance, message: `Đã ${amountInt > 0 ? 'cộng' : 'trừ'} ${Math.abs(amountInt).toLocaleString('vi-VN')}đ thành công!` });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('[ADJUST BALANCE ERROR]:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  } finally {
+    client.release();
+  }
+});
+
+// POST /api/bot/users/:telegramId/ban: ban or unban user
+app.post('/api/bot/users/:telegramId/ban', async (req, res) => {
+  try {
+    const { telegramId } = req.params;
+    const { isBanned } = req.body || {};
+    const result = await dbPool.query(`UPDATE "User" SET "isBanned" = $1 WHERE "telegramId" = $2 RETURNING *`, [Boolean(isBanned), telegramId]);
+    if (result.rowCount === 0) return res.status(404).json({ success: false, error: 'Không tìm thấy user' });
+    res.json({ success: true, isBanned: result.rows[0].isBanned, message: result.rows[0].isBanned ? 'Đã khóa tài khoản thành viên' : 'Đã mở khóa tài khoản thành viên' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET /api/bot/orders: list orders with date range, status, and search filters
 app.get('/api/bot/orders', async (req, res) => {
   try {
-    const status = req.query.status;
+    const { status, range, search } = req.query || {};
     let query = `
       SELECT o.id, 
              CONCAT('DH-', o.id) as payment_ref,
@@ -2343,18 +2749,234 @@ app.get('/api/bot/orders', async (req, res) => {
       FROM "Order" o
       LEFT JOIN "Product" p ON o."productId" = p.id
       LEFT JOIN "User" u ON o."userId" = u.id
+      WHERE 1=1
     `;
     const params = [];
+    let idx = 1;
+
     if (status && status !== 'all') {
       params.push(status.toUpperCase());
-      query += ` WHERE UPPER(o.status) = $1`;
+      query += ` AND UPPER(o.status) = $${idx++}`;
     }
-    query += ` ORDER BY o."createdAt" DESC LIMIT 100`;
+
+    if (range === 'today') {
+      query += ` AND o."createdAt" >= CURRENT_DATE`;
+    } else if (range === '7d') {
+      query += ` AND o."createdAt" >= (NOW() - INTERVAL '7 days')`;
+    } else if (range === '30d') {
+      query += ` AND o."createdAt" >= (NOW() - INTERVAL '30 days')`;
+    } else if (range === 'month') {
+      query += ` AND o."createdAt" >= date_trunc('month', CURRENT_DATE)`;
+    }
+
+    if (search && search.trim()) {
+      const trimmed = search.trim();
+      params.push(`%${trimmed}%`);
+      query += ` AND (CONCAT('DH-', o.id) ILIKE $${idx} OR u."telegramId" ILIKE $${idx} OR u.username ILIKE $${idx} OR p.name ILIKE $${idx} OR o."deliveredContent" ILIKE $${idx})`;
+      idx++;
+    }
+
+    query += ` ORDER BY o."createdAt" DESC LIMIT 150`;
 
     const result = await dbPool.query(query, params);
     res.json({ success: true, orders: result.rows });
   } catch (err) {
     console.error('[API /api/bot/orders ERROR]:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// PATCH /api/bot/orders/:id/status: update order status
+app.patch('/api/bot/orders/:id/status', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const { status } = req.body || {};
+    if (!status) return res.status(400).json({ success: false, error: 'Chưa chọn trạng thái' });
+    const result = await dbPool.query(`UPDATE "Order" SET status = $1 WHERE id = $2 RETURNING *`, [status.toUpperCase(), id]);
+    res.json({ success: true, order: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/bot/orders/:id/refund: refund order and credit back to user wallet
+app.post('/api/bot/orders/:id/refund', async (req, res) => {
+  const client = await dbPool.connect();
+  try {
+    const id = parseInt(req.params.id, 10);
+    await client.query('BEGIN');
+
+    const orderRes = await client.query(`SELECT * FROM "Order" WHERE id = $1 FOR UPDATE`, [id]);
+    if (orderRes.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ success: false, error: 'Không tìm thấy đơn hàng' });
+    }
+
+    const order = orderRes.rows[0];
+    if (order.status !== 'COMPLETED') {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ success: false, error: 'Chỉ hoàn tiền được đơn hàng đang ở trạng thái Hoàn tất (COMPLETED)' });
+    }
+
+    // Update order status
+    await client.query(`UPDATE "Order" SET status = 'REFUNDED' WHERE id = $1`, [id]);
+
+    // Credit user balance
+    const userRes = await client.query(`SELECT id, balance FROM "User" WHERE id = $1 FOR UPDATE`, [order.userId]);
+    if (userRes.rows.length > 0) {
+      const user = userRes.rows[0];
+      const newBal = user.balance + order.totalPrice;
+      await client.query(`UPDATE "User" SET balance = $1 WHERE id = $2`, [newBal, user.id]);
+      await client.query(`
+        INSERT INTO "Transaction" ("userId", type, amount, "balanceAfter", note, "createdAt")
+        VALUES ($1, 'REFUND', $2, $3, $4, NOW())
+      `, [user.id, order.totalPrice, newBal, `Hoàn đơn hàng #${order.id} (Admin refund)`]);
+    }
+
+    await client.query('COMMIT');
+    res.json({ success: true, message: `Đã hoàn thành công ${Number(order.totalPrice).toLocaleString('vi-VN')}đ vào ví khách hàng!` });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('[REFUND ERROR]:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  } finally {
+    client.release();
+  }
+});
+
+// GET /api/bot/expenses: list expense entries
+app.get('/api/bot/expenses', async (req, res) => {
+  try {
+    const result = await dbPool.query(`SELECT id, amount, note, "createdAt" FROM "Expense" ORDER BY "createdAt" DESC LIMIT 100`);
+    res.json({ success: true, expenses: result.rows });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/bot/expenses: create expense entry
+app.post('/api/bot/expenses', async (req, res) => {
+  try {
+    const { amount, note } = req.body || {};
+    const amountInt = parseInt(amount, 10);
+    if (!Number.isInteger(amountInt) || amountInt <= 0) return res.status(400).json({ success: false, error: 'Số tiền chi phí không hợp lệ' });
+    const trimmedNote = String(note || '').trim();
+    if (!trimmedNote) return res.status(400).json({ success: false, error: 'Ghi chú không được để trống' });
+
+    const result = await dbPool.query(`
+      INSERT INTO "Expense" (amount, note, "createdAt")
+      VALUES ($1, $2, NOW())
+      RETURNING *
+    `, [amountInt, trimmedNote]);
+    res.json({ success: true, expense: result.rows[0], message: 'Đã ghi chi phí thành công!' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// DELETE /api/bot/expenses/:id: delete expense entry
+app.delete('/api/bot/expenses/:id', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    await dbPool.query(`DELETE FROM "Expense" WHERE id = $1`, [id]);
+    res.json({ success: true, message: 'Đã xóa chi phí' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/bot/broadcast: send broadcast HTML to all bot users
+app.post('/api/bot/broadcast', async (req, res) => {
+  try {
+    const { content } = req.body || {};
+    const text = String(content || '').trim();
+    if (!text) return res.status(400).json({ success: false, error: 'Nội dung thông báo không được để trống' });
+
+    const usersRes = await dbPool.query(`SELECT "telegramId" FROM "User" WHERE "isBanned" = false`);
+    const botToken = process.env.TELEGRAM_BOT_TOKEN || '7798628777:AAGjA9r0yjI8y83l5sCfAn-kOET-UYSg4Sw';
+
+    let successCount = 0;
+    let failCount = 0;
+
+    // Send in parallel batches of 10
+    const batchSize = 10;
+    for (let i = 0; i < usersRes.rows.length; i += batchSize) {
+      const batch = usersRes.rows.slice(i, i + batchSize);
+      await Promise.all(batch.map(async (u) => {
+        try {
+          const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              chat_id: u.telegramId,
+              text: text,
+              parse_mode: 'HTML'
+            })
+          });
+          const data = await response.json();
+          if (data.ok) successCount++;
+          else failCount++;
+        } catch {
+          failCount++;
+        }
+      }));
+    }
+
+    res.json({
+      success: true,
+      total_targeted: usersRes.rows.length,
+      success_count: successCount,
+      fail_count: failCount,
+      message: `Đã gửi thông báo thành công đến ${successCount}/${usersRes.rows.length} người dùng!`
+    });
+  } catch (err) {
+    console.error('[BROADCAST ERROR]:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET /api/bot/coupons: list coupons
+app.get('/api/bot/coupons', async (req, res) => {
+  try {
+    const result = await dbPool.query(`SELECT id, code, "discountPercent", "isActive", "createdAt" FROM "Coupon" ORDER BY "createdAt" DESC`);
+    res.json({ success: true, coupons: result.rows });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/bot/coupons: add new coupon
+app.post('/api/bot/coupons', async (req, res) => {
+  try {
+    const { code, discountPercent } = req.body || {};
+    const cleanCode = String(code || '').trim().toUpperCase();
+    const percent = parseInt(discountPercent, 10);
+    if (!cleanCode) return res.status(400).json({ success: false, error: 'Mã giảm giá không được để trống' });
+    if (!Number.isInteger(percent) || percent < 1 || percent > 100) {
+      return res.status(400).json({ success: false, error: '% giảm giá phải từ 1 đến 100' });
+    }
+
+    const result = await dbPool.query(`
+      INSERT INTO "Coupon" (code, "discountPercent", "isActive", "createdAt")
+      VALUES ($1, $2, true, NOW())
+      RETURNING *
+    `, [cleanCode, percent]);
+    res.json({ success: true, coupon: result.rows[0], message: 'Tạo mã giảm giá thành công!' });
+  } catch (err) {
+    if (err.message.includes('unique constraint') || err.message.includes('Coupon_code_key')) {
+      return res.status(400).json({ success: false, error: 'Mã giảm giá này đã tồn tại' });
+    }
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// DELETE /api/bot/coupons/:id: delete coupon
+app.delete('/api/bot/coupons/:id', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    await dbPool.query(`DELETE FROM "Coupon" WHERE id = $1`, [id]);
+    res.json({ success: true, message: 'Đã xóa mã giảm giá' });
+  } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });

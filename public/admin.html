@@ -601,132 +601,479 @@
     </main>
 
     <!-- ======================================================== -->
-    <!-- TAB 6: BOT TELEGRAM SHOP & ORDERS (Shared Neon DB) -->
+    <!-- TAB 6: BOT TELEGRAM SHOP & COMPLETE MANAGEMENT (Shared Neon DB) -->
     <!-- ======================================================== -->
     <main id="tab-content-bot" class="tab-content">
-      <!-- Bot Metric Cards -->
-      <div class="stats-grid">
-        <div class="stat-card" style="border-color: rgba(14, 165, 233, 0.35);">
-          <div class="stat-icon" style="background: rgba(14, 165, 233, 0.15); color: #0ea5e9;">🤖</div>
-          <div class="stat-info">
-            <span class="stat-label">Bot Telegram</span>
-            <h2 class="stat-value" id="botUsernameDisplay" style="font-size: 1.35rem; color: #38bdf8;">@Kwshopremium_bot</h2>
-          </div>
-        </div>
-        <div class="stat-card stat-success">
-          <div class="stat-icon">💰</div>
-          <div class="stat-info">
-            <span class="stat-label">Doanh Thu Bot Tele</span>
-            <h2 class="stat-value" id="botTotalRevenue">0 đ</h2>
-          </div>
-        </div>
-        <div class="stat-card" style="border-color: rgba(168, 85, 247, 0.35);">
-          <div class="stat-icon" style="background: rgba(168, 85, 247, 0.15); color: #a855f7;">📦</div>
-          <div class="stat-info">
-            <span class="stat-label">Tổng Đơn Hàng Bot</span>
-            <h2 class="stat-value" id="botTotalOrders">0</h2>
-          </div>
-        </div>
-        <div class="stat-card stat-gold">
-          <div class="stat-icon">👥</div>
-          <div class="stat-info">
-            <span class="stat-label">Khách Hàng Bot</span>
-            <h2 class="stat-value" id="botTotalUsers">0</h2>
-          </div>
-        </div>
-      </div>
-
-      <!-- Quick Info / Status Banner -->
-      <div class="workspace-card" style="padding: 16px 22px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; border-left: 4px solid #0ea5e9;">
-        <div style="display: flex; align-items: center; gap: 14px;">
-          <span style="font-size: 28px;">⚡</span>
+      <!-- Bot Header Info Bar -->
+      <div class="workspace-card" style="padding: 14px 20px; margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; border-left: 4px solid #0ea5e9;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span style="font-size: 26px;">🤖</span>
           <div>
-            <div style="font-weight: 700; font-size: 14px; color: var(--text-primary);">Tích hợp Locket Gold No-DNS StoreKit 2 Cụm 2</div>
-            <div style="font-size: 12px; color: var(--text-secondary);">Khách mua gói Locket Gold trên Telegram sẽ tự động liên kết Alias vào Cụm 2 và nhận thông báo ngay lập tức.</div>
+            <div style="font-weight: 700; font-size: 14px; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+              <span>KW x Lucifer Bot Manager</span>
+              <a href="https://t.me/Kwshopremium_bot" target="_blank" class="badge-tag tag-cyan" style="text-decoration: none;">@Kwshopremium_bot</a>
+              <span class="badge-resolved-valid" style="font-size: 11px;">🟢 LIVE NEON DB</span>
+            </div>
+            <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">
+              Đồng bộ 100% kho hàng, danh mục, ví thành viên, đơn hàng, sổ chi và broadcast từ hệ thống gốc.
+            </div>
           </div>
         </div>
         <div style="display: flex; gap: 8px;">
+          <button class="btn btn-sm btn-outline" onclick="loadAllBotData(true)">🔄 Làm Mới Toàn Bộ</button>
           <a href="https://t.me/Kwshopremium_bot" target="_blank" class="btn btn-sm btn-gold" style="text-decoration: none;">
-            <span>📱 Mở Bot Telegram</span>
+            <span>📱 Chat Bot</span>
           </a>
-          <button class="btn btn-sm btn-outline" onclick="loadBotShopData(true)">🔄 Làm Mới</button>
         </div>
       </div>
 
-      <!-- Bot Orders Table -->
-      <div class="workspace-card" style="margin-bottom: 24px;">
-        <div class="workspace-header">
-          <div>
-            <h2 class="workspace-title">🛒 Đơn Hàng Telegram Bot (bot_orders)</h2>
-            <p class="workspace-subtitle">Tự động đồng bộ thời gian thực từ Neon PostgreSQL</p>
-          </div>
-          <div class="admin-top-actions">
-            <div class="search-box">
-              <span class="search-icon">🔍</span>
-              <input type="text" id="botOrderSearchInput" placeholder="Tìm theo mã đơn, user, locket..." oninput="filterBotOrders()">
+      <!-- Bot Sub-Navigation Bar -->
+      <div class="bot-subnav-bar">
+        <button class="bot-subtab-btn active" onclick="switchBotSubTab('overview', this)">
+          <span>📊 Tổng Quan</span>
+        </button>
+        <button class="bot-subtab-btn" onclick="switchBotSubTab('products', this)">
+          <span>📦 Sản Phẩm & Kho</span>
+        </button>
+        <button class="bot-subtab-btn" onclick="switchBotSubTab('categories', this)">
+          <span>📂 Danh Mục</span>
+        </button>
+        <button class="bot-subtab-btn" onclick="switchBotSubTab('users', this)">
+          <span>👥 Người Dùng & Ví</span>
+        </button>
+        <button class="bot-subtab-btn" onclick="switchBotSubTab('orders', this)">
+          <span>🛒 Đơn Hàng</span>
+        </button>
+        <button class="bot-subtab-btn" onclick="switchBotSubTab('expenses', this)">
+          <span>💸 Sổ Chi Tiêu</span>
+        </button>
+        <button class="bot-subtab-btn" onclick="switchBotSubTab('broadcast', this)">
+          <span>📢 Gửi Thông Báo</span>
+        </button>
+        <button class="bot-subtab-btn" onclick="switchBotSubTab('coupons', this)">
+          <span>🎟️ Mã Giảm Giá</span>
+        </button>
+      </div>
+
+      <!-- SUBPANEL 1: TỔNG QUAN (OVERVIEW) -->
+      <div id="botSubPanelOverview" class="bot-subpanel active">
+        <!-- 6 Metrics Grid -->
+        <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-bottom: 20px;">
+          <!-- Doanh thu -->
+          <div class="stat-card stat-success">
+            <div class="stat-icon">💰</div>
+            <div class="stat-info">
+              <span class="stat-label">Doanh Thu Shop</span>
+              <h2 class="stat-value" id="botRevToday" style="font-size: 1.35rem;">0 đ</h2>
+              <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+                Tháng này: <b id="botRevMonth" style="color: #4ade80;">0 đ</b> | Tổng: <b id="botRevTotal" style="color: #86efac;">0 đ</b>
+              </div>
             </div>
-            <select id="botOrderFilterStatus" class="form-input" style="padding: 6px 10px; font-size: 12px; width: 140px;" onchange="filterBotOrders()">
-              <option value="all">Tất cả trạng thái</option>
-              <option value="completed">Đã hoàn thành</option>
-              <option value="delivered">Đã giao hàng</option>
-              <option value="paid">Đã thanh toán</option>
-              <option value="pending">Chờ thanh toán</option>
-              <option value="cancelled">Đã hủy</option>
-            </select>
+          </div>
+
+          <!-- Chi phí -->
+          <div class="stat-card" style="border-color: rgba(239, 68, 68, 0.35);">
+            <div class="stat-icon" style="background: rgba(239, 68, 68, 0.15); color: #ef4444;">💸</div>
+            <div class="stat-info">
+              <span class="stat-label">Chi Phí Sổ Chi</span>
+              <h2 class="stat-value" id="botExpToday" style="font-size: 1.35rem; color: #f87171;">0 đ</h2>
+              <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+                Tháng này: <b id="botExpMonth" style="color: #fca5a5;">0 đ</b> | Tổng: <b id="botExpTotal" style="color: #fecaca;">0 đ</b>
+              </div>
+            </div>
+          </div>
+
+          <!-- Lợi nhuận ròng -->
+          <div class="stat-card stat-gold">
+            <div class="stat-icon">📈</div>
+            <div class="stat-info">
+              <span class="stat-label">Lợi Nhuận Ròng</span>
+              <h2 class="stat-value" id="botProfitToday" style="font-size: 1.35rem;">0 đ</h2>
+              <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+                Tháng này: <b id="botProfitMonth" style="color: var(--accent-gold);">0 đ</b> | Tổng: <b id="botProfitTotal" style="color: #fef08a;">0 đ</b>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tồn kho -->
+          <div class="stat-card" style="border-color: rgba(14, 165, 233, 0.35);">
+            <div class="stat-icon" style="background: rgba(14, 165, 233, 0.15); color: #0ea5e9;">📦</div>
+            <div class="stat-info">
+              <span class="stat-label">Tồn Kho Sẵn Có</span>
+              <h2 class="stat-value" id="botAvailStock" style="font-size: 1.35rem; color: #38bdf8;">0</h2>
+              <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+                Đã xuất hôm nay: <b id="botSoldToday" style="color: #7dd3fc;">0</b> sản phẩm
+              </div>
+            </div>
+          </div>
+
+          <!-- Thành viên & Ví -->
+          <div class="stat-card" style="border-color: rgba(168, 85, 247, 0.35);">
+            <div class="stat-icon" style="background: rgba(168, 85, 247, 0.15); color: #a855f7;">👥</div>
+            <div class="stat-info">
+              <span class="stat-label">Khách Hàng Bot</span>
+              <h2 class="stat-value" id="botUserCount" style="font-size: 1.35rem; color: #c084fc;">0</h2>
+              <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+                Tổng số dư ví: <b id="botWalletTotal" style="color: #e9d5ff;">0 đ</b>
+              </div>
+            </div>
+          </div>
+
+          <!-- Đơn hàng -->
+          <div class="stat-card" style="border-color: rgba(245, 158, 11, 0.35);">
+            <div class="stat-icon" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b;">🛒</div>
+            <div class="stat-info">
+              <span class="stat-label">Đơn Hàng Shop</span>
+              <h2 class="stat-value" id="botOrderToday" style="font-size: 1.35rem; color: #fbbf24;">0</h2>
+              <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+                Tổng đơn toàn thời gian: <b id="botOrderTotal" style="color: #fef3c7;">0</b>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div class="table-wrapper">
-          <table class="custom-table" id="botOrdersTable">
-            <thead>
-              <tr>
-                <th>Mã Đơn</th>
-                <th>Sản Phẩm</th>
-                <th>Khách Telegram</th>
-                <th>Tài Khoản Locket</th>
-                <th>Đơn Giá</th>
-                <th>Trạng Thái</th>
-                <th>Thời Gian</th>
-                <th>Thao Tác</th>
-              </tr>
-            </thead>
-            <tbody id="botOrdersTableBody">
-              <tr>
-                <td colspan="8" class="text-center py-4">Đang tải danh sách đơn hàng Telegram...</td>
-              </tr>
-            </tbody>
-          </table>
+        <!-- Recent Orders in Overview -->
+        <div class="workspace-card">
+          <div class="workspace-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <h2 class="workspace-title">🕒 Đơn Hàng Gần Đây</h2>
+              <p class="workspace-subtitle">Tự động cập nhật các giao dịch mua hàng mới nhất</p>
+            </div>
+            <button class="btn btn-sm btn-glass" onclick="loadBotOverviewData()">🔄 Cập Nhật</button>
+          </div>
+          <div class="table-wrapper">
+            <table class="custom-table" id="botRecentOrdersTable">
+              <thead>
+                <tr>
+                  <th>Mã Đơn</th>
+                  <th>Khách Hàng</th>
+                  <th>Sản Phẩm</th>
+                  <th>Số Tiền</th>
+                  <th>Trạng Thái</th>
+                  <th>Thời Gian</th>
+                </tr>
+              </thead>
+              <tbody id="botRecentOrdersTableBody">
+                <tr><td colspan="6" class="text-center py-4">Đang tải đơn hàng gần đây...</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
-      <!-- Bot Products & Services Table -->
-      <div class="workspace-card">
-        <div class="workspace-header">
-          <div>
-            <h2 class="workspace-title">📦 Danh Sách Mặt Hàng & Dịch Vụ Bot (bot_products)</h2>
-            <p class="workspace-subtitle">Các gói Locket Gold và sản phẩm kích hoạt hiển thị trong menu shop Telegram</p>
+      <!-- SUBPANEL 2: SẢN PHẨM & KHO HÀNG -->
+      <div id="botSubPanelProducts" class="bot-subpanel">
+        <div class="workspace-card">
+          <div class="workspace-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div>
+              <h2 class="workspace-title">📦 Danh Sách Mặt Hàng & Kho Hàng (@Kwshopremium_bot)</h2>
+              <p class="workspace-subtitle">Chỉnh sửa giá niêm yết, cập nhật mô tả và nạp kho tự động (STOCK)</p>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn btn-gold btn-sm" onclick="openAddBotProductModal()">
+                <span>➕ Thêm Mặt Hàng</span>
+              </button>
+              <button class="btn btn-glass btn-sm" onclick="loadBotProducts()">
+                <span>🔄 Tải Lại</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="table-wrapper">
+            <table class="custom-table" id="botProductsTable">
+              <thead>
+                <tr>
+                  <th>STT</th>
+                  <th>Tên Mặt Hàng</th>
+                  <th>Danh Mục</th>
+                  <th>Giá Niêm Yết</th>
+                  <th>Loại Phân Phối</th>
+                  <th>Kho Hàng</th>
+                  <th>Trạng Thái</th>
+                  <th style="text-align: right;">Thao Tác</th>
+                </tr>
+              </thead>
+              <tbody id="botProductsTableBody">
+                <tr><td colspan="8" class="text-center py-4">Đang tải danh mục mặt hàng Bot...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUBPANEL 3: DANH MỤC SẢN PHẨM -->
+      <div id="botSubPanelCategories" class="bot-subpanel">
+        <div class="workspace-card">
+          <div class="workspace-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div>
+              <h2 class="workspace-title">📂 Quản Lý Danh Mục Sản Phẩm</h2>
+              <p class="workspace-subtitle">Tạo và phân loại danh mục hiển thị trên bàn phím inline Telegram</p>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn btn-gold btn-sm" onclick="openAddCategoryModal()">
+                <span>➕ Thêm Danh Mục</span>
+              </button>
+              <button class="btn btn-glass btn-sm" onclick="loadBotCategories()">
+                <span>🔄 Tải Lại</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="table-wrapper">
+            <table class="custom-table" id="botCategoriesTable">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Tên Danh Mục</th>
+                  <th>Số Sản Phẩm</th>
+                  <th>Thứ Tự Sắp Xếp</th>
+                  <th>Trạng Thái</th>
+                  <th style="text-align: right;">Thao Tác</th>
+                </tr>
+              </thead>
+              <tbody id="botCategoriesTableBody">
+                <tr><td colspan="6" class="text-center py-4">Đang tải danh mục...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUBPANEL 4: NGƯỜI DÙNG & VÍ -->
+      <div id="botSubPanelUsers" class="bot-subpanel">
+        <div class="workspace-card">
+          <div class="workspace-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div>
+              <h2 class="workspace-title">👥 Quản Lý Thành Viên & Số Dư Ví</h2>
+              <p class="workspace-subtitle">Tra cứu khách hàng, cộng/trừ số dư ví và khóa/mở khóa tài khoản</p>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="botUserSearchInput" placeholder="Telegram ID hoặc @username..." oninput="debounceFilterBotUsers()">
+              </div>
+              <button class="btn btn-sm btn-glass" onclick="loadBotUsers()">🔄 Tải Lại</button>
+            </div>
+          </div>
+
+          <div class="table-wrapper">
+            <table class="custom-table" id="botUsersTable">
+              <thead>
+                <tr>
+                  <th>Telegram ID</th>
+                  <th>Username / Tên</th>
+                  <th>Số Dư Ví</th>
+                  <th>Đơn Hàng</th>
+                  <th>Tổng Chi Tiêu</th>
+                  <th>Trạng Thái</th>
+                  <th style="text-align: right;">Thao Tác</th>
+                </tr>
+              </thead>
+              <tbody id="botUsersTableBody">
+                <tr><td colspan="7" class="text-center py-4">Đang tải danh sách thành viên...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUBPANEL 5: ĐƠN HÀNG (ORDERS) -->
+      <div id="botSubPanelOrders" class="bot-subpanel">
+        <div class="workspace-card">
+          <div class="workspace-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div>
+              <h2 class="workspace-title">🛒 Toàn Bộ Đơn Hàng Shop</h2>
+              <p class="workspace-subtitle">Lọc theo thời gian, trạng thái, tìm mã đơn và hỗ trợ hoàn tiền tự động</p>
+            </div>
+            <div class="admin-top-actions" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+              <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="botOrderSearchInput" placeholder="Tìm mã đơn, user, khách..." oninput="debounceFilterBotOrders()">
+              </div>
+              <select id="botOrderFilterRange" class="form-input" style="padding: 6px 10px; font-size: 12px; width: 130px;" onchange="loadBotOrders()">
+                <option value="today">Hôm nay</option>
+                <option value="7d">7 ngày qua</option>
+                <option value="30d">30 ngày qua</option>
+                <option value="month">Tháng này</option>
+                <option value="all" selected>Tất cả</option>
+              </select>
+              <select id="botOrderFilterStatus" class="form-input" style="padding: 6px 10px; font-size: 12px; width: 140px;" onchange="loadBotOrders()">
+                <option value="all">Tất cả trạng thái</option>
+                <option value="COMPLETED">Hoàn tất</option>
+                <option value="PENDING">Đang xử lý</option>
+                <option value="FAILED">Thất bại</option>
+                <option value="REFUNDED">Đã hoàn tiền</option>
+              </select>
+              <button class="btn btn-sm btn-glass" onclick="loadBotOrders()">🔄 Lọc</button>
+            </div>
+          </div>
+
+          <div class="table-wrapper">
+            <table class="custom-table" id="botOrdersTable">
+              <thead>
+                <tr>
+                  <th>Mã Đơn</th>
+                  <th>Khách Hàng</th>
+                  <th>Sản Phẩm</th>
+                  <th>Đơn Giá / SL</th>
+                  <th>Tổng Tiền</th>
+                  <th>Trạng Thái</th>
+                  <th>Thời Gian</th>
+                  <th style="text-align: right;">Thao Tác</th>
+                </tr>
+              </thead>
+              <tbody id="botOrdersTableBody">
+                <tr><td colspan="8" class="text-center py-4">Đang tải đơn hàng...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUBPANEL 6: SỔ CHI TIÊU (EXPENSES & NET PROFIT) -->
+      <div id="botSubPanelExpenses" class="bot-subpanel">
+        <div class="workspace-card" style="margin-bottom: 20px;">
+          <div class="workspace-header">
+            <div>
+              <h2 class="workspace-title">✍️ Ghi Chi Phí Thủ Công (Sổ Chi)</h2>
+              <p class="workspace-subtitle">Nhập chi phí mua hàng, công cụ, proxy... để tự động tính lợi nhuận ròng</p>
+            </div>
+          </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Số Tiền (VNĐ):</label>
+              <input type="number" id="botNewExpenseAmount" class="form-input font-mono" placeholder="vd: 150000" min="1" step="1000">
+            </div>
+            <div class="form-group" style="grid-column: span 2;">
+              <label class="form-label">Nội Dung Ghi Chú:</label>
+              <input type="text" id="botNewExpenseNote" class="form-input" placeholder="vd: Mua 10 acc Netflix từ nguồn sỉ A, tiền gia hạn server...">
+            </div>
+          </div>
+          <div style="display: flex; justify-content: flex-end; margin-top: 14px;">
+            <button class="btn btn-gold" onclick="submitAddExpense()">
+              <span>➕ Ghi Chi Phí</span>
+            </button>
           </div>
         </div>
 
-        <div class="table-wrapper">
-          <table class="custom-table" id="botProductsTable">
-            <thead>
-              <tr>
-                <th>STT</th>
-                <th>Tên Mặt Hàng</th>
-                <th>Danh Mục</th>
-                <th>Giá Niêm Yết</th>
-                <th>Loại Phân Phối</th>
-                <th>Kho Hàng</th>
-                <th>Trạng Thái</th>
-              </tr>
-            </thead>
-            <tbody id="botProductsTableBody">
-              <tr>
-                <td colspan="7" class="text-center py-4">Đang tải danh mục mặt hàng Bot...</td>
-              </tr>
-            </tbody>
-          </table>
+        <div class="workspace-card">
+          <div class="workspace-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <h2 class="workspace-title">📋 Lịch Sử Các Khoản Chi Tiêu</h2>
+              <p class="workspace-subtitle">Danh sách chi phí đã ghi nhận</p>
+            </div>
+            <button class="btn btn-sm btn-glass" onclick="loadBotExpenses()">🔄 Tải Lại</button>
+          </div>
+
+          <div class="table-wrapper">
+            <table class="custom-table" id="botExpensesTable">
+              <thead>
+                <tr>
+                  <th>STT</th>
+                  <th>Ghi Chú Khoản Chi</th>
+                  <th>Số Tiền (VNĐ)</th>
+                  <th>Thời Gian</th>
+                  <th style="text-align: right;">Xoá</th>
+                </tr>
+              </thead>
+              <tbody id="botExpensesTableBody">
+                <tr><td colspan="5" class="text-center py-4">Đang tải danh sách chi tiêu...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUBPANEL 7: GỬI THÔNG BÁO (BROADCAST) -->
+      <div id="botSubPanelBroadcast" class="bot-subpanel">
+        <div class="workspace-card">
+          <div class="workspace-header">
+            <div>
+              <h2 class="workspace-title">📢 Soạn & Gửi Thông Báo Tới Khách Hàng</h2>
+              <p class="workspace-subtitle">Gửi tin nhắn tức thì tới toàn bộ người dùng đang hoạt động trên bot Telegram</p>
+            </div>
+          </div>
+
+          <div style="padding: 12px 16px; background: rgba(14, 165, 233, 0.08); border: 1px solid rgba(14, 165, 233, 0.2); border-radius: 8px; margin-bottom: 16px; font-size: 12.5px; color: var(--text-secondary); line-height: 1.6;">
+            💡 Hỗ trợ định dạng HTML: <code>&lt;b&gt;in đậm&lt;/b&gt;</code>, <code>&lt;i&gt;in nghiêng&lt;/i&gt;</code>, <code>&lt;code&gt;mã code&lt;/code&gt;</code>. Xuống dòng bằng phím Enter bình thường.
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Nội Dung Thông Báo:</label>
+            <textarea 
+              id="botBroadcastContent" 
+              class="form-input" 
+              rows="7" 
+              placeholder="🎉 KHUYẾN MÃI ĐẶC BIỆT TUẦN NÀY!&#10;&#10;Shop vừa cập nhật thêm hàng loạt gói Locket Gold No-DNS, CapCut Pro và Netflix Premium với giá cực ưu đãi.&#10;&#10;👉 Bấm vào menu bên dưới để trải nghiệm ngay!"
+              style="resize: vertical; font-size: 13px; line-height: 1.6;"
+            ></textarea>
+          </div>
+
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-top: 14px;">
+            <div style="font-size: 13px; color: var(--text-muted);">
+              Đối tượng nhận: <b id="botBroadcastAudienceCount" style="color: var(--text-primary);">0 người dùng</b> (trừ user bị cấm)
+            </div>
+            <button class="btn btn-gold" id="btnSendBroadcast" onclick="submitBotBroadcast()">
+              <span>📤 Gửi Thông Báo Tức Thì</span>
+            </button>
+          </div>
+
+          <div id="botBroadcastAlert" class="alert-box" style="margin-top: 16px; display: none;"></div>
+        </div>
+      </div>
+
+      <!-- SUBPANEL 8: MÃ GIẢM GIÁ (COUPONS) -->
+      <div id="botSubPanelCoupons" class="bot-subpanel">
+        <div class="workspace-card" style="margin-bottom: 20px;">
+          <div class="workspace-header">
+            <div>
+              <h2 class="workspace-title">🎟️ Thêm Mã Giảm Giá Mới</h2>
+              <p class="workspace-subtitle">Tạo mã khuyến mãi giảm % khi khách đặt mua sản phẩm trên Bot Telegram</p>
+            </div>
+          </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Mã Giảm Giá (Không phân biệt hoa/thường):</label>
+              <input type="text" id="botNewCouponCode" class="form-input font-mono" placeholder="vd: TET2026, VIP50">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Mức Giảm (%):</label>
+              <input type="number" id="botNewCouponPercent" class="form-input font-mono" placeholder="vd: 20" min="1" max="100">
+            </div>
+          </div>
+          <div style="display: flex; justify-content: flex-end; margin-top: 14px;">
+            <button class="btn btn-gold" onclick="submitAddCoupon()">
+              <span>➕ Tạo Mã Giảm Giá</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="workspace-card">
+          <div class="workspace-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <h2 class="workspace-title">📋 Danh Sách Mã Giảm Giá Đang Hoạt Động</h2>
+              <p class="workspace-subtitle">Quản lý các coupon khuyến mãi</p>
+            </div>
+            <button class="btn btn-sm btn-glass" onclick="loadBotCoupons()">🔄 Tải Lại</button>
+          </div>
+
+          <div class="table-wrapper">
+            <table class="custom-table" id="botCouponsTable">
+              <thead>
+                <tr>
+                  <th>STT</th>
+                  <th>Mã Coupon</th>
+                  <th>Mức Giảm (%)</th>
+                  <th>Trạng Thái</th>
+                  <th>Ngày Tạo</th>
+                  <th style="text-align: right;">Xoá</th>
+                </tr>
+              </thead>
+              <tbody id="botCouponsTableBody">
+                <tr><td colspan="6" class="text-center py-4">Đang tải danh sách coupon...</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </main>
@@ -940,6 +1287,268 @@
           </a>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: EDIT BOT PRODUCT & PRICE -->
+  <!-- ======================================================== -->
+  <div id="botEditProductModal" class="modal-backdrop">
+    <div class="modal-card" style="max-width: 520px;">
+      <div class="modal-header">
+        <h3 class="modal-title">✏️ Chỉnh Sửa Mặt Hàng & Giá Bán</h3>
+        <button class="modal-close" onclick="closeBotEditModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="botEditProdId">
+        <div class="form-group">
+          <label class="form-label">Tên Mặt Hàng:</label>
+          <input type="text" id="botEditProdName" class="form-input">
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Danh Mục:</label>
+            <select id="botEditProdCategory" class="form-input"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Giá Bán Niêm Yết (VNĐ):</label>
+            <input type="number" id="botEditProdPrice" class="form-input font-mono" min="0" step="1000">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Trạng Thái Hiển Thị Trên Bot:</label>
+          <select id="botEditProdActive" class="form-input">
+            <option value="true">🟢 Đang Bán (Hiển thị trong menu shop bot)</option>
+            <option value="false">🔴 Tạm Ẩn (Không hiện trên menu shop bot)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mô Tả Sản Phẩm (Hiển thị khi khách bấm chi tiết):</label>
+          <textarea id="botEditProdDesc" class="form-input" rows="3" style="resize: vertical; font-size: 13px;"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; padding: 14px 20px; border-top: 1px solid var(--border-color);">
+        <button class="btn btn-glass" onclick="closeBotEditModal()">Huỷ</button>
+        <button class="btn btn-gold" onclick="saveBotProductEdit()">💾 Lưu Thay Đổi</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: FILL STOCK & INVENTORY MANAGEMENT -->
+  <!-- ======================================================== -->
+  <div id="botFillStockModal" class="modal-backdrop">
+    <div class="modal-card" style="max-width: 650px;">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title">📦 Nhập Kho & Fill Hàng Tự Động</h3>
+          <p id="botFillStockSubtitle" style="font-size: 12px; color: var(--text-muted); margin-top: 2px;"></p>
+        </div>
+        <button class="modal-close" onclick="closeBotFillStockModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="botFillStockProdId">
+        
+        <div class="form-group">
+          <label class="form-label">Dán danh sách tài khoản / mã (Mỗi dòng 1 sản phẩm):</label>
+          <textarea 
+            id="botFillStockLines" 
+            class="form-input font-mono" 
+            rows="6" 
+            placeholder="acc1@gmail.com|matkhau123&#10;acc2@gmail.com|matkhau456&#10;KEY-XXXX-YYYY-ZZZZ"
+            style="resize: vertical; font-size: 12.5px; line-height: 1.5;"
+          ></textarea>
+          <small style="color: var(--text-muted); font-size: 11px; display: block; margin-top: 4px;">
+            Khách mua loại STOCK sẽ tự động nhận 1 dòng từ trên xuống dưới (FIFO).
+          </small>
+        </div>
+
+        <div style="margin: 14px 0; padding: 10px 14px; background: rgba(234, 179, 8, 0.08); border: 1px solid rgba(234, 179, 8, 0.2); border-radius: 8px;">
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; cursor: pointer;">
+            <input type="checkbox" id="botFillStockBroadcast" checked style="width: 16px; height: 16px; accent-color: var(--accent-gold);">
+            <span>🔔 Bắn thông báo <b>"Fill thêm hàng mới!"</b> qua Telegram cho toàn bộ khách hàng</span>
+          </label>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 18px;">
+          <button class="btn btn-gold" onclick="submitBotFillStock()">
+            <span>📥 Nạp Vào Kho & Phát Hành</span>
+          </button>
+        </div>
+
+        <!-- Current Stock List -->
+        <div style="border-top: 1px solid var(--border-color); padding-top: 14px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <h4 style="font-size: 13px; font-weight: 700; color: var(--text-primary);">
+              📋 Danh Sách Tài Khoản Đang Có Trong Kho (<span id="botStockCurrentCount">0</span>)
+            </h4>
+            <button class="btn btn-xs btn-glass" onclick="refreshCurrentStockList()">🔄 Làm Mới</button>
+          </div>
+          <div style="max-height: 180px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px;">
+            <table class="custom-table" style="font-size: 11.5px; margin: 0;">
+              <thead>
+                <tr>
+                  <th>STT</th>
+                  <th>Nội Dung Tài Khoản / Key</th>
+                  <th>Ngày Nhập</th>
+                  <th>Xoá</th>
+                </tr>
+              </thead>
+              <tbody id="botStockItemsTableBody">
+                <tr><td colspan="4" class="text-center py-2">Đang tải danh sách kho...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: flex-end; padding: 12px 20px; border-top: 1px solid var(--border-color);">
+        <button class="btn btn-glass" onclick="closeBotFillStockModal()">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: ADD NEW BOT PRODUCT -->
+  <!-- ======================================================== -->
+  <div id="botAddProductModal" class="modal-backdrop">
+    <div class="modal-card" style="max-width: 520px;">
+      <div class="modal-header">
+        <h3 class="modal-title">➕ Thêm Mặt Hàng Mới Vào Bot Shop</h3>
+        <button class="modal-close" onclick="closeBotAddProductModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Tên Mặt Hàng:</label>
+          <input type="text" id="botNewProdName" class="form-input" placeholder="vd: CapCut Pro 1 Tháng">
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Danh Mục:</label>
+            <select id="botNewProdCategory" class="form-input"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Giá Bán (VNĐ):</label>
+            <input type="number" id="botNewProdPrice" class="form-input font-mono" placeholder="vd: 50000" min="0" step="1000">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Hình Thức Giao Hàng:</label>
+          <select id="botNewProdType" class="form-input">
+            <option value="STOCK">📦 STOCK (Kho tài khoản/key, mua tự giao và trừ dần kho)</option>
+            <option value="LOCKET">⚡ LOCKET (Kích hoạt Locket Gold No-DNS theo username)</option>
+            <option value="LINK">🔗 LINK (Link nâng cấp / hướng dẫn kích hoạt)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mô Tả Sản Phẩm:</label>
+          <textarea id="botNewProdDesc" class="form-input" rows="3" placeholder="Mô tả quyền lợi, bảo hành..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; padding: 14px 20px; border-top: 1px solid var(--border-color);">
+        <button class="btn btn-glass" onclick="closeBotAddProductModal()">Huỷ</button>
+        <button class="btn btn-gold" onclick="submitBotAddProduct()">➕ Tạo Mặt Hàng</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: ADD NEW CATEGORY -->
+  <!-- ======================================================== -->
+  <div id="botAddCategoryModal" class="modal-backdrop">
+    <div class="modal-card" style="max-width: 440px;">
+      <div class="modal-header">
+        <h3 class="modal-title">📂 Thêm Danh Mục Mới</h3>
+        <button class="modal-close" onclick="closeBotAddCategoryModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Tên Danh Mục:</label>
+          <input type="text" id="botNewCatName" class="form-input" placeholder="vd: Tài Khoản VIP, Ứng Dụng AI...">
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; padding: 14px 20px; border-top: 1px solid var(--border-color);">
+        <button class="btn btn-glass" onclick="closeBotAddCategoryModal()">Huỷ</button>
+        <button class="btn btn-gold" onclick="submitBotAddCategory()">➕ Tạo Danh Mục</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: ADJUST USER BALANCE (+ / -) -->
+  <!-- ======================================================== -->
+  <div id="botAdjustBalanceModal" class="modal-backdrop">
+    <div class="modal-card" style="max-width: 440px;">
+      <div class="modal-header">
+        <h3 class="modal-title">💵 Cộng / Trừ Số Dư Ví Thành Viên</h3>
+        <button class="modal-close" onclick="closeBotAdjustBalanceModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="botAdjustTelegramId">
+        <p id="botAdjustUserInfo" style="font-size: 13px; color: var(--text-secondary); margin-bottom: 14px;"></p>
+        <div class="form-group">
+          <label class="form-label">Số Tiền (Nhập số âm để trừ, ví dụ: -50000):</label>
+          <input type="number" id="botAdjustAmount" class="form-input font-mono" placeholder="vd: 100000 hoặc -50000" step="1000">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Lý Do / Ghi Chú:</label>
+          <input type="text" id="botAdjustNote" class="form-input" placeholder="vd: Nạp bù giao dịch, hoàn tiền thủ công...">
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; padding: 14px 20px; border-top: 1px solid var(--border-color);">
+        <button class="btn btn-glass" onclick="closeBotAdjustBalanceModal()">Huỷ</button>
+        <button class="btn btn-gold" onclick="submitBotAdjustBalance()">Xác Nhận Thay Đổi</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: USER TRANSACTION & ORDER HISTORY -->
+  <!-- ======================================================== -->
+  <div id="botUserHistoryModal" class="modal-backdrop">
+    <div class="modal-card" style="max-width: 650px;">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title" id="botUserHistoryTitle">📜 Lịch Sử Giao Dịch Khách Hàng</h3>
+          <p id="botUserHistorySubtitle" style="font-size: 12px; color: var(--text-muted); margin-top: 2px;"></p>
+        </div>
+        <button class="modal-close" onclick="closeBotUserHistoryModal()">✕</button>
+      </div>
+      <div class="modal-body" style="max-height: 450px; overflow-y: auto;">
+        <h4 style="font-size: 13px; font-weight: 700; margin-bottom: 8px; color: var(--text-primary);">Biến Động Số Dư (Transactions)</h4>
+        <table class="custom-table" style="font-size: 12px; margin-bottom: 18px;">
+          <thead>
+            <tr>
+              <th>Loại</th>
+              <th>Số Tiền</th>
+              <th>Số Dư Sau</th>
+              <th>Ghi Chú</th>
+              <th>Thời Gian</th>
+            </tr>
+          </thead>
+          <tbody id="botUserTxTableBody">
+            <tr><td colspan="5" class="text-center py-2">Chưa có giao dịch</td></tr>
+          </tbody>
+        </table>
+
+        <h4 style="font-size: 13px; font-weight: 700; margin-bottom: 8px; color: var(--text-primary);">Đơn Hàng Đã Đặt</h4>
+        <table class="custom-table" style="font-size: 12px;">
+          <thead>
+            <tr>
+              <th>Mã Đơn</th>
+              <th>Sản Phẩm</th>
+              <th>Tổng Tiền</th>
+              <th>Trạng Thái</th>
+              <th>Thời Gian</th>
+            </tr>
+          </thead>
+          <tbody id="botUserOrdersTableBody">
+            <tr><td colspan="5" class="text-center py-2">Chưa có đơn hàng</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: flex-end; padding: 12px 20px; border-top: 1px solid var(--border-color);">
+        <button class="btn btn-glass" onclick="closeBotUserHistoryModal()">Đóng</button>
+      </div>
     </div>
   </div>
 
