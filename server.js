@@ -2145,6 +2145,92 @@ async function runAutoWatchdogScan() {
   }
 }
 
+// ========================================================
+// BOT TELEGRAM SHOP & ORDER ENDPOINTS (Shared Neon DB)
+// ========================================================
+
+// GET /api/bot/overview: financial and order metrics
+app.get('/api/bot/overview', async (req, res) => {
+  try {
+    const ordersCountRes = await dbPool.query(`SELECT COUNT(*) as count FROM bot_orders`);
+    const revenueRes = await dbPool.query(`SELECT COALESCE(SUM(final_price), 0) as total FROM bot_orders WHERE status::text IN ('PAID', 'DELIVERED')`);
+    const usersCountRes = await dbPool.query(`SELECT COUNT(*) as count FROM bot_users`);
+    const productsCountRes = await dbPool.query(`SELECT COUNT(*) as count FROM bot_products WHERE is_active = true`);
+    const locketOrdersRes = await dbPool.query(`SELECT COUNT(*) as count FROM bot_orders WHERE locket_username IS NOT NULL OR product_id IN (SELECT id FROM bot_products WHERE delivery_type::text = 'LOCKET_GOLD')`);
+
+    const recentOrdersRes = await dbPool.query(`
+      SELECT o.id, o.payment_ref, o.quantity, o.final_price, o.status, o.locket_username, o.locket_uid, o.created_at,
+             p.name as product_name, p.delivery_type,
+             u.username as tg_username, u.full_name as tg_full_name, u.telegram_id
+      FROM bot_orders o
+      LEFT JOIN bot_products p ON o.product_id = p.id
+      LEFT JOIN bot_users u ON o.user_id = u.id
+      ORDER BY o.created_at DESC
+      LIMIT 10
+    `);
+
+    res.json({
+      success: true,
+      metrics: {
+        orders_count: parseInt(ordersCountRes.rows[0]?.count || 0),
+        revenue: parseFloat(revenueRes.rows[0]?.total || 0),
+        users_count: parseInt(usersCountRes.rows[0]?.count || 0),
+        products_count: parseInt(productsCountRes.rows[0]?.count || 0),
+        locket_orders_count: parseInt(locketOrdersRes.rows[0]?.count || 0)
+      },
+      recent_orders: recentOrdersRes.rows
+    });
+  } catch (err) {
+    console.error('[API /api/bot/overview ERROR]:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET /api/bot/products: list all bot products
+app.get('/api/bot/products', async (req, res) => {
+  try {
+    const result = await dbPool.query(`
+      SELECT p.id, p.name, p.description, p.price, p.delivery_type, p.stock, p.is_active, p.total_sold, p.created_at,
+             c.name as category_name, c.emoji as category_emoji
+      FROM bot_products p
+      LEFT JOIN bot_categories c ON p.category_id = c.id
+      ORDER BY p.id ASC
+    `);
+    res.json({ success: true, products: result.rows });
+  } catch (err) {
+    console.error('[API /api/bot/products ERROR]:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET /api/bot/orders: list all bot orders
+app.get('/api/bot/orders', async (req, res) => {
+  try {
+    const status = req.query.status;
+    let query = `
+      SELECT o.id, o.payment_ref, o.quantity, o.unit_price, o.final_price, o.status, 
+             o.locket_username, o.locket_uid, o.transaction_id, o.paid_amount, o.paid_at, o.delivered_at, o.created_at,
+             p.name as product_name, p.delivery_type,
+             u.username as tg_username, u.full_name as tg_full_name, u.telegram_id
+      FROM bot_orders o
+      LEFT JOIN bot_products p ON o.product_id = p.id
+      LEFT JOIN bot_users u ON o.user_id = u.id
+    `;
+    const params = [];
+    if (status && status !== 'all') {
+      params.push(status.toUpperCase());
+      query += ` WHERE UPPER(o.status::text) = $1`;
+    }
+    query += ` ORDER BY o.created_at DESC LIMIT 100`;
+
+    const result = await dbPool.query(query, params);
+    res.json({ success: true, orders: result.rows });
+  } catch (err) {
+    console.error('[API /api/bot/orders ERROR]:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // Start Server
 app.listen(PORT, () => {
   const lanIp = getLanIp();

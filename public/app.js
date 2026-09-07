@@ -15,12 +15,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // Check URL param for tab
   const params = new URLSearchParams(window.location.search);
   const tabParam = params.get('tab');
-  if (tabParam && ['upgrade', 'admin', 'scanner', 'dns', 'master'].includes(tabParam)) {
+  if (tabParam && ['upgrade', 'admin', 'scanner', 'dns', 'master', 'bot'].includes(tabParam)) {
     switchTab(tabParam);
   }
 
   loadAdminData();
   loadMasterInfo();
+  loadBotShopData();
   checkExpiryHeartbeat();
 });
 
@@ -149,6 +150,8 @@ function switchTab(tabId) {
     loadAdminData();
   } else if (tabId === 'master') {
     loadMasterInfo();
+  } else if (tabId === 'bot') {
+    loadBotShopData();
   }
 }
 
@@ -1124,3 +1127,206 @@ function showToast(message) {
     toast.classList.remove('show');
   }, 3000);
 }
+
+// ========================================================
+// 10. BOT TELEGRAM SHOP DATA & CRM (Shared Neon DB)
+// ========================================================
+let allBotOrders = [];
+let allBotProducts = [];
+
+async function loadBotShopData(showFeedback = false) {
+  try {
+    // 1. Fetch overview metrics
+    const resOverview = await fetch('/api/bot/overview');
+    if (resOverview.ok) {
+      const data = await resOverview.json();
+      if (data.success && data.metrics) {
+        const revEl = document.getElementById('botTotalRevenue');
+        if (revEl) revEl.innerText = Number(data.metrics.revenue || 0).toLocaleString('vi-VN') + ' đ';
+
+        const ordEl = document.getElementById('botTotalOrders');
+        if (ordEl) ordEl.innerText = data.metrics.orders_count || 0;
+
+        const usrEl = document.getElementById('botTotalUsers');
+        if (usrEl) usrEl.innerText = data.metrics.users_count || 0;
+
+        const badgeEl = document.getElementById('tabBadgeBotOrderCount');
+        if (badgeEl) badgeEl.innerText = data.metrics.orders_count || 0;
+      }
+    }
+
+    // 2. Fetch all orders
+    const resOrders = await fetch('/api/bot/orders');
+    if (resOrders.ok) {
+      const data = await resOrders.json();
+      if (data.success) {
+        allBotOrders = data.orders || [];
+        renderBotOrders(allBotOrders);
+      }
+    }
+
+    // 3. Fetch all products
+    const resProducts = await fetch('/api/bot/products');
+    if (resProducts.ok) {
+      const data = await resProducts.json();
+      if (data.success) {
+        allBotProducts = data.products || [];
+        renderBotProducts(allBotProducts);
+      }
+    }
+
+    if (showFeedback) {
+      showToast('Đã đồng bộ dữ liệu Bot Telegram Shop từ Neon DB!');
+    }
+  } catch (err) {
+    console.error('Error loading bot shop data:', err);
+  }
+}
+
+function renderBotOrders(orders) {
+  const tbody = document.getElementById('botOrdersTableBody');
+  if (!tbody) return;
+
+  if (!orders || orders.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="8" class="text-center py-4" style="color: var(--text-secondary);">
+          Chưa có đơn hàng nào phát sinh từ Bot Telegram.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = orders.map(order => {
+    const isLocket = (order.delivery_type && order.delivery_type.toLowerCase().includes('locket')) || !!order.locket_username;
+    
+    // Status Badge
+    let statusClass = 'badge-pending';
+    let statusText = order.status || 'PENDING';
+    const stUpper = String(order.status).toUpperCase();
+    if (['COMPLETED', 'DELIVERED'].includes(stUpper)) {
+      statusClass = 'badge-paid';
+      statusText = '🟢 Đã Giao Hàng';
+    } else if (['PAID'].includes(stUpper)) {
+      statusClass = 'badge-paid';
+      statusText = '🔵 Đã Thanh Toán';
+    } else if (['CANCELLED', 'REFUNDED'].includes(stUpper)) {
+      statusClass = 'badge-expired';
+      statusText = '🔴 Đã Hủy';
+    } else {
+      statusClass = 'badge-pending';
+      statusText = '🟡 Chờ Chuyển Khoản';
+    }
+
+    // Formatted time
+    const timeStr = order.created_at ? new Date(order.created_at).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' }) : '--';
+
+    return `
+      <tr>
+        <td><strong class="font-mono text-gold">${escapeHtml(order.payment_ref || '#' + order.id)}</strong></td>
+        <td>
+          <div style="font-weight: 600; color: var(--text-primary);">${escapeHtml(order.product_name || 'Sản phẩm #' + order.id)}</div>
+          ${isLocket ? '<span class="mode-tag tag-gold" style="font-size: 10px; padding: 2px 6px; margin-top: 2px; display: inline-block;">⚡ Locket Gold</span>' : ''}
+        </td>
+        <td>
+          <div><strong>${order.tg_username ? '@' + escapeHtml(order.tg_username) : escapeHtml(order.tg_full_name || 'Khách')}</strong></div>
+          <small class="font-mono" style="color: var(--text-muted); font-size: 11px;">ID: ${order.telegram_id || '--'}</small>
+        </td>
+        <td>
+          ${order.locket_username ? `
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span style="color: var(--gold-primary); font-weight: 700;">@${escapeHtml(order.locket_username)}</span>
+              <button class="btn btn-xs btn-glass" title="Sao chép username" onclick="copyText('@${escapeHtml(order.locket_username)}')">📋</button>
+            </div>
+            ${order.locket_uid ? `<div class="font-mono" style="font-size: 10px; color: var(--text-muted);">${escapeHtml(order.locket_uid.slice(0, 10))}...</div>` : ''}
+          ` : '<span style="color: var(--text-muted);">--</span>'}
+        </td>
+        <td><span class="font-mono" style="font-weight: 700; color: var(--gold-primary);">${Number(order.final_price || 0).toLocaleString('vi-VN')} đ</span></td>
+        <td><span class="badge ${statusClass}">${statusText}</span></td>
+        <td><span style="font-size: 12px; color: var(--text-secondary);">${timeStr}</span></td>
+        <td>
+          <div style="display: flex; gap: 4px;">
+            ${order.locket_username ? `
+              <button class="btn btn-xs btn-gold" onclick="fillLocketUpgradeFromBot('${escapeHtml(order.locket_username)}')">⚡ Nạp</button>
+            ` : ''}
+            <button class="btn btn-xs btn-glass" onclick="copyText('${escapeHtml(order.payment_ref)}')">Copy Ref</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function renderBotProducts(products) {
+  const tbody = document.getElementById('botProductsTableBody');
+  if (!tbody) return;
+
+  if (!products || products.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="7" class="text-center py-4" style="color: var(--text-secondary);">
+          Chưa có sản phẩm nào trong hệ thống Bot.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = products.map((p, idx) => {
+    const isLocket = p.delivery_type && p.delivery_type.toLowerCase().includes('locket');
+    const stockText = p.stock === -1 ? '♾️ Vô hạn' : `${p.stock} item(s)`;
+    const statusBadge = p.is_active 
+      ? '<span class="badge badge-paid">🟢 Đang bán</span>' 
+      : '<span class="badge badge-expired">🔴 Ẩn</span>';
+
+    return `
+      <tr>
+        <td class="font-mono">${idx + 1}</td>
+        <td>
+          <div style="font-weight: 700; color: var(--text-primary);">${escapeHtml(p.name)}</div>
+          ${p.description ? `<small style="color: var(--text-muted); font-size: 11px;">${escapeHtml(p.description.slice(0, 60))}${p.description.length > 60 ? '...' : ''}</small>` : ''}
+        </td>
+        <td>
+          <span>${escapeHtml(p.category_emoji || '📦')} ${escapeHtml(p.category_name || 'Chung')}</span>
+        </td>
+        <td>
+          <span class="font-mono text-gold" style="font-weight: 700;">${Number(p.price).toLocaleString('vi-VN')} đ</span>
+        </td>
+        <td>
+          ${isLocket ? '<span class="mode-tag tag-gold" style="font-size: 11px;">⚡ Locket Gold No-DNS</span>' : `<span class="badge badge-purple">${escapeHtml(p.delivery_type)}</span>`}
+        </td>
+        <td><span class="font-mono">${stockText}</span></td>
+        <td>${statusBadge}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function filterBotOrders() {
+  const query = (document.getElementById('botOrderSearchInput')?.value || '').toLowerCase().trim();
+  const filterStatus = (document.getElementById('botOrderFilterStatus')?.value || 'all').toLowerCase();
+
+  const filtered = allBotOrders.filter(order => {
+    const matchStatus = filterStatus === 'all' || String(order.status).toLowerCase() === filterStatus;
+    const matchQuery = !query || 
+      (order.payment_ref && order.payment_ref.toLowerCase().includes(query)) ||
+      (order.product_name && order.product_name.toLowerCase().includes(query)) ||
+      (order.tg_username && order.tg_username.toLowerCase().includes(query)) ||
+      (order.tg_full_name && order.tg_full_name.toLowerCase().includes(query)) ||
+      (order.locket_username && order.locket_username.toLowerCase().includes(query));
+    return matchStatus && matchQuery;
+  });
+
+  renderBotOrders(filtered);
+}
+
+function fillLocketUpgradeFromBot(username) {
+  switchTab('upgrade');
+  const inputLookup = document.getElementById('inputSmartLookup');
+  if (inputLookup) {
+    inputLookup.value = username;
+    triggerManualLookup();
+  }
+}
+
