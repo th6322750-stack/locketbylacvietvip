@@ -888,6 +888,15 @@ const MASTER_CLUSTERS = [
     is_full: false,
     status: 'active',
     notes: 'Đang nhận khách - Hưởng trọn Gói 1 Năm (23/07/2027) từ @trangcutee'
+  },
+  {
+    id: 'MASTER_03',
+    uid: 'lacviet_cluster_03_master',
+    name: 'Master Cụm 3',
+    is_full: false,
+    status: 'active',
+    fetch_token: DEFAULT_MASTER_JWS_TOKEN,
+    notes: 'Cụm Master 03 mở rộng tải StoreKit 2 (50 slots mới)'
   }
 ];
 
@@ -909,7 +918,7 @@ async function ensureMasterClusterActive(cluster) {
         const payload = JSON.stringify({
           app_user_id: masterUid,
           fetch_token: tokenToUse,
-          price: 3.99,
+          price: 1.99,
           currency: 'USD',
           is_restore: true,
           attributes: { "storefront": { value: "VNM" }, "platform": { value: "iOS" } }
@@ -968,6 +977,9 @@ function linkAliasToMaster(masterUid, customerUid) {
 }
 
 async function injectToRevenueCat(uid, is15s = false, customToken = null) {
+  let hasAliasLimitError = 0;
+  let activeClusterCount = 0;
+
   // 1. Alias Cluster Grouping (Tự động lọc các Cụm đang Active & chưa Full)
   for (const cluster of MASTER_CLUSTERS) {
     if (uid === cluster.uid) continue;
@@ -975,6 +987,8 @@ async function injectToRevenueCat(uid, is15s = false, customToken = null) {
       console.log(`[CLUSTER POOL] ⏭️ Bỏ qua ${cluster.name} (${cluster.id}) do đã kịch trần 50 Alias.`);
       continue;
     }
+
+    activeClusterCount++;
 
     try {
       // Đảm bảo Master Node của Cụm này luôn có Gold
@@ -988,21 +1002,12 @@ async function injectToRevenueCat(uid, is15s = false, customToken = null) {
           return { success: true, method: 'alias_cluster', cluster: cluster.id, cluster_uid: cluster.uid, data: check.raw };
         }
       } else {
-        // Tự động nhận diện nếu Cụm bị RevenueCat chặn do đạt kịch trần 50 Aliases
-        const isLimitReached = aliasRes.body && (aliasRes.body.includes('7255') || aliasRes.body.includes('Alias limit reached') || aliasRes.statusCode === 400);
-        if (isLimitReached) {
-          cluster.is_full = true;
-          cluster.status = 'full';
-          console.warn(`[CLUSTER POOL] ⚠️ ${cluster.name} (${cluster.id}) ĐÃ KỊCH TRẦN 50 ALIASES! Đã tự động đánh dấu FULL.`);
-          try {
-            sendTelegramAnomalyAlert({
-              type: 'warning',
-              title: `CỤM MASTER ${cluster.name} ĐÃ ĐẦY`,
-              message: `Cụm <b>${cluster.name}</b> (<code>${cluster.uid}</code>) vừa đạt giới hạn 50 Aliases. Hệ thống đã tự động khóa cụm này và chuyển hướng khách sang cụm tiếp theo!`
-            });
-          } catch (e) {}
+        const isLimit = aliasRes.body && (aliasRes.body.includes('7255') || aliasRes.body.includes('Alias limit reached'));
+        if (isLimit) {
+          hasAliasLimitError++;
+          console.warn(`[CLUSTER POOL] ⚠️ ${cluster.name} (${cluster.id}) báo Alias limit khi ghép @${uid}. Đang chuyển cụm tiếp theo...`);
         } else {
-          console.warn(`[CLUSTER POOL] ⚠️ ${cluster.name} (${cluster.id}) không thể nhận thêm (HTTP ${aliasRes.statusCode}). Đang tự động chuyển cụm tiếp theo...`);
+          console.warn(`[CLUSTER POOL] ⚠️ ${cluster.name} (${cluster.id}) không thể nhận nick @${uid} (HTTP ${aliasRes.statusCode}). Đang tự động chuyển cụm tiếp theo...`);
         }
       }
     } catch (e) {
@@ -1010,8 +1015,17 @@ async function injectToRevenueCat(uid, is15s = false, customToken = null) {
     }
   }
 
-  // 2. Cảnh báo nếu toàn bộ các cụm đều kịch trần
-  console.error(`[CLUSTER POOL] ❌ TẤT CẢ CÁC CỤM MASTER ĐÃ ĐẦY! Không nạp lẻ vào UID cá nhân.`);
+  // Nếu tất cả các cụm đều báo lỗi Alias Limit thì chính tài khoản của khách đã kịch trần 50 alias cũ
+  if (hasAliasLimitError >= activeClusterCount && activeClusterCount > 0) {
+    return {
+      success: false,
+      statusCode: 400,
+      error: 'Tài khoản Locket này đã liên kết tối đa 50 thiết bị/alias trên Apple từ trước. Vui lòng nhập tài khoản Locket khác!'
+    };
+  }
+
+  // 2. Cảnh báo nếu thực sự toàn bộ các cụm đều kịch trần
+  console.error(`[CLUSTER POOL] ❌ TẤT CẢ CÁC CỤM MASTER ĐÃ ĐẦY!`);
   try {
     sendTelegramAnomalyAlert({
       type: 'error',
