@@ -1472,7 +1472,7 @@ app.post('/api/upgrade/bulk', requireAdminAuth, async (req, res) => {
 // -------------------------------------------------------------
 // 6b. SEPAY WEBHOOK ENDPOINT (AUTO-PAYMENT & AUTO-UPGRADE)
 // -------------------------------------------------------------
-app.post(['/api/sepay/webhook', '/api/webhook/sepay', '/hooks/sepay-payment'], async (req, res) => {
+app.post(['/api/sepay/webhook', '/api/webhook/sepay', '/hooks/sepay-payment', '/webhook/payment', '/api/webhook/payment'], async (req, res) => {
   try {
     const data = req.body || {};
     console.log('--- NHẬN WEBHOOK SEPAY ---', JSON.stringify(data));
@@ -1485,6 +1485,89 @@ app.post(['/api/sepay/webhook', '/api/webhook/sepay', '/hooks/sepay-payment'], a
 
     if (!content) {
       return res.status(200).json({ success: true, message: 'Bỏ qua: Không có nội dung chuyển khoản' });
+    }
+
+    // 0. Check if content matches a Telegram Bot wallet topup code (KWP...)
+    const kwpMatch = content.match(/KWP\d*[A-F0-9]+/i);
+    if (kwpMatch) {
+      const topupCode = kwpMatch[0].toUpperCase();
+      try {
+        const topupRes = await dbPool.query(
+          `SELECT t.*, u."telegramId", u.username, u."firstName"
+           FROM "TopupRequest" t
+           JOIN "User" u ON t."userId" = u.id
+           WHERE UPPER(t.code) = $1 AND t.status = 'PENDING'
+           LIMIT 1`,
+          [topupCode]
+        );
+
+        if (topupRes.rows.length > 0) {
+          const topup = topupRes.rows[0];
+          if (transferAmount >= Number(topup.amount)) {
+            // Update TopupRequest
+            await dbPool.query(
+              `UPDATE "TopupRequest"
+               SET status = 'PAID', "paidAt" = NOW(), "rawWebhook" = $1
+               WHERE id = $2`,
+              [JSON.stringify(data), topup.id]
+            );
+
+            // Increment user balance
+            const userUpdate = await dbPool.query(
+              `UPDATE "User"
+               SET balance = balance + $1
+               WHERE id = $2
+               RETURNING balance`,
+              [Number(topup.amount), topup.userId]
+            );
+
+            const newBalance = userUpdate.rows[0]?.balance || 0;
+
+            // Record transaction ledger
+            await dbPool.query(
+              `INSERT INTO "Transaction" ("userId", amount, type, note, "balanceAfter", "createdAt")
+               VALUES ($1, $2, 'TOPUP', $3, $4, NOW())`,
+              [topup.userId, Number(topup.amount), `Nap vi #${topup.code}`, newBalance]
+            );
+
+            // Helper to send Telegram notifications
+            const sendTele = (token, chatId, text) => {
+              const teleReq = https.request({
+                hostname: 'api.telegram.org',
+                path: `/bot${token}/sendMessage`,
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+              });
+              teleReq.on('error', (e) => console.error('Telegram notification error:', e.message));
+              teleReq.write(JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' }));
+              teleReq.end();
+            };
+
+            // Notify user
+            const teleToken = '7798628777:AAGjA9r0yjI8y83l5sCfAn-kOET-UYSg4Sw';
+            const userMsg = `✅ <b>Nạp ví thành công +${Number(topup.amount).toLocaleString('vi-VN')}đ</b>\n` +
+              `💰 <b>Số dư mới:</b> ${Number(newBalance).toLocaleString('vi-VN')}đ`;
+            sendTele(teleToken, topup.telegramId, userMsg);
+
+            // Notify admin group
+            const groupToken = '8526627556:AAGoqOQ9KFQ-C5L7G-qBPc5stvM8v4NZrIc';
+            const groupMsg = `<b>BÁO ĐƠN HỆ THỐNG</b>\n` +
+              `💰 <b>Nạp tiền thành công</b>\n` +
+              `Khách: ${topup.username ? '@' + topup.username : topup.firstName || topup.telegramId}\n` +
+              `Số tiền: ${Number(topup.amount).toLocaleString('vi-VN')}đ\n` +
+              `Số dư mới: ${Number(newBalance).toLocaleString('vi-VN')}đ`;
+            sendTele(groupToken, -5088834251, groupMsg);
+
+            return res.status(200).json({
+              success: true,
+              message: `Đã tự động cộng ví thành công mã ${topupCode} cho @${topup.username || topup.telegramId}!`,
+              newBalance
+            });
+          }
+        }
+      } catch (kwpErr) {
+        console.error('Lỗi kiểm tra topup KWP trong SePay webhook:', kwpErr);
+      }
     }
 
     // 1. Check if content matches a Telegram Bot order payment_ref (SHOP...)

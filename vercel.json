@@ -54,6 +54,10 @@
       "dest": "/server.js"
     },
     {
+      "src": "/webhook/(.*)",
+      "dest": "/server.js"
+    },
+    {
       "src": "/admin",
       "dest": "/public/admin.html"
     },
