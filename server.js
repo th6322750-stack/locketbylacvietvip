@@ -873,19 +873,42 @@ function resolveLocketProfile(input) {
 // REVENUECAT MULTI-CLUSTER MASTER POOL ENGINE
 // -------------------------------------------------------------
 const MASTER_CLUSTERS = [
-  { id: 'MASTER_01', uid: 'VBo5nZiVs4ee3JIyV9L5zlijIa23', name: 'Master Cụm 1' },
-  { id: 'MASTER_02', uid: 'lacviet_cluster_02_master', name: 'Master Cụm 2' }
+  {
+    id: 'MASTER_01',
+    uid: 'VBo5nZiVs4ee3JIyV9L5zlijIa23',
+    name: 'Master Cụm 1',
+    is_full: true,
+    status: 'full',
+    notes: 'Đã kịch trần 50/50 Aliases trên RevenueCat (Gói 1 Năm 27/07/2027)'
+  },
+  {
+    id: 'MASTER_02',
+    uid: 'lacviet_cluster_02_master',
+    name: 'Master Cụm 2',
+    is_full: false,
+    status: 'active',
+    notes: 'Đang nhận khách - Hưởng trọn Gói 1 Năm (23/07/2027) từ @trangcutee'
+  }
 ];
 
-async function ensureMasterClusterActive(masterUid) {
+async function ensureMasterClusterActive(cluster) {
+  const masterUid = typeof cluster === 'object' ? cluster.uid : cluster;
+  const token = typeof cluster === 'object' ? cluster.fetch_token : null;
   try {
     const rc = await queryRevenueCatLive(masterUid);
     if (!rc.is_live) {
+      // Chỉ nạp lại nếu có token độc lập của cụm đó, tránh đá token giữa các cụm
+      const tokenToUse = token || (masterUid === 'VBo5nZiVs4ee3JIyV9L5zlijIa23' ? DEFAULT_MASTER_JWS_TOKEN : null);
+      if (!tokenToUse) {
+        console.warn(`[MASTER POOL] ℹ️ Master Cluster ${masterUid} đang dùng gói thừa hưởng tự nhiên (không nạp đè token StoreKit 2).`);
+        return;
+      }
+
       console.log(`[MASTER POOL] 🔄 Kích hoạt lại Token gốc cho Master Cluster ${masterUid}...`);
       await new Promise((resolve) => {
         const payload = JSON.stringify({
           app_user_id: masterUid,
-          fetch_token: DEFAULT_MASTER_JWS_TOKEN,
+          fetch_token: tokenToUse,
           price: 3.99,
           currency: 'USD',
           is_restore: true,
@@ -945,12 +968,17 @@ function linkAliasToMaster(masterUid, customerUid) {
 }
 
 async function injectToRevenueCat(uid, is15s = false, customToken = null) {
-  // 1. Alias Cluster Grouping (Thử lần lượt: Cụm 1 -> nếu kịch trần tự động chuyển sang Cụm 2, Cụm 3...)
+  // 1. Alias Cluster Grouping (Tự động lọc các Cụm đang Active & chưa Full)
   for (const cluster of MASTER_CLUSTERS) {
     if (uid === cluster.uid) continue;
+    if (cluster.is_full || cluster.status === 'full') {
+      console.log(`[CLUSTER POOL] ⏭️ Bỏ qua ${cluster.name} (${cluster.id}) do đã kịch trần 50 Alias.`);
+      continue;
+    }
+
     try {
       // Đảm bảo Master Node của Cụm này luôn có Gold
-      await ensureMasterClusterActive(cluster.uid);
+      await ensureMasterClusterActive(cluster);
 
       const aliasRes = await linkAliasToMaster(cluster.uid, uid);
       if (aliasRes.success) {
@@ -960,15 +988,38 @@ async function injectToRevenueCat(uid, is15s = false, customToken = null) {
           return { success: true, method: 'alias_cluster', cluster: cluster.id, cluster_uid: cluster.uid, data: check.raw };
         }
       } else {
-        console.warn(`[CLUSTER POOL] ⚠️ ${cluster.name} (${cluster.id}) không thể nhận thêm (HTTP ${aliasRes.statusCode}). Đang tự động chuyển cụm tiếp theo...`);
+        // Tự động nhận diện nếu Cụm bị RevenueCat chặn do đạt kịch trần 50 Aliases
+        const isLimitReached = aliasRes.body && (aliasRes.body.includes('7255') || aliasRes.body.includes('Alias limit reached') || aliasRes.statusCode === 400);
+        if (isLimitReached) {
+          cluster.is_full = true;
+          cluster.status = 'full';
+          console.warn(`[CLUSTER POOL] ⚠️ ${cluster.name} (${cluster.id}) ĐÃ KỊCH TRẦN 50 ALIASES! Đã tự động đánh dấu FULL.`);
+          try {
+            sendTelegramAnomalyAlert({
+              type: 'warning',
+              title: `CỤM MASTER ${cluster.name} ĐÃ ĐẦY`,
+              message: `Cụm <b>${cluster.name}</b> (<code>${cluster.uid}</code>) vừa đạt giới hạn 50 Aliases. Hệ thống đã tự động khóa cụm này và chuyển hướng khách sang cụm tiếp theo!`
+            });
+          } catch (e) {}
+        } else {
+          console.warn(`[CLUSTER POOL] ⚠️ ${cluster.name} (${cluster.id}) không thể nhận thêm (HTTP ${aliasRes.statusCode}). Đang tự động chuyển cụm tiếp theo...`);
+        }
       }
     } catch (e) {
       console.warn(`[ALIAS ERROR on ${cluster.id}]:`, e.message);
     }
   }
 
-  // 2. KHÔNG BAO GIỜ nạp token lẻ trực tiếp vào UID cá nhân (fix triệt để chống đá văng token)
+  // 2. Cảnh báo nếu toàn bộ các cụm đều kịch trần
   console.error(`[CLUSTER POOL] ❌ TẤT CẢ CÁC CỤM MASTER ĐÃ ĐẦY! Không nạp lẻ vào UID cá nhân.`);
+  try {
+    sendTelegramAnomalyAlert({
+      type: 'error',
+      title: 'TẤT CẢ CÁC CỤM MASTER ĐÃ KỊCH TRẦN',
+      message: `Hệ thống vừa từ chối đơn nâng cấp cho UID <code>${uid}</code> vì toàn bộ các Cụm Master đã đầy 50/50. Vui lòng thêm Cụm Master mới ngay!`
+    });
+  } catch (e) {}
+
   return {
     success: false,
     statusCode: 429,
@@ -1117,7 +1168,7 @@ function recordSuccessfulLogin(ip) {
 
 function requireAdminAuth(req, res, next) {
   const authHeader = req.headers['authorization'] || '';
-  const token = authHeader.replace(/^Bearer\s+/i, '').trim() || req.headers['x-admin-token'] || req.query?.token;
+  const token = authHeader.replace(/^Bearer\s+/i, '').trim() || req.headers['x-admin-token'] || req.query?.token || req.body?.admin_token || req.body?.token;
 
   if (token && (activeAdminSessions.has(token) || token === 'MASTER_LACVIET_TOKEN_2026' || token.startsWith('lkvip_'))) {
     return next();
@@ -1371,14 +1422,29 @@ app.get('/api/scan-all', requireAdminAuth, async (req, res) => {
 
 // 5. Fast Upgrade (Single - Protected with Admin Auth)
 app.post('/api/upgrade', requireAdminAuth, async (req, res) => {
-  const { username, uid, mode = 'nodns', price = DEFAULT_PRICE, payment_status = 'paid', channel = 'zalo', notes = '', avatar = '' } = req.body;
-  if (!uid || typeof uid !== 'string' || uid.trim().length < 10) {
-    return res.status(400).json({ success: false, error: 'UID Locket không hợp lệ!' });
+  const { username, uid, mode = 'nodns', package: pkg = 'nodns', price = DEFAULT_PRICE, payment_status = 'paid', channel = 'zalo', notes = '', avatar = '' } = req.body;
+  
+  let cleanUid = (uid && typeof uid === 'string') ? uid.trim() : null;
+  let cleanUsername = (username || '').trim().replace('@', '');
+
+  // Tự động phân giải UID từ Username/Link nếu chưa có UID
+  if (!cleanUid && cleanUsername) {
+    try {
+      const resolved = await resolveLocketProfile(cleanUsername);
+      if (resolved && resolved.uid) {
+        cleanUid = resolved.uid;
+        if (resolved.username) cleanUsername = resolved.username;
+      }
+    } catch (e) {
+      console.warn('[UPGRADE] Failed to auto-resolve username:', e.message);
+    }
   }
 
-  const cleanUid = uid.trim();
-  const cleanUsername = (username || 'customer_' + cleanUid.substring(0, 6)).trim().replace('@', '');
-  const is15s = mode === '15s' || mode === 'nodns15s';
+  if (!cleanUid || cleanUid.length < 10) {
+    return res.status(400).json({ success: false, error: 'Không tìm thấy tài khoản Locket này! Vui lòng kiểm tra lại Username.' });
+  }
+
+  const is15s = mode === '15s' || mode === 'nodns15s' || pkg === '15s';
 
   // Inject to RevenueCat via Cascade Master Clusters (Cụm 1 -> nếu đầy tự động sang Cụm 2)
   const injectRes = await injectToRevenueCat(cleanUid, is15s);
@@ -1416,9 +1482,13 @@ app.post('/api/upgrade', requireAdminAuth, async (req, res) => {
     console.error('Failed to send Telegram alert:', err.message);
   }
 
+  const shareLink = `https://locket.cam/${cleanUsername}`;
+
   res.json({
     success: true,
     message: `Đã nâng cấp thành công Locket Gold cho @${cleanUsername} vào ${injectRes.cluster || 'Cụm Master'}!`,
+    share_link: shareLink,
+    link: shareLink,
     user: userObj,
     rc_result: injectRes
   });
@@ -1945,20 +2015,78 @@ app.get('/api/clusters/status', async (req, res) => {
       const clusterUsers = users.filter(u => u.master_uid === c.uid || (c.id === 'MASTER_01' && (!u.master_uid || u.master_uid === 'C2A5eSIG79UquwvohWpirajDTVx2' || u.master_uid === c.uid)));
       const paid = clusterUsers.filter(u => u.payment_status === 'paid').length;
       const unpaid = clusterUsers.length - paid;
+      const isFull = c.is_full || c.status === 'full';
+      const usedSlots = isFull ? 50 : clusterUsers.length;
+      const availableSlots = isFull ? 0 : Math.max(0, 50 - clusterUsers.length);
+
       return {
         id: c.id,
         name: c.name,
         uid: c.uid,
+        status: isFull ? 'full' : (c.status || 'active'),
+        is_full: isFull,
         total_slots: 50,
-        used_slots: clusterUsers.length,
-        available_slots: Math.max(0, 50 - clusterUsers.length),
+        used_slots: usedSlots,
+        available_slots: availableSlots,
         paid_count: paid,
         unpaid_count: unpaid,
+        notes: c.notes || '',
         users: clusterUsers.map(u => ({ username: u.username, uid: u.uid, payment_status: u.payment_status, has_gold: u.has_gold }))
       };
     });
 
     res.json({ success: true, clusters });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 10c. DYNAMIC CLUSTER ADDITION & EXPANSION
+app.post('/api/clusters/add', async (req, res) => {
+  try {
+    const { name, uid, notes = '', fetch_token = null } = req.body;
+    if (!uid || uid.trim().length < 5) {
+      return res.status(400).json({ success: false, error: 'Vui lòng nhập UID hợp lệ của Master Cụm!' });
+    }
+    const cleanUid = uid.trim();
+    if (MASTER_CLUSTERS.some(c => c.uid === cleanUid)) {
+      return res.status(400).json({ success: false, error: 'UID Cụm này đã tồn tại trong danh sách!' });
+    }
+
+    // Kiểm tra xem UID này có Gold hay không
+    const rc = await queryRevenueCatLive(cleanUid);
+    if (!rc.is_live && !fetch_token) {
+      return res.status(400).json({ success: false, error: `UID ${cleanUid} hiện không có quyền Gold trên RevenueCat và không cung cấp Token kích hoạt!` });
+    }
+
+    const newClusterId = 'MASTER_' + String(MASTER_CLUSTERS.length + 1).padStart(2, '0');
+    const newCluster = {
+      id: newClusterId,
+      uid: cleanUid,
+      name: (name || `Master Cụm ${MASTER_CLUSTERS.length + 1}`).trim(),
+      fetch_token: fetch_token || null,
+      is_full: false,
+      status: 'active',
+      notes: notes.trim() || `Cụm mới thêm lúc ${new Date().toLocaleString('vi-VN')}`
+    };
+
+    MASTER_CLUSTERS.push(newCluster);
+
+    // Lưu vào Neon DB nếu có kết nối
+    try {
+      await dbPool.query(`
+        INSERT INTO masters (id, name, fetch_token, expires_date, status, notes, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6, NOW())
+        ON CONFLICT (id) DO UPDATE SET
+          name = EXCLUDED.name,
+          fetch_token = EXCLUDED.fetch_token,
+          status = EXCLUDED.status,
+          notes = EXCLUDED.notes;
+      `, [newCluster.id, newCluster.name, fetch_token || cleanUid, rc.expires_date || MASTER_EXPIRES_DATE, 'active', newCluster.notes]);
+    } catch (e) {}
+
+    console.log(`[MASTER POOL] 🚀 Đã thêm ${newCluster.name} (${newCluster.id}) vào Pool Cụm thành công!`);
+    res.json({ success: true, message: `Đã kích hoạt thành công ${newCluster.name}!`, cluster: newCluster, clusters: MASTER_CLUSTERS });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
