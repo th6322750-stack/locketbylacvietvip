@@ -9,7 +9,7 @@ const STORE_CONFIG = {
     name: "VietinBank (Ngân Hàng Công Thương)",
     code: "ICB",
     accountNumber: "102668820501",
-    accountName: "VIETINBANK",
+    accountName: "TRINH HOANG THANH",
   },
   packages: {
     'nodns-standard': {
