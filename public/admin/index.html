@@ -30,6 +30,13 @@
       </div>
 
       <div class="header-right">
+        <div id="adminUserGreetingBadge" style="display: none; align-items: center; gap: 8px; background: rgba(255, 204, 0, 0.12); border: 1px solid rgba(255, 204, 0, 0.4); padding: 5px 12px; border-radius: 999px;">
+          <span class="pulse-dot" style="background: #10b981;"></span>
+          <span style="font-size: 13px; font-weight: 600; color: #fff;">
+            👋 Xin chào: <strong id="adminCurrentUserName" style="color: #ffcc00;">@Admin</strong>
+          </span>
+          <button class="btn btn-sm btn-outline" style="padding: 2px 7px; font-size: 11px; margin-left: 4px; border-color: rgba(255,255,255,0.2); color: #fca5a5;" onclick="handleAdminLogout()" title="Đăng xuất khỏi phiên quản trị">Đăng xuất</button>
+        </div>
         <a href="/shop.html" target="_blank" class="btn btn-gold btn-sm" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
           <span>🛍️ Trang Bán Hàng (Store)</span>
         </a>
@@ -327,6 +334,7 @@
                 <th>Customer UID</th>
                 <th>Gói & Video</th>
                 <th>Kênh Bán</th>
+                <th>Người Nâng</th>
                 <th>Đơn Giá</th>
                 <th>Thanh Toán</th>
                 <th>Hạn Sử Dụng</th>
@@ -335,7 +343,7 @@
             </thead>
             <tbody id="adminTableBody">
               <tr>
-                <td colspan="10" class="text-center py-4">Đang tải dữ liệu khách hàng...</td>
+                <td colspan="11" class="text-center py-4">Đang tải dữ liệu khách hàng...</td>
               </tr>
             </tbody>
           </table>
@@ -1229,6 +1237,14 @@
               <option value="false">Chưa Mở Khóa (No-DNS Thường)</option>
             </select>
           </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Người Nâng Cấp / Quản Trị Viên Phụ Trách:</label>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="editUpgradedBy" class="form-input" placeholder="Ví dụ: @lucifer hoặc @kwang">
+            <button type="button" class="btn btn-sm btn-outline" style="white-space: nowrap; font-size: 11px;" onclick="assignCurrentUserToEdit()">Gán Tôi</button>
+          </div>
+          <small class="form-hint" style="color: var(--text-muted); font-size: 11px;">Ghi rõ admin nào thao tác để hiển thị trên bảng khách hàng.</small>
         </div>
         <div class="form-group">
           <label class="form-label">Ghi Chú Đơn Hàng:</label>

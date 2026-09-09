@@ -501,7 +501,43 @@ function renderAdminTable(users) {
     const featureBadge = `<span class="tag-channel-pill" style="background: rgba(255,204,0,0.15); color: #ffcc00; border: 1px solid rgba(255,204,0,0.3); font-weight: 700;">No-DNS Chuẩn</span>`;
 
     const channelBadge = `<span class="tag-channel-pill">${u.channel || 'Zalo'}</span>`;
-    const priceFormatted = (Number(u.price) || 60000).toLocaleString('vi-VN') + ' đ';
+
+    // Upgraded by badge with distinct color coding
+    const upBy = u.upgraded_by || (u.channel === 'telegram_bot' ? 'Telegram Bot' : (u.channel === 'sepay_auto' ? 'Tự động (Web)' : 'Admin'));
+    const upByLower = upBy.toLowerCase();
+    const isLucifer = upByLower.includes('lucifer');
+    const isKwang = upByLower.includes('kwang');
+    const isBot = upByLower.includes('bot');
+    const isAuto = upByLower.includes('tự động');
+
+    let upByStyle = 'background: rgba(148, 163, 184, 0.15); color: #cbd5e1; border: 1px solid rgba(148, 163, 184, 0.3);';
+    let upByIcon = '👤';
+
+    if (isLucifer) {
+      upByStyle = 'background: rgba(168, 85, 247, 0.2); color: #d8b4fe; border: 1px solid rgba(168, 85, 247, 0.5);';
+      upByIcon = '👑';
+    } else if (isKwang) {
+      upByStyle = 'background: rgba(59, 130, 246, 0.2); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.5);';
+      upByIcon = '⚡';
+    } else if (isBot) {
+      upByStyle = 'background: rgba(16, 185, 129, 0.2); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.5);';
+      upByIcon = '🤖';
+    } else if (isAuto) {
+      upByStyle = 'background: rgba(14, 165, 233, 0.2); color: #7dd3fc; border: 1px solid rgba(14, 165, 233, 0.5);';
+      upByIcon = '🌐';
+    }
+
+    const cleanDisplayUpBy = upBy.startsWith('@') ? upBy : ((isBot || isAuto) ? upBy : `@${upBy}`);
+    const upgradedByBadge = `<span class="tag-channel-pill" style="${upByStyle} font-weight: 700; display: inline-flex; align-items: center; gap: 4px;" title="Admin phụ trách: ${upBy}"><span>${upByIcon}</span><span>${cleanDisplayUpBy}</span></span>`;
+
+    // Price formatting: correctly preserve 0d and show discount tag if lower than standard 60k
+    const numericPrice = (u.price !== undefined && u.price !== null && !isNaN(Number(u.price))) ? Number(u.price) : 60000;
+    const isDiscounted = numericPrice < 60000;
+    const priceFormatted = numericPrice.toLocaleString('vi-VN') + ' đ';
+    const priceDisplay = isDiscounted 
+      ? `<span class="font-mono" style="font-size: 12px; color: #10b981; font-weight: 700;" title="${u.notes || 'Đã áp dụng mã giảm giá'}">${priceFormatted} <small style="font-size:10px; background: rgba(16,185,129,0.2); color: #10b981; padding: 1px 4px; border-radius: 4px; font-weight: 600;">Giảm</small></span>`
+      : `<span class="font-mono" style="font-size: 12px;">${priceFormatted}</span>`;
+
     const paymentBadge = u.payment_status === 'paid' 
       ? `<span class="badge-paid">Đã TT</span>` 
       : `<span class="badge-pending">Chờ TT</span>`;
@@ -524,7 +560,8 @@ function renderAdminTable(users) {
         </td>
         <td>${featureBadge}</td>
         <td>${channelBadge}</td>
-        <td><span class="font-mono" style="font-size: 12px;">${priceFormatted}</span></td>
+        <td>${upgradedByBadge}</td>
+        <td>${priceDisplay}</td>
         <td>${paymentBadge}</td>
         <td><strong style="color: var(--gold-primary); font-size: 12px;">${expireFormatted}</strong></td>
         <td>
@@ -636,12 +673,28 @@ function openEditModal(uid) {
   document.getElementById('editUsername').value = user.username || '';
   document.getElementById('editUid').value = user.uid || '';
   document.getElementById('editChannel').value = user.channel || 'zalo';
-  document.getElementById('editPrice').value = user.price || 50000;
+  document.getElementById('editPrice').value = (user.price !== undefined && user.price !== null) ? user.price : 60000;
   document.getElementById('editPaymentStatus').value = user.payment_status || 'paid';
   document.getElementById('editVideo15s').value = user.video_15s ? 'true' : 'false';
   document.getElementById('editNotes').value = user.notes || '';
+  const currentLogged = sessionStorage.getItem('locket_admin_user') || 'lucifer';
+  const defaultUpBy = user.upgraded_by || (currentLogged.startsWith('@') ? currentLogged : `@${currentLogged}`);
+  const upByInput = document.getElementById('editUpgradedBy');
+  if (upByInput) {
+    upByInput.value = defaultUpBy;
+  }
 
   document.getElementById('editModal').classList.add('open');
+}
+
+function assignCurrentUserToEdit() {
+  const currentLogged = sessionStorage.getItem('locket_admin_user') || 'lucifer';
+  const formatted = currentLogged.startsWith('@') ? currentLogged : `@${currentLogged}`;
+  const upByInput = document.getElementById('editUpgradedBy');
+  if (upByInput) {
+    upByInput.value = formatted;
+    showToast(`Đã gán người thực hiện: ${formatted}`);
+  }
 }
 
 function closeEditModal() {
@@ -658,17 +711,19 @@ async function saveEditedUser() {
   const payment_status = document.getElementById('editPaymentStatus').value;
   const video_15s = document.getElementById('editVideo15s').value === 'true';
   const notes = document.getElementById('editNotes').value.trim();
+  const upByInput = document.getElementById('editUpgradedBy');
+  const upgraded_by = upByInput ? upByInput.value.trim() : '';
 
   try {
     const res = await authFetch(`/api/users/${encodeURIComponent(editingUid)}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, channel, price, payment_status, video_15s, notes })
+      body: JSON.stringify({ username, channel, price, payment_status, video_15s, notes, upgraded_by })
     });
 
     const data = await res.json();
     if (data.success) {
-      showToast('Đã lưu thông tin khách hàng!');
+      showToast('Đã lưu thông tin khách hàng thành công!');
       closeEditModal();
       loadAdminData();
     }

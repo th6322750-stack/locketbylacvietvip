@@ -177,11 +177,12 @@ async function dbGetAllUsersMap() {
           video_15s_unlocked: false,
           expires_date: u.expires_date || MASTER_EXPIRES_DATE,
           upgraded_at: u.upgraded_at,
-          price: Number(u.price) || DEFAULT_PRICE,
+          price: (u.price !== undefined && u.price !== null && !isNaN(Number(u.price))) ? Number(u.price) : DEFAULT_PRICE,
           payment_status: u.payment_status || 'paid',
           channel: u.channel || 'zalo',
           avatar: u.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(u.username || u.uid)}&backgroundColor=f59e0b,fbbf24&textColor=ffffff&fontWeight=700`,
-          notes: u.notes || ''
+          notes: u.notes || '',
+          upgraded_by: u.upgraded_by || (u.channel === 'telegram_bot' ? 'Telegram Bot' : (u.channel === 'sepay_auto' ? 'Tự động (Web)' : 'Admin'))
         });
       });
       return userMap;
@@ -197,7 +198,7 @@ async function dbSaveUser(userObj) {
   if (!uid) return false;
 
   const cleanUsername = (userObj.username || 'customer_' + uid.substring(0, 6)).trim().replace('@', '');
-  const price = Number(userObj.price) || DEFAULT_PRICE;
+  const price = (userObj.price !== undefined && userObj.price !== null && !isNaN(Number(userObj.price))) ? Number(userObj.price) : DEFAULT_PRICE;
   const channel = userObj.channel || 'zalo';
   const payment_status = userObj.payment_status || 'paid';
   const expires_date = userObj.expires_date || MASTER_EXPIRES_DATE;
@@ -205,6 +206,7 @@ async function dbSaveUser(userObj) {
   const avatar = userObj.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(cleanUsername)}&backgroundColor=f59e0b,fbbf24&textColor=ffffff&fontWeight=700`;
   const notes = userObj.notes || '';
   const master_uid = userObj.master_uid || 'C2A5eSIG79UquwvohWpirajDTVx2';
+  const upgraded_by = userObj.upgraded_by || (channel === 'telegram_bot' ? 'Telegram Bot' : 'Admin');
 
   const normalized = {
     uid,
@@ -220,14 +222,15 @@ async function dbSaveUser(userObj) {
     payment_status,
     channel,
     avatar,
-    notes
+    notes,
+    upgraded_by
   };
 
   // 1. Neon PostgreSQL Write (Cloud Sync)
   try {
     await dbPool.query(`
-      INSERT INTO users (uid, username, customer_uid, master_uid, has_gold, video_15s, video_15s_unlocked, expires_date, upgraded_at, price, payment_status, channel, avatar, notes, updated_at)
-      VALUES ($1, $2, $3, $4, true, false, false, $5, $6, $7, $8, $9, $10, $11, NOW())
+      INSERT INTO users (uid, username, customer_uid, master_uid, has_gold, video_15s, video_15s_unlocked, expires_date, upgraded_at, price, payment_status, channel, avatar, notes, upgraded_by, updated_at)
+      VALUES ($1, $2, $3, $4, true, false, false, $5, $6, $7, $8, $9, $10, $11, $12, NOW())
       ON CONFLICT (uid) DO UPDATE SET
         username = EXCLUDED.username,
         has_gold = EXCLUDED.has_gold,
@@ -238,8 +241,9 @@ async function dbSaveUser(userObj) {
         channel = EXCLUDED.channel,
         avatar = EXCLUDED.avatar,
         notes = EXCLUDED.notes,
+        upgraded_by = EXCLUDED.upgraded_by,
         updated_at = NOW();
-    `, [uid, cleanUsername, uid, master_uid, expires_date, upgraded_at, price, payment_status, channel, avatar, notes]);
+    `, [uid, cleanUsername, uid, master_uid, expires_date, upgraded_at, price, payment_status, channel, avatar, notes, upgraded_by]);
   } catch (err) {
     console.error('[NEON DB SAVE USER ERROR]:', err.message);
   }
@@ -716,11 +720,12 @@ function saveUserToAllFiles(userObj) {
     video_15s_unlocked: !!userObj.video_15s,
     expires_date: userObj.expires_date || MASTER_EXPIRES_DATE,
     upgraded_at: userObj.upgraded_at || new Date().toISOString(),
-    price: Number(userObj.price) || DEFAULT_PRICE,
+    price: (userObj.price !== undefined && userObj.price !== null && !isNaN(Number(userObj.price))) ? Number(userObj.price) : DEFAULT_PRICE,
     payment_status: userObj.payment_status || 'paid',
     channel: userObj.channel || 'zalo',
     avatar: userObj.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(cleanUsername)}&backgroundColor=f59e0b,fbbf24&textColor=ffffff&fontWeight=700`,
-    notes: userObj.notes || ''
+    notes: userObj.notes || '',
+    upgraded_by: userObj.upgraded_by || (userObj.channel === 'telegram_bot' ? 'Telegram Bot' : 'Admin')
   };
 
   const targetFiles = [
@@ -1390,7 +1395,7 @@ app.get('/api/users', requireAdminAuth, async (req, res) => {
   let pendingRevenue = 0;
 
   users.forEach(u => {
-    const p = Number(u.price) || DEFAULT_PRICE;
+    const p = (u.price !== undefined && u.price !== null && !isNaN(Number(u.price))) ? Number(u.price) : DEFAULT_PRICE;
     totalRevenue += p;
     if (u.payment_status === 'paid') paidRevenue += p;
     else pendingRevenue += p;
@@ -1482,11 +1487,12 @@ app.post('/api/upgrade', requireAdminAuth, async (req, res) => {
     video_15s: is15s,
     expires_date: MASTER_EXPIRES_DATE,
     upgraded_at: new Date().toISOString(),
-    price: Number(price) || DEFAULT_PRICE,
+    price: (price !== undefined && price !== null && !isNaN(Number(price))) ? Number(price) : DEFAULT_PRICE,
     payment_status,
     channel,
     avatar: avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(cleanUsername)}&backgroundColor=f59e0b,fbbf24&textColor=ffffff&fontWeight=700`,
-    notes: (notes ? notes + ' | ' : '') + `Cụm: ${injectRes.cluster || 'Master'}`
+    notes: (notes ? notes + ' | ' : '') + `Cụm: ${injectRes.cluster || 'Master'}`,
+    upgraded_by: req.body.upgraded_by || (req.adminUser ? `@${req.adminUser}` : (channel === 'telegram_bot' ? 'Telegram Bot' : 'Admin'))
   });
 
   // Send Instant Telegram Notification
@@ -1510,7 +1516,7 @@ app.post('/api/upgrade', requireAdminAuth, async (req, res) => {
 
 // 6. Bulk Fast Upgrade (Protected with Admin Auth)
 app.post('/api/upgrade/bulk', requireAdminAuth, async (req, res) => {
-  const { entries, mode = 'nodns', price = DEFAULT_PRICE, channel = 'zalo' } = req.body;
+  const { entries, mode = 'nodns', price, channel = 'zalo', upgraded_by } = req.body;
   if (!entries || !Array.isArray(entries)) {
     return res.status(400).json({ success: false, error: 'Danh sách không hợp lệ' });
   }
@@ -1533,11 +1539,12 @@ app.post('/api/upgrade/bulk', requireAdminAuth, async (req, res) => {
           video_15s: is15s,
           expires_date: MASTER_EXPIRES_DATE,
           upgraded_at: new Date().toISOString(),
-          price: Number(price) || DEFAULT_PRICE,
+          price: (price !== undefined && price !== null && !isNaN(Number(price))) ? Number(price) : DEFAULT_PRICE,
           payment_status: 'paid',
           channel: channel || 'zalo',
           avatar: item.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(cleanUsername)}&backgroundColor=f59e0b,fbbf24&textColor=ffffff&fontWeight=700`,
-          notes: (item.notes ? item.notes + ' | ' : '') + `Cụm: ${injectRes.cluster || 'Master'}`
+          notes: (item.notes ? item.notes + ' | ' : '') + `Cụm: ${injectRes.cluster || 'Master'}`,
+          upgraded_by: upgraded_by || (req.adminUser ? `@${req.adminUser}` : (channel === 'telegram_bot' ? 'Telegram Bot' : 'Admin'))
         });
         results.push(userObj);
 
@@ -1938,8 +1945,13 @@ app.delete('/api/users/:uid', requireAdminAuth, async (req, res) => {
 app.put('/api/users/:uid', requireAdminAuth, async (req, res) => {
   const uid = req.params.uid;
   const userMap = await dbGetAllUsersMap();
-  const existing = userMap.get(uid) || { uid, customer_uid: uid };
-  const updated = { ...existing, ...req.body, uid, customer_uid: uid };
+  const updated = { 
+    ...existing, 
+    ...req.body, 
+    uid, 
+    customer_uid: uid,
+    upgraded_by: req.body.upgraded_by || existing.upgraded_by || (req.adminUser ? `@${req.adminUser}` : 'Admin')
+  };
   await dbSaveUser(updated);
   res.json({ success: true, user: updated });
 });

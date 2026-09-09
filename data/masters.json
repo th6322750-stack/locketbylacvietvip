@@ -1,16 +1,16 @@
 {
-  "active_id": "MASTER_01",
-  "active_token": "510002836840566",
+  "active_id": "MASTER_3001",
+  "active_token": "FAKE_TOKEN_12345",
   "expires_date": "2026-10-03T11:26:26Z",
   "keys": [
     {
-      "id": "MASTER_01",
-      "name": "Master Node 01 (StoreKit 2 Gold Active)",
-      "fetch_token": "510002836840566",
+      "id": "MASTER_3001",
+      "name": "HACKER KEY",
+      "fetch_token": "FAKE_TOKEN_12345",
       "expires_date": "2026-10-03T11:26:26Z",
       "status": "active",
-      "created_at": "2026-09-04T18:41:53.430Z",
-      "notes": "StoreKit 2 Master Key đang hoạt động ổn định"
+      "created_at": "2026-09-09T17:42:33.001Z",
+      "notes": ""
     }
   ]
 }
