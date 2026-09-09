@@ -1945,6 +1945,7 @@ app.delete('/api/users/:uid', requireAdminAuth, async (req, res) => {
 app.put('/api/users/:uid', requireAdminAuth, async (req, res) => {
   const uid = req.params.uid;
   const userMap = await dbGetAllUsersMap();
+  const existing = userMap.get(uid) || {};
   const updated = { 
     ...existing, 
     ...req.body, 
@@ -1960,38 +1961,44 @@ app.put('/api/users/:uid', requireAdminAuth, async (req, res) => {
 // HELPER: LOAD & SYNC MASTER KEYS POOL
 // -------------------------------------------------------------
 function loadMasterData() {
+  const defaultKeys = MASTER_CLUSTERS.map(c => ({
+    id: c.id,
+    name: c.name + (c.is_full ? ' (Đã Full 50/50)' : ' (Đang nhận khách)'),
+    uid: c.uid,
+    fetch_token: c.fetch_token || MASTER_FETCH_TOKEN,
+    expires_date: c.id === 'MASTER_01' ? '2027-07-27T12:00:00Z' : (c.id === 'MASTER_02' ? '2027-07-23T12:00:00Z' : MASTER_EXPIRES_DATE),
+    status: c.is_full ? 'full' : (c.status || 'active'),
+    created_at: c.id === 'MASTER_01' ? '2026-07-27T00:00:00Z' : (c.id === 'MASTER_02' ? '2026-09-08T00:00:00Z' : '2026-09-09T00:00:00Z'),
+    notes: c.notes || ''
+  }));
+
   let masterData = {
-    active_id: "MASTER_01",
+    active_id: "MASTER_02",
     active_token: MASTER_FETCH_TOKEN,
     expires_date: MASTER_EXPIRES_DATE,
-    keys: [
-      {
-        id: "MASTER_01",
-        name: "Master Node 01 (StoreKit 2 Gold Active)",
-        fetch_token: MASTER_FETCH_TOKEN,
-        expires_date: MASTER_EXPIRES_DATE,
-        status: "active",
-        created_at: new Date().toISOString(),
-        notes: "StoreKit 2 Master Key đang hoạt động ổn định"
-      }
-    ]
+    keys: defaultKeys
   };
 
   if (fs.existsSync(LOCAL_MASTERS_FILE)) {
     try {
       const d = JSON.parse(fs.readFileSync(LOCAL_MASTERS_FILE, 'utf8'));
-      if (d.keys && Array.isArray(d.keys)) {
+      if (d.keys && Array.isArray(d.keys) && d.keys.length > 0) {
         masterData = d;
         if (d.active_token) MASTER_FETCH_TOKEN = d.active_token;
         if (d.expires_date) MASTER_EXPIRES_DATE = d.expires_date;
       } else if (d.active_token) {
         masterData.active_token = d.active_token;
         masterData.expires_date = d.expires_date || MASTER_EXPIRES_DATE;
-        masterData.keys[0].fetch_token = d.active_token;
-        masterData.keys[0].expires_date = d.expires_date || MASTER_EXPIRES_DATE;
       }
     } catch (e) {}
   }
+
+  // Ensure all 3 MASTER_CLUSTERS are present
+  defaultKeys.forEach(dk => {
+    if (!masterData.keys.some(k => k.id === dk.id)) {
+      masterData.keys.push(dk);
+    }
+  });
 
   return masterData;
 }
@@ -2023,11 +2030,12 @@ function saveMasterData(masterData) {
 app.get('/api/masters', (req, res) => {
   const masterData = loadMasterData();
   res.json({
-    active_id: masterData.active_id,
+    active_id: masterData.active_id || 'MASTER_02',
     active_token: masterData.active_token || MASTER_FETCH_TOKEN,
     expires_date: masterData.expires_date || MASTER_EXPIRES_DATE,
     api_key: LOCKET_RC_KEY,
-    keys: masterData.keys || []
+    keys: masterData.keys || [],
+    clusters: MASTER_CLUSTERS
   });
 });
 

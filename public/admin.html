@@ -30,12 +30,12 @@
       </div>
 
       <div class="header-right">
-        <div id="adminUserGreetingBadge" style="display: none; align-items: center; gap: 8px; background: rgba(255, 204, 0, 0.12); border: 1px solid rgba(255, 204, 0, 0.4); padding: 5px 12px; border-radius: 999px;">
-          <span class="pulse-dot" style="background: #10b981;"></span>
+        <div id="adminUserGreetingBadge" style="display: inline-flex; align-items: center; gap: 8px; background: rgba(255, 204, 0, 0.15); border: 1px solid rgba(255, 204, 0, 0.4); padding: 5px 14px; border-radius: 999px; box-shadow: 0 0 14px rgba(255, 204, 0, 0.15);">
+          <span class="pulse-dot" style="background: #10b981; width: 8px; height: 8px;"></span>
           <span style="font-size: 13px; font-weight: 600; color: #fff;">
-            👋 Xin chào: <strong id="adminCurrentUserName" style="color: #ffcc00;">@Admin</strong>
+            👋 Xin chào: <strong id="adminCurrentUserName" style="color: #ffcc00; font-size: 14px;">@lucifer</strong>
           </span>
-          <button class="btn btn-sm btn-outline" style="padding: 2px 7px; font-size: 11px; margin-left: 4px; border-color: rgba(255,255,255,0.2); color: #fca5a5;" onclick="handleAdminLogout()" title="Đăng xuất khỏi phiên quản trị">Đăng xuất</button>
+          <button class="btn btn-sm btn-outline" style="padding: 2px 8px; font-size: 11px; margin-left: 6px; border-color: rgba(255,255,255,0.25); color: #fca5a5;" onclick="handleAdminLogout()" title="Đăng xuất hoặc đổi tài khoản quản trị">Đổi Acc</button>
         </div>
         <a href="/shop.html" target="_blank" class="btn btn-gold btn-sm" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
           <span>🛍️ Trang Bán Hàng (Store)</span>
@@ -575,12 +575,42 @@
         </div>
       </div>
 
+      <!-- RevenueCat Multi-Cluster Pool Cards -->
+      <div class="workspace-card" style="margin-bottom: 24px; padding: 22px;">
+        <div class="workspace-header" style="margin-bottom: 16px;">
+          <div>
+            <h2 class="workspace-title" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+              <span>🌐 Hệ Thống Cụm Master RevenueCat (Multi-Cluster Engine)</span>
+              <span class="badge-live" style="background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid #10b981; font-size: 11px; padding: 2px 8px;">3 CỤM HOẠT ĐỘNG</span>
+            </h2>
+            <p class="workspace-subtitle">Tự động điều phối Alias thông minh khi khách nạp. Cụm 1 đầy (50/50) tự động chuyển tiếp sang Cụm 2 và Cụm 3.</p>
+          </div>
+          <button class="btn btn-sm btn-outline" onclick="loadMasterInfo(true)">🔄 Làm Mới Cụm</button>
+        </div>
+
+        <!-- Real-time Cluster Cards Grid -->
+        <div id="clusterCardsGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; margin-bottom: 16px;">
+          <!-- Will be rendered dynamically by renderClustersDashboard() -->
+        </div>
+
+        <!-- Cluster Quick Stats -->
+        <div style="display: flex; gap: 16px; flex-wrap: wrap; background: rgba(0,0,0,0.25); padding: 12px 18px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.06); font-size: 13px;">
+          <div>🏢 Tổng Cụm: <strong style="color: #ffcc00;" id="statTotalClusters">3 Cụm Hệ Thống</strong></div>
+          <div style="color: rgba(255,255,255,0.2);">|</div>
+          <div>👥 Tổng Dung Lượng: <strong style="color: #fff;" id="statTotalSlots">150 Khách</strong> (50 khách / cụm)</div>
+          <div style="color: rgba(255,255,255,0.2);">|</div>
+          <div>🔴 Đã Dùng: <strong style="color: #ef4444;" id="statUsedSlots">75 Slots</strong></div>
+          <div style="color: rgba(255,255,255,0.2);">|</div>
+          <div>🟢 Còn Trống: <strong style="color: #10b981;" id="statAvailableSlots">75 Slots</strong></div>
+        </div>
+      </div>
+
       <!-- Master Keys Pool Table Container -->
       <div class="workspace-card">
         <div class="workspace-header">
           <div>
-            <h2 class="workspace-title">📋 Danh Sách Toàn Bộ Key Master Trong Kho (Master Pool)</h2>
-            <p class="workspace-subtitle">Quản lý nhiều Token dự phòng và chuyển đổi Master Key chỉ bằng 1 cú nhấp chuột</p>
+            <h2 class="workspace-title">📋 Danh Sách Toàn Bộ Key & Cụm Master (Master Pool)</h2>
+            <p class="workspace-subtitle">Quản lý toàn bộ 3 Cụm Master RevenueCat và Token dự phòng của hệ thống</p>
           </div>
           <button class="btn btn-sm btn-outline" onclick="loadMasterInfo(true)">🔄 Làm Mới Kho Key</button>
         </div>
@@ -590,17 +620,17 @@
             <thead>
               <tr>
                 <th>STT</th>
-                <th>Tên Key Master</th>
-                <th>Mã Fetch Token</th>
+                <th>Tên Cụm / Key Master</th>
+                <th>UID / Mã Token</th>
+                <th>Dung Lượng Slot</th>
                 <th>Hạn Sử Dụng</th>
-                <th>Ngày Thêm</th>
                 <th>Trạng Thái</th>
                 <th>Hành Động</th>
               </tr>
             </thead>
             <tbody id="masterKeysTableBody">
               <tr>
-                <td colspan="7" class="text-center py-4">Đang tải danh sách Master Key...</td>
+                <td colspan="7" class="text-center py-4">Đang tải danh sách Cụm & Master Key...</td>
               </tr>
             </tbody>
           </table>

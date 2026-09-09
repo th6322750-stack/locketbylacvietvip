@@ -1,16 +1,37 @@
 {
-  "active_id": "MASTER_3001",
-  "active_token": "FAKE_TOKEN_12345",
+  "active_id": "MASTER_02",
+  "active_token": "510002836840566",
   "expires_date": "2026-10-03T11:26:26Z",
   "keys": [
     {
-      "id": "MASTER_3001",
-      "name": "HACKER KEY",
-      "fetch_token": "FAKE_TOKEN_12345",
+      "id": "MASTER_01",
+      "name": "Master Cụm 1 (StoreKit 2 VIP 2027)",
+      "uid": "VBo5nZiVs4ee3JIyV9L5zlijIa23",
+      "fetch_token": "510002836840566",
+      "expires_date": "2027-07-27T12:00:00Z",
+      "status": "full",
+      "created_at": "2026-07-27T00:00:00Z",
+      "notes": "Đã kịch trần 50/50 Aliases trên RevenueCat (Gói 1 Năm 27/07/2027)"
+    },
+    {
+      "id": "MASTER_02",
+      "name": "Master Cụm 2 (StoreKit 2 VIP 2027)",
+      "uid": "lacviet_cluster_02_master",
+      "fetch_token": "510002836840566",
+      "expires_date": "2027-07-23T12:00:00Z",
+      "status": "active",
+      "created_at": "2026-09-08T00:00:00Z",
+      "notes": "Đang nhận khách - Hưởng trọn Gói 1 Năm (23/07/2027) từ @trangcutee"
+    },
+    {
+      "id": "MASTER_03",
+      "name": "Master Cụm 3 (StoreKit 2 VIP 2026)",
+      "uid": "lacviet_cluster_03_master",
+      "fetch_token": "510002836840566",
       "expires_date": "2026-10-03T11:26:26Z",
       "status": "active",
-      "created_at": "2026-09-09T17:42:33.001Z",
-      "notes": ""
+      "created_at": "2026-09-09T00:00:00Z",
+      "notes": "Cụm Master 03 mở rộng tải StoreKit 2 (50 slots mới)"
     }
   ]
 }

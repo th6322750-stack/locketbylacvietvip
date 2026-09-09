@@ -41,10 +41,56 @@ function authFetch(url, options = {}) {
   return fetch(url, { ...options, headers });
 }
 
+function getAdminUser() {
+  return sessionStorage.getItem('locket_admin_user') || localStorage.getItem('locket_admin_user') || 'lucifer';
+}
+
+function updateAdminGreeting() {
+  const user = getAdminUser();
+  const badge = document.getElementById('adminUserGreetingBadge');
+  const nameEl = document.getElementById('adminCurrentUserName');
+  if (badge) {
+    badge.style.display = 'inline-flex';
+  }
+  if (nameEl) {
+    nameEl.innerText = `@${user}`;
+  }
+}
+
+function handleAdminLogout() {
+  sessionStorage.removeItem('locket_admin_auth');
+  sessionStorage.removeItem('locket_admin_token');
+  sessionStorage.removeItem('locket_admin_user');
+  localStorage.removeItem('locket_admin_user');
+
+  const lockOverlay = document.getElementById('adminLockOverlay');
+  if (lockOverlay) {
+    lockOverlay.style.display = 'flex';
+    lockOverlay.classList.add('open');
+    const userInput = document.getElementById('adminUserInput');
+    if (userInput) {
+      userInput.value = '';
+      userInput.focus();
+    }
+  } else {
+    window.location.reload();
+  }
+}
+
+function assignCurrentUserToEdit() {
+  const user = getAdminUser();
+  const input = document.getElementById('editUpgradedBy');
+  if (input) {
+    input.value = `@${user}`;
+  }
+}
+
 function checkAdminAuth() {
   const isAuth = sessionStorage.getItem('locket_admin_auth');
   const token = sessionStorage.getItem('locket_admin_token');
   const lockOverlay = document.getElementById('adminLockOverlay');
+
+  updateAdminGreeting();
 
   if (isAuth === 'true' && token) {
     if (lockOverlay) {
@@ -96,9 +142,13 @@ async function handleAdminLogin() {
 
     const data = await res.json();
     if (res.ok && data.success && data.token) {
+      const loggedUser = data.user || username;
       sessionStorage.setItem('locket_admin_auth', 'true');
       sessionStorage.setItem('locket_admin_token', data.token);
-      sessionStorage.setItem('locket_admin_user', data.user || username);
+      sessionStorage.setItem('locket_admin_user', loggedUser);
+      localStorage.setItem('locket_admin_user', loggedUser);
+
+      updateAdminGreeting();
 
       const lockOverlay = document.getElementById('adminLockOverlay');
       if (lockOverlay) {
@@ -106,7 +156,7 @@ async function handleAdminLogin() {
         lockOverlay.style.display = 'none';
       }
 
-      showToast(`🔓 Xin chào Quản trị viên @${data.user}! Mở khóa thành công.`);
+      showToast(`🔓 Xin chào Quản trị viên @${loggedUser}! Mở khóa thành công.`);
       loadAdminData();
       loadMasterInfo();
     } else {
@@ -876,64 +926,162 @@ let allMasterKeys = [];
 
 async function loadMasterInfo(showToastMsg = false) {
   try {
-    const res = await authFetch(`/api/masters?_t=${Date.now()}`);
-    const data = await res.json();
+    const [resMasters, resClusters] = await Promise.all([
+      authFetch(`/api/masters?_t=${Date.now()}`).then(r => r.json()).catch(() => ({})),
+      authFetch(`/api/clusters/status?_t=${Date.now()}`).then(r => r.json()).catch(() => ({}))
+    ]);
+
+    const data = resMasters || {};
+    const clusters = resClusters.clusters || [];
+
+    renderClustersDashboard(clusters);
+
     allMasterKeys = data.keys || [];
 
-    document.getElementById('vaultTokenDisplay').innerText = data.active_token || '510002836840566';
-    document.getElementById('vaultExpiryDisplay').innerText = data.expires_date || '2026-10-03T11:26:26Z';
-    document.getElementById('adminMasterExpiry').innerText = '03/10/2026';
+    const tokenEl = document.getElementById('vaultTokenDisplay');
+    const expiryEl = document.getElementById('vaultExpiryDisplay');
+    const adminExpiryEl = document.getElementById('adminMasterExpiry');
+
+    if (tokenEl) tokenEl.innerText = data.active_token || '510002836840566';
+    if (expiryEl) expiryEl.innerText = data.expires_date || '2026-10-03T11:26:26Z';
+    if (adminExpiryEl) adminExpiryEl.innerText = '03/10/2026';
 
     startMasterCountdown(data.expires_date || '2026-10-03T11:26:26Z');
-    renderMasterKeysTable(allMasterKeys, data.active_id);
+    renderMasterKeysTable(allMasterKeys, data.active_id, clusters);
 
-    if (showToastMsg) showToast('Đã làm mới Kho Master Key!');
+    if (showToastMsg) showToast('Đã làm mới Kho Master Key & Cụm Hệ Thống!');
   } catch (err) {
     console.error('Error loading master keys:', err);
   }
 }
 
-function renderMasterKeysTable(keys, activeId) {
+function renderClustersDashboard(clusters) {
+  const container = document.getElementById('clusterCardsGrid');
+  if (!container || !clusters || clusters.length === 0) return;
+
+  let totalClusters = clusters.length;
+  let totalSlots = 0;
+  let usedSlots = 0;
+  let availableSlots = 0;
+
+  container.innerHTML = clusters.map(c => {
+    const isFull = c.is_full || c.status === 'full';
+    const used = isFull ? 50 : (c.used_slots !== undefined ? c.used_slots : (c.users ? c.users.length : 0));
+    const total = c.total_slots || 50;
+    const avail = isFull ? 0 : Math.max(0, total - used);
+    const pct = Math.min(100, Math.round((used / total) * 100));
+
+    totalSlots += total;
+    usedSlots += used;
+    availableSlots += avail;
+
+    const statusBadge = isFull 
+      ? `<span class="badge-live" style="background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid #ef4444;">🔴 ĐÃ FULL (50/50)</span>`
+      : `<span class="badge-live" style="background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid #10b981;">🟢 ĐANG NHẬN KHÁCH</span>`;
+
+    const barColor = isFull 
+      ? 'linear-gradient(90deg, #ef4444, #dc2626)' 
+      : (pct > 60 ? 'linear-gradient(90deg, #f59e0b, #eab308)' : 'linear-gradient(90deg, #10b981, #059669)');
+
+    return `
+      <div style="background: rgba(255,255,255,0.03); border: 1px solid ${isFull ? 'rgba(239,68,68,0.35)' : 'rgba(255,204,0,0.25)'}; border-radius: 12px; padding: 16px; position: relative;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+          <div>
+            <div style="font-weight: 700; font-size: 15px; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+              <span>🏢 ${c.name || c.id}</span>
+              <span style="font-size: 11px; font-weight: 600; color: #a1a1aa; font-family: monospace;">[${c.id}]</span>
+            </div>
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">
+              UID: <code class="uid-code" style="font-size: 11px;" title="${c.uid}">${(c.uid || '').substring(0, 18)}...</code>
+              <button class="btn btn-sm btn-outline" style="padding: 1px 6px; font-size: 10px; margin-left: 4px;" onclick="copyText('${c.uid}', 'Đã copy UID Cụm!')">Copy</button>
+            </div>
+          </div>
+          <div>${statusBadge}</div>
+        </div>
+
+        <div style="margin: 12px 0 8px 0;">
+          <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px;">
+            <span style="color: var(--text-muted);">Dung lượng Alias RevenueCat:</span>
+            <strong>${used}/${total} slots (${pct}%)</strong>
+          </div>
+          <div style="background: rgba(255,255,255,0.1); border-radius: 999px; height: 8px; overflow: hidden;">
+            <div style="background: ${barColor}; width: ${pct}%; height: 100%; border-radius: 999px; transition: width 0.4s ease;"></div>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.06); flex-wrap: wrap; gap: 6px;">
+          <span style="color: ${avail > 0 ? '#10b981' : '#ef4444'}; font-weight: 600;">
+            ${avail > 0 ? `⚡ Còn trống: ${avail} slots` : '🔒 Đã đầy - Tự khóa chuyển cụm'}
+          </span>
+          <small style="color: var(--text-muted); font-size: 11px;">${c.notes || ''}</small>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Update summary counts
+  const statClusters = document.getElementById('statTotalClusters');
+  const statSlots = document.getElementById('statTotalSlots');
+  const statUsed = document.getElementById('statUsedSlots');
+  const statAvail = document.getElementById('statAvailableSlots');
+
+  if (statClusters) statClusters.innerText = `${totalClusters} Cụm Hệ Thống`;
+  if (statSlots) statSlots.innerText = `${totalSlots} Khách (50 khách / cụm)`;
+  if (statUsed) statUsed.innerText = `${usedSlots} Slots`;
+  if (statAvail) statAvail.innerText = `${availableSlots} Slots`;
+}
+
+function renderMasterKeysTable(keys, activeId, clusters = []) {
   const tbody = document.getElementById('masterKeysTableBody');
   if (!tbody) return;
 
   if (!keys || keys.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4">Chưa có Master Key nào trong kho.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4">Chưa có Cụm / Master Key nào trong kho.</td></tr>`;
     return;
   }
 
   tbody.innerHTML = keys.map((k, idx) => {
-    const isActive = k.status === 'active' || k.id === activeId;
-    const statusBadge = isActive 
-      ? `<span class="badge-live">🟢 ĐANG SỬ DỤNG</span>` 
-      : `<span class="badge-tag-15s" style="background: rgba(255,255,255,0.08); color: var(--text-secondary);">⚪ DỰ PHÒNG</span>`;
+    const clusterObj = (clusters || []).find(c => c.id === k.id || c.uid === k.uid);
+    const isCluster = Boolean(clusterObj) || k.id.startsWith('MASTER_0');
+    const isFull = (clusterObj && clusterObj.is_full) || k.status === 'full';
+    const isActive = (k.status === 'active' || k.id === activeId) && !isFull;
 
-    const shortToken = (k.fetch_token || '').substring(0, 16) + '...';
+    let statusBadge = '';
+    if (isFull) {
+      statusBadge = `<span class="badge-live" style="background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid #ef4444;">🔴 ĐÃ FULL (50/50)</span>`;
+    } else if (isActive) {
+      statusBadge = `<span class="badge-live">🟢 ĐANG SỬ DỤNG</span>`;
+    } else {
+      statusBadge = `<span class="badge-tag-15s" style="background: rgba(255,255,255,0.08); color: var(--text-secondary);">⚪ DỰ PHÒNG</span>`;
+    }
+
+    const shortToken = (k.uid || k.fetch_token || '').substring(0, 16) + '...';
     const expireFormatted = k.expires_date 
       ? new Date(k.expires_date).toLocaleDateString('vi-VN') 
       : '03/10/2026';
 
-    const createdFormatted = k.created_at 
-      ? new Date(k.created_at).toLocaleDateString('vi-VN') 
-      : 'Hệ thống';
+    const usedSlots = clusterObj ? (clusterObj.used_slots !== undefined ? clusterObj.used_slots : (clusterObj.is_full ? 50 : 0)) : (isFull ? 50 : '-');
+    const slotDisplay = isCluster 
+      ? `<strong style="color: ${isFull ? '#ef4444' : '#10b981'}; font-size: 13px;">${usedSlots}/50</strong> <small style="color: var(--text-muted);">slots</small>` 
+      : `<span style="color: var(--text-muted); font-size: 12px;">Token đơn</span>`;
 
     return `
       <tr style="${isActive ? 'background: rgba(255,204,0,0.05);' : ''}" id="master_row_${k.id}">
         <td style="color: var(--text-muted); font-weight: 600;">#${idx + 1}</td>
         <td>
-          <strong>${k.name || 'Master Node'}</strong>
+          <strong style="color: #fff; font-size: 13px;">${k.name || 'Master Node'}</strong>
           ${k.notes ? `<small style="display: block; color: var(--text-muted); font-size: 11px;">${k.notes}</small>` : ''}
         </td>
-        <td><code class="uid-code" title="${k.fetch_token}">${shortToken}</code></td>
+        <td><code class="uid-code" title="${k.uid || k.fetch_token}">${shortToken}</code></td>
+        <td>${slotDisplay}</td>
         <td><strong style="color: var(--gold-primary); font-size: 12px;">${expireFormatted}</strong></td>
-        <td><small style="color: var(--text-muted);">${createdFormatted}</small></td>
         <td>${statusBadge}</td>
         <td>
-          <div style="display: flex; gap: 4px;">
-            ${!isActive ? `<button class="btn btn-sm btn-gold" onclick="activateMasterKey('${k.id}', '${k.name}')">⚡ Dùng Key Này</button>` : ''}
-            <button class="btn btn-sm btn-glass" onclick="testSpecificKey('${k.fetch_token}')">🧪 Test</button>
-            <button class="btn btn-sm btn-outline" onclick="copyText('${k.fetch_token}', 'Đã copy Token!')">Copy</button>
-            ${keys.length > 1 ? `<button class="btn btn-sm btn-outline" style="color: var(--danger-color); border-color: rgba(255,61,113,0.3);" onclick="deleteMasterKey('${k.id}', '${k.name}')">🗑️</button>` : ''}
+          <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+            ${(!isActive && !isFull) ? `<button class="btn btn-sm btn-gold" onclick="activateMasterKey('${k.id}', '${k.name}')">⚡ Dùng Key</button>` : ''}
+            <button class="btn btn-sm btn-glass" onclick="testSpecificKey('${k.fetch_token || k.uid}')">🧪 Test</button>
+            <button class="btn btn-sm btn-outline" onclick="copyText('${k.fetch_token || k.uid}', 'Đã copy!')">Copy</button>
+            ${(!isCluster && keys.length > 1) ? `<button class="btn btn-sm btn-outline" style="color: var(--danger-color); border-color: rgba(255,61,113,0.3);" onclick="deleteMasterKey('${k.id}', '${k.name}')">🗑️</button>` : ''}
           </div>
         </td>
       </tr>
